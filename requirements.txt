@@ -1,0 +1,9 @@
+playwright
+beautifulsoup4
+pillow
+deepdiff
+streamlit
+flask
+requests
+imaplib2
+sqlite3

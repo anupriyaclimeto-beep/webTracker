@@ -1,0 +1,41 @@
+{
+    "portals": [
+      {
+        "name": "my-portal",
+        "url": "https://eprplastic.cpcb.gov.in/#/plastic/home",
+        "auth": "manual",
+        "crawl": {
+          "max_pages": 100,
+          "follow_links": true,
+          "depth": 4
+        }
+      }
+    ],
+    "schedule": {
+      "time": "07:00",
+      "timezone": "Asia/Kolkata"
+    },
+    "diff": {
+      "visual": true,
+      "html": true,
+      "json": true,
+      "har": true,
+      "pixel_threshold": 0.05
+    },
+    "storage": {
+      "db": "changes.db",
+      "archive_dir": "archive",
+      "keep_days": 30
+    },
+   
+    "browser": {
+      "headless": false,
+      "timeout_ms": 30000,
+      "persistent": true,
+      "user_data_dir": "browser_session",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      }
+    }
+  }
