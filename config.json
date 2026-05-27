@@ -7,7 +7,12 @@
         "crawl": {
           "max_pages": 100,
           "follow_links": true,
-          "depth": 4
+          "depth": 4,
+          "only_home": true,
+          "capture_dropdowns": true,
+          "dropdown_targets": [
+            "Plastic Waste Management Rules"
+          ]
         }
       }
     ],

@@ -46,6 +46,17 @@ def clean_html(html: str) -> str:
                     attrs_to_remove.append(attr)
                     continue
 
+                # remove ECharts dynamic instance IDs (_echarts_instance_="ec_1234...")
+                if attr_lower.startswith("_echarts_instance"):
+                    attrs_to_remove.append(attr)
+                    continue
+
+                # remove other common dynamic instance/random ID attributes
+                if attr_lower in ("data-uid", "data-reactid", "data-reactroot",
+                                  "data-ember-action", "data-guid"):
+                    attrs_to_remove.append(attr)
+                    continue
+
                 # remove ng-star-inserted from class list
                 if attr_lower == "class":
                     if isinstance(value, list):
@@ -97,6 +108,139 @@ def clean_html(html: str) -> str:
     except Exception as e:
         logger.error("clean_html error — %s", str(e))
         return html
+
+
+def extract_text_changes(diff_sample):
+    """
+    Convert raw HTML diff lines into human-readable descriptions.
+    Instead of showing raw tags, extract meaningful text/labels from them.
+    """
+    added_texts = []
+    removed_texts = []
+
+    for line in diff_sample:
+        if line.startswith("+") and not line.startswith("+++"):
+            raw = line[1:].strip()
+            text = extract_readable_text(raw)
+            if text:
+                added_texts.append(text)
+        elif line.startswith("-") and not line.startswith("---"):
+            raw = line[1:].strip()
+            text = extract_readable_text(raw)
+            if text:
+                removed_texts.append(text)
+
+    return added_texts, removed_texts
+
+
+def extract_readable_text(html_fragment):
+    """
+    Pull meaningful human-readable content from an HTML fragment.
+    Returns None if the fragment is noise (empty tags, dynamic IDs, etc).
+    """
+    try:
+        # skip lines that are only dynamic/structural noise
+        noise_patterns = [
+            r"^<[^>]+>$",               # empty tag with no text
+            r"echarts",                  # echarts instance
+            r"_ngcontent|_nghost",       # angular internals
+            r"ng-reflect",
+            r"^\s*$",                    # blank
+        ]
+        for pattern in noise_patterns:
+            if re.search(pattern, html_fragment, re.IGNORECASE):
+                return None
+
+        soup = BeautifulSoup(html_fragment, "html.parser")
+
+        # try to get button/link/label text first
+        for tag in soup.find_all(["button", "a", "label", "h1", "h2", "h3",
+                                   "h4", "h5", "span", "td", "th", "li", "p"]):
+            text = tag.get_text(strip=True)
+            if text and len(text) > 1:
+                tag_name = tag.name.upper()
+                if tag_name in ("BUTTON", "A"):
+                    return f'{tag_name}: "{text}"'
+                return f'"{text}"'
+
+        # fallback: plain text of the fragment
+        plain = soup.get_text(strip=True)
+        if plain and len(plain) > 1:
+            return f'"{plain}"'
+
+        return None
+
+    except Exception:
+        return None
+
+
+def summarize_changes(added_texts, removed_texts):
+    """
+    Build a plain-English summary of what changed.
+    """
+    def humanize_item(item):
+        if not item:
+            return None
+        s = item.strip()
+        # strip leading tag indicators like BUTTON: "Label"
+        m = re.match(r'^(?P<tag>[A-Z]+):\s*"(.*)"$', s)
+        if m:
+            tag = m.group('tag').lower()
+            label = m.group(2)
+            if 'test' in label.lower() or 'test' in tag:
+                return f'Test button "{label}"'
+            if tag == 'button':
+                return f'Button "{label}"'
+            if tag == 'a':
+                return f'Link "{label}"'
+            return f'{tag.capitalize()} "{label}"'
+
+        # quoted plain text: "Some label"
+        q = re.match(r'^"(.*)"$', s)
+        if q:
+            label = q.group(1)
+            low = label.lower()
+            if 'test' in low or 'test' in s.lower():
+                return f'Test element "{label}"'
+            # common UI words -> button/link label
+            if any(word in low for word in ('button','add','submit','tracking')):
+                return f'UI label "{label}"'
+            return f'"{label}"'
+
+        # fallback: return raw truncated
+        return s if len(s) < 100 else s[:97] + "..."
+
+    added_phrases = []
+    for a in added_texts:
+        h = humanize_item(a)
+        if h:
+            added_phrases.append(h)
+
+    removed_phrases = []
+    for r in removed_texts:
+        h = humanize_item(r)
+        if h:
+            removed_phrases.append(h)
+
+    parts = []
+    if added_phrases:
+        uniq = list(dict.fromkeys(added_phrases))
+        if len(uniq) == 1:
+            parts.append(f"{uniq[0]} added")
+        else:
+            parts.append(f"Added: {', '.join(uniq[:5])}")
+
+    if removed_phrases:
+        uniq = list(dict.fromkeys(removed_phrases))
+        if len(uniq) == 1:
+            parts.append(f"{uniq[0]} removed")
+        else:
+            parts.append(f"Removed: {', '.join(uniq[:5])}")
+
+    if not parts:
+        return "Page structure changed (no visible text differences found)"
+
+    return " | ".join(parts)
 
 
 def visual_diff(baseline_path, current_bytes):
@@ -156,12 +300,21 @@ def html_diff(baseline_path, current_html):
         ))
 
         changed = len(diff) > 0
-        logger.info("HTML diff — changed=%s diff_lines=%s", changed, len(diff))
+
+        # build human-readable summary (use larger sample so we don't miss localized inserts)
+        added_texts, removed_texts = extract_text_changes(diff)
+        summary = summarize_changes(added_texts, removed_texts) if changed else "No changes"
+
+        logger.info("HTML diff — changed=%s diff_lines=%s summary=%s",
+                    changed, len(diff), summary)
 
         return {
             "changed": changed,
             "diff_lines": len(diff),
-            "diff_sample": diff[:50]
+            "diff_sample": diff[:50],
+            "summary": summary,
+            "added_texts": added_texts[:10],
+            "removed_texts": removed_texts[:10],
         }
 
     except Exception as e:

@@ -97,33 +97,42 @@ def update_baseline(portal, url, html_path, screenshot_path, har_path):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     updated_at = datetime.now().isoformat()
+    # Always insert a new baseline row (keep history). This allows the UI to
+    # show previous vs latest snapshots by querying the most recent two rows.
     cursor.execute(
-        "SELECT id FROM baselines WHERE portal=? AND url=?",
-        (portal, url)
+        """INSERT INTO baselines (portal, url, html_path, screenshot_path, har_path, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (portal, url, html_path, screenshot_path, har_path, updated_at)
     )
-    row = cursor.fetchone()
-    if row:
-        cursor.execute(
-            """UPDATE baselines
-               SET html_path=?, screenshot_path=?, har_path=?, updated_at=?
-               WHERE portal=? AND url=?""",
-            (html_path, screenshot_path, har_path, updated_at, portal, url)
-        )
-    else:
-        cursor.execute(
-            """INSERT INTO baselines (portal, url, html_path, screenshot_path, har_path, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (portal, url, html_path, screenshot_path, har_path, updated_at)
-        )
     conn.commit()
     conn.close()
     logger.info("Baseline updated — portal=%s url=%s", portal, url)
 
 
+def cleanup_old_snapshots(url_folder, keep=2):
+    """Delete all but the `keep` most recent timestamp folders for a URL."""
+    try:
+        if not os.path.isdir(url_folder):
+            return
+        # Folders are named as timestamps (YYYYMMDD_HHMMSS), so sorting = chronological order
+        entries = sorted([
+            e for e in os.listdir(url_folder)
+            if os.path.isdir(os.path.join(url_folder, e))
+        ])
+        to_delete = entries[:-keep]  # everything except the last `keep`
+        for folder_name in to_delete:
+            full_path = os.path.join(url_folder, folder_name)
+            shutil.rmtree(full_path, ignore_errors=True)
+            logger.info("Deleted old snapshot folder: %s", full_path)
+    except Exception as e:
+        logger.error("Error during snapshot cleanup — %s", str(e))
+
+
 def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_url = url.replace("https://", "").replace("http://", "").replace("/", "_").replace(":", "_")
-    folder = os.path.join(ARCHIVE_DIR, portal, safe_url, timestamp)
+    url_folder = os.path.join(ARCHIVE_DIR, portal, safe_url)
+    folder = os.path.join(url_folder, timestamp)
     os.makedirs(folder, exist_ok=True)
 
     screenshot_path = os.path.join(folder, "screenshot.png")
@@ -143,6 +152,10 @@ def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
             json.dump(har_data, f, indent=2)
 
     logger.info("Artefacts archived to %s", folder)
+
+    # Keep only current + previous snapshot; delete anything older
+    cleanup_old_snapshots(url_folder, keep=2)
+
     return screenshot_path, html_path, har_path
 
 
@@ -181,6 +194,7 @@ def get_all_changes():
     conn.close()
     return rows
 
+
 def clear_baselines_for_portal(portal):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -189,6 +203,8 @@ def clear_baselines_for_portal(portal):
     conn.commit()
     conn.close()
     logger.info("Cleared %s old baselines for portal: %s", deleted, portal)
+
+
 def purge_old_records(keep_days):
     from datetime import timedelta
     cutoff = (datetime.now() - timedelta(days=keep_days)).isoformat()
