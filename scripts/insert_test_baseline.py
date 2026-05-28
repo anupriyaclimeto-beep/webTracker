@@ -1,7 +1,7 @@
 import sqlite3, os, datetime
 
 DB = os.path.join(os.path.dirname(__file__), "..", "changes.db")
-portal = "my-portal"
+portal = "EPR PLASTIC"
 url = "https://eprplastic.cpcb.gov.in/#/plastic/home___Home"
 html_path = r"archive\\my-portal\\eprplastic.cpcb.gov.in_#_plastic_home\\20260525_124632\\snapshot.html"
 screenshot_path = r"archive\\my-portal\\eprplastic.cpcb.gov.in_#_plastic_home\\20260525_124632\\screenshot.png"

@@ -36,28 +36,62 @@ def init_db():
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS baselines (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            portal      TEXT NOT NULL,
-            url         TEXT NOT NULL,
-            html_path   TEXT,
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            portal          TEXT NOT NULL,
+            url             TEXT NOT NULL,
+            html_path       TEXT,
             screenshot_path TEXT,
-            har_path    TEXT,
-            updated_at  TEXT NOT NULL
+            har_path        TEXT,
+            updated_at      TEXT NOT NULL
         )
     """)
 
     cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_baselines_portal_url
+        ON baselines (portal, url)
+    """)
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS crawl_log (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            portal      TEXT NOT NULL,
-            started_at  TEXT NOT NULL,
-            finished_at TEXT,
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            portal        TEXT NOT NULL,
+            started_at    TEXT NOT NULL,
+            finished_at   TEXT,
             pages_visited INTEGER DEFAULT 0,
-            status      TEXT DEFAULT 'running'
+            status        TEXT DEFAULT 'running'
         )
     """)
 
     conn.commit()
+
+    # ── Migration: drop UNIQUE constraint if the DB was created by an older
+    #    version of this file.  We do this by checking the table's SQL
+    #    definition; if it contains "UNIQUE", we rebuild the table without it.
+    cursor.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='baselines'"
+    )
+    row = cursor.fetchone()
+    if row and "UNIQUE" in (row[0] or "").upper():
+        logger.info("Migrating baselines table — removing stale UNIQUE constraint …")
+        conn.executescript("""
+            ALTER TABLE baselines RENAME TO baselines_old;
+            CREATE TABLE baselines (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                portal          TEXT NOT NULL,
+                url             TEXT NOT NULL,
+                html_path       TEXT,
+                screenshot_path TEXT,
+                har_path        TEXT,
+                updated_at      TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_baselines_portal_url
+                ON baselines (portal, url);
+            INSERT INTO baselines SELECT * FROM baselines_old;
+            DROP TABLE baselines_old;
+        """)
+        conn.commit()
+        logger.info("Migration complete.")
+
     conn.close()
     logger.info("Database initialised at %s", DB_PATH)
 
@@ -79,28 +113,36 @@ def get_baseline(portal, url):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT html_path, screenshot_path, har_path FROM baselines WHERE portal=? AND url=? ORDER BY updated_at DESC LIMIT 1",
+        """SELECT html_path, screenshot_path, har_path
+           FROM baselines
+           WHERE portal=? AND url=?
+           ORDER BY updated_at DESC
+           LIMIT 1""",
         (portal, url)
     )
     row = cursor.fetchone()
     conn.close()
     if row:
         return {
-            "html_path": row[0],
+            "html_path":       row[0],
             "screenshot_path": row[1],
-            "har_path": row[2]
+            "har_path":        row[2],
         }
     return None
 
 
 def update_baseline(portal, url, html_path, screenshot_path, har_path):
+    """
+    Always insert a new baseline row so we keep a full history.
+    get_baseline() retrieves the most recent row via ORDER BY updated_at DESC,
+    so diffing always compares against the previous snapshot.
+    """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     updated_at = datetime.now().isoformat()
-    # Always insert a new baseline row (keep history). This allows the UI to
-    # show previous vs latest snapshots by querying the most recent two rows.
     cursor.execute(
-        """INSERT INTO baselines (portal, url, html_path, screenshot_path, har_path, updated_at)
+        """INSERT INTO baselines
+               (portal, url, html_path, screenshot_path, har_path, updated_at)
            VALUES (?, ?, ?, ?, ?, ?)""",
         (portal, url, html_path, screenshot_path, har_path, updated_at)
     )
@@ -114,30 +156,31 @@ def cleanup_old_snapshots(url_folder, keep=2):
     try:
         if not os.path.isdir(url_folder):
             return
-        # Folders are named as timestamps (YYYYMMDD_HHMMSS), so sorting = chronological order
         entries = sorted([
             e for e in os.listdir(url_folder)
             if os.path.isdir(os.path.join(url_folder, e))
         ])
-        to_delete = entries[:-keep]  # everything except the last `keep`
-        for folder_name in to_delete:
+        for folder_name in entries[:-keep]:
             full_path = os.path.join(url_folder, folder_name)
             shutil.rmtree(full_path, ignore_errors=True)
             logger.info("Deleted old snapshot folder: %s", full_path)
     except Exception as e:
-        logger.error("Error during snapshot cleanup — %s", str(e))
+        logger.error("Error during snapshot cleanup — %s", e)
 
 
 def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    safe_url = url.replace("https://", "").replace("http://", "").replace("/", "_").replace(":", "_")
+    timestamp  = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_url   = (
+        url.replace("https://", "").replace("http://", "")
+           .replace("/", "_").replace(":", "_")
+    )
     url_folder = os.path.join(ARCHIVE_DIR, portal, safe_url)
-    folder = os.path.join(url_folder, timestamp)
+    folder     = os.path.join(url_folder, timestamp)
     os.makedirs(folder, exist_ok=True)
 
     screenshot_path = os.path.join(folder, "screenshot.png")
-    html_path = os.path.join(folder, "snapshot.html")
-    har_path = os.path.join(folder, "network.har")
+    html_path       = os.path.join(folder, "snapshot.html")
+    har_path        = os.path.join(folder, "network.har")
 
     if screenshot_bytes:
         with open(screenshot_path, "wb") as f:
@@ -152,10 +195,7 @@ def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
             json.dump(har_data, f, indent=2)
 
     logger.info("Artefacts archived to %s", folder)
-
-    # Keep only current + previous snapshot; delete anything older
     cleanup_old_snapshots(url_folder, keep=2)
-
     return screenshot_path, html_path, har_path
 
 
@@ -183,7 +223,10 @@ def finish_crawl_log(crawl_id, pages_visited, status="done"):
     )
     conn.commit()
     conn.close()
-    logger.info("Crawl log finished — id=%s pages=%s status=%s", crawl_id, pages_visited, status)
+    logger.info(
+        "Crawl log finished — id=%s pages=%s status=%s",
+        crawl_id, pages_visited, status
+    )
 
 
 def get_all_changes():
@@ -214,7 +257,7 @@ def purge_old_records(keep_days):
     deleted = cursor.rowcount
     conn.commit()
     conn.close()
-    logger.info("Purged %s old records older than %s days", deleted, keep_days)
+    logger.info("Purged %s records older than %s days", deleted, keep_days)
 
 
 if __name__ == "__main__":
