@@ -548,3 +548,60 @@ if __name__ == "__main__":
         asyncio.run(run_all_portals(args.portal))
     else:
         asyncio.run(scheduler(args.portal))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Multi-portal router — routes each portal to its dedicated crawler
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Map portal name → crawler module function
+PORTAL_CRAWLERS = {
+    "EPR PLASTIC": "crawl_portal",    # this file
+    "EPR EWASTE":  "crawl_ewaste",    # crawler_ewaste.py
+}
+
+
+async def run_all_portals(portal_name_filter=None):
+    for portal in config.get("portals", []):
+        name = portal["name"]
+        if portal_name_filter and name != portal_name_filter:
+            continue
+
+        if name == "EPR EWASTE":
+            # Import and run the e-waste crawler
+            from crawler_ewaste import crawl_ewaste_portal
+            await crawl_ewaste_portal(portal)
+
+        elif name == "EPR PLASTIC":
+            await crawl_portal(portal)
+
+        else:
+            # Default fallback — try plastic crawler
+            logger.warning("Unknown portal '%s' — using default plastic crawler", name)
+            await crawl_portal(portal)
+
+
+async def scheduler(portal_name_filter=None):
+    while True:
+        await run_all_portals(portal_name_filter)
+        intervals = [
+            p.get("crawl_interval_minutes", 60)
+            for p in config.get("portals", [])
+            if p.get("crawl_interval_minutes", 0) > 0
+        ]
+        wait_min = min(intervals) if intervals else 60
+        logger.info("Next crawl in %d min", wait_min)
+        await asyncio.sleep(wait_min * 60)
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--portal")
+    parser.add_argument("--once", action="store_true")
+    args = parser.parse_args()
+    init_db()
+    if args.once:
+        asyncio.run(run_all_portals(args.portal))
+    else:
+        asyncio.run(scheduler(args.portal))

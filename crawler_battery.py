@@ -1,17 +1,17 @@
 """
-crawler_ewaste.py — CPCB EPR E-Waste Portal Crawler
-URL: https://eprewaste.cpcb.gov.in/#/
+crawler_battery.py — CPCB EPR Battery Waste Portal Crawler
+URL: https://eprbattery.cpcb.gov.in/
 
-Navbar structure (from screenshots):
-  1.  Home page
-  2.  EPR            → dropdown: List of EEE, E-Waste Recycling Target, Registered Producers List
-  3.  E-Waste Rules  → dropdown (many items) → scroll page to capture all
-  4.  FAQ            → dropdown: 2 items
-  5.  SOP            → dropdown
-  6.  Important Links→ dropdown: MoEF, MeitY, CPCB
-  7.  Downloads      → dropdown
-  8.  Dashboards     → full page scroll & stitch
-  9.  Lodge Complaint→ dropdown (if present)
+Known pages from search results:
+  1.  Home page                → scroll & stitch
+  2.  National Dashboard       → full page (public, no login needed)
+  3.  About EPR / BWM Rules    → dropdown screenshot
+  4.  SOP                      → dropdown screenshot
+  5.  Important Documents      → scroll page (likely many items)
+  6.  Lodge Complaint          → dropdown screenshot
+  7.  Any other dropdowns found
+
+NOTE: Update nav_items list once actual navbar screenshots are available.
 """
 
 import asyncio
@@ -42,9 +42,9 @@ with open("config.json") as f:
     config = json.load(f)
 
 ARCHIVE_DIR = config["storage"]["archive_dir"]
-PORTAL_NAME = "EPR EWASTE"
-HOME_URL    = "https://eprewaste.cpcb.gov.in/#/"
-BASE_URL    = "https://eprewaste.cpcb.gov.in/"
+PORTAL_NAME = "EPR BATTERY"
+HOME_URL    = "https://eprbattery.cpcb.gov.in/"
+DASHBOARD_URL = "https://eprbattery.cpcb.gov.in/user/nationaldashboard"
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -103,7 +103,6 @@ async def diff_and_store(url, snap, har_path):
 
 
 async def scroll_and_stitch(page) -> bytes:
-    """Scroll full page top→bottom, stitch into one tall PNG."""
     vw = page.viewport_size["width"]
     vh = page.viewport_size["height"]
     await page.evaluate("window.scrollTo(0,0)")
@@ -118,7 +117,6 @@ async def scroll_and_stitch(page) -> bytes:
         img      = Image.open(io.BytesIO(raw))
         actual_y = await page.evaluate("window.scrollY")
         pieces.append((actual_y, img))
-        logger.info("  scrollY=%dpx piece=%d", actual_y, len(pieces))
         scroll_y += vh
         total_h   = await page.evaluate("document.body.scrollHeight")
     stitched = Image.new("RGB", (vw, total_h))
@@ -133,7 +131,6 @@ async def scroll_and_stitch(page) -> bytes:
 
 
 async def goto_home(page):
-    """Go back to home and wait for Angular to settle."""
     await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
     try:
         await page.wait_for_load_state("networkidle", timeout=12000)
@@ -143,10 +140,6 @@ async def goto_home(page):
 
 
 async def click_item(page, *labels) -> bool:
-    """
-    Try clicking any of the given label variants.
-    Returns True if any matched and was clicked.
-    """
     for label in labels:
         for sel in [
             f"a:has-text('{label}')",
@@ -164,47 +157,38 @@ async def click_item(page, *labels) -> bool:
                     return True
             except Exception:
                 continue
-    logger.warning("  Could not find any of: %s", labels)
+    logger.warning("  Could not find: %s", labels)
     return False
 
 
-async def dropdown_screenshot(page, key: str, har_path: str,
-                               label: str, pages_visited: int) -> int:
-    """
-    Helper: go home → click dropdown → single screenshot → save → escape.
-    Returns updated pages_visited count.
-    """
+async def do_dropdown(page, key, har_path, pages_visited, *labels):
+    """Click dropdown → single screenshot → escape. Returns updated count."""
     await goto_home(page)
-    if await click_item(page, label):
+    if await click_item(page, *labels):
         snap = await save_snapshot(page, key,
                                    await page.screenshot(full_page=False, type="png"))
         await diff_and_store(key, snap, har_path)
         pages_visited += 1
         await page.keyboard.press("Escape")
         await asyncio.sleep(0.5)
-        logger.info("  %s done ✓", label)
+        logger.info("  %s done ✓", labels[0])
     return pages_visited
 
 
-async def dropdown_scroll(page, key: str, har_path: str,
-                           label: str, pages_visited: int) -> int:
-    """
-    Helper: go home → click dropdown → scroll whole page → save.
-    Use when dropdown has many items and page itself scrolls (no internal scroller).
-    Returns updated pages_visited count.
-    """
+async def do_scroll(page, key, har_path, pages_visited, *labels):
+    """Click item → scroll & stitch whole page. Returns updated count."""
     await goto_home(page)
-    if await click_item(page, label):
+    if await click_item(page, *labels):
         snap = await save_snapshot(page, key, await scroll_and_stitch(page))
         await diff_and_store(key, snap, har_path)
         pages_visited += 1
-        logger.info("  %s done ✓", label)
+        logger.info("  %s done ✓", labels[0])
     return pages_visited
 
 
 # ── Main crawl ────────────────────────────────────────────────────────────────
 
-async def crawl_ewaste_portal(portal_config: dict):
+async def crawl_battery_portal(portal_config: dict):
     har_dir  = Path(ARCHIVE_DIR) / PORTAL_NAME
     har_dir.mkdir(parents=True, exist_ok=True)
     har_path = str(har_dir / f"{PORTAL_NAME}_network.har")
@@ -242,92 +226,66 @@ async def crawl_ewaste_portal(portal_config: dict):
         pages_visited += 1
         logger.info("Home done ✓")
 
-        # ── STEP 2: EPR dropdown ──────────────────────────────────────────────
-        # Items: List of EEE, E-Waste Recycling Target (Sch. III & IV),
-        #        Registered Producers List
-        logger.info("═══ STEP 2: EPR dropdown ═══")
-        pages_visited = await dropdown_screenshot(
-            page, HOME_URL + "__DROPDOWN_EPR", har_path, "EPR", pages_visited
+        # ── STEP 2: National Dashboard (public page) ──────────────────────────
+        logger.info("═══ STEP 2: National Dashboard ═══")
+        await page.goto(DASHBOARD_URL, wait_until="domcontentloaded", timeout=30000)
+        try:
+            await page.wait_for_load_state("networkidle", timeout=12000)
+        except Exception:
+            pass
+        await asyncio.sleep(3)
+        snap = await save_snapshot(page, DASHBOARD_URL, await scroll_and_stitch(page))
+        await diff_and_store(DASHBOARD_URL, snap, har_path)
+        pages_visited += 1
+        logger.info("National Dashboard done ✓")
+
+        # ── STEP 3: About EPR / BWM Rules dropdown ────────────────────────────
+        logger.info("═══ STEP 3: About EPR dropdown ═══")
+        pages_visited = await do_dropdown(
+            page, HOME_URL + "__DROPDOWN_AboutEPR", har_path, pages_visited,
+            "About EPR", "BWM Rules", "About"
         )
 
-        # ── STEP 3: E-Waste Rules dropdown ───────────────────────────────────
-        # Many items (6+) — page scrolls, no internal scroller
-        logger.info("═══ STEP 3: E-Waste Rules dropdown + scroll ═══")
-        await goto_home(page)
-        if await click_item(page, "E-Waste Rules", "E-Waste Management Rules"):
-            snap = await save_snapshot(
-                page, HOME_URL + "__DROPDOWN_EWasteRules",
-                await scroll_and_stitch(page)
-            )
-            await diff_and_store(HOME_URL + "__DROPDOWN_EWasteRules", snap, har_path)
-            pages_visited += 1
-            logger.info("  E-Waste Rules done ✓")
-
-        # ── STEP 4: FAQ dropdown ──────────────────────────────────────────────
-        # Items: FAQ under E-Waste (Management) Rules 2022,
-        #        Clarification with regard to registration...
-        logger.info("═══ STEP 4: FAQ dropdown ═══")
-        pages_visited = await dropdown_screenshot(
-            page, HOME_URL + "__DROPDOWN_FAQ", har_path, "FAQ", pages_visited
+        # ── STEP 4: SOP dropdown ──────────────────────────────────────────────
+        logger.info("═══ STEP 4: SOP dropdown ═══")
+        pages_visited = await do_dropdown(
+            page, HOME_URL + "__DROPDOWN_SOP", har_path, pages_visited,
+            "SOP"
         )
 
-        # ── STEP 5: SOP dropdown ──────────────────────────────────────────────
-        logger.info("═══ STEP 5: SOP dropdown ═══")
-        pages_visited = await dropdown_screenshot(
-            page, HOME_URL + "__DROPDOWN_SOP", har_path, "SOP", pages_visited
+        # ── STEP 5: Important Documents — scroll page ─────────────────────────
+        logger.info("═══ STEP 5: Important Documents ═══")
+        pages_visited = await do_scroll(
+            page, HOME_URL + "__DROPDOWN_ImportantDocuments", har_path, pages_visited,
+            "Important Documents", "Important Document"
         )
 
-        # ── STEP 6: Important Links dropdown ─────────────────────────────────
-        # Items: Ministry of Environment Forest and Climate Change,
-        #        Ministry of Electronics and Information Technology,
-        #        Central Pollution Control Board
-        logger.info("═══ STEP 6: Important Links dropdown ═══")
-        pages_visited = await dropdown_screenshot(
-            page, HOME_URL + "__DROPDOWN_ImportantLinks", har_path,
-            "Important Links", pages_visited
+        # ── STEP 6: Lodge Complaint dropdown ──────────────────────────────────
+        logger.info("═══ STEP 6: Lodge Complaint dropdown ═══")
+        pages_visited = await do_dropdown(
+            page, HOME_URL + "__DROPDOWN_LodgeComplaint", har_path, pages_visited,
+            "Lodge Complaint"
         )
 
-        # ── STEP 7: Downloads dropdown ────────────────────────────────────────
-        logger.info("═══ STEP 7: Downloads dropdown ═══")
-        await goto_home(page)
-        if await click_item(page, "Downloads", "Download"):
-            snap = await save_snapshot(
-                page, HOME_URL + "__DROPDOWN_Downloads",
-                await scroll_and_stitch(page)   # may have many items
-            )
-            await diff_and_store(HOME_URL + "__DROPDOWN_Downloads", snap, har_path)
-            pages_visited += 1
-            logger.info("  Downloads done ✓")
+        # ── STEP 7: FAQ dropdown (if present) ────────────────────────────────
+        logger.info("═══ STEP 7: FAQ dropdown ═══")
+        pages_visited = await do_dropdown(
+            page, HOME_URL + "__DROPDOWN_FAQ", har_path, pages_visited,
+            "FAQ"
+        )
 
-        # ── STEP 8: Dashboards page ───────────────────────────────────────────
-        logger.info("═══ STEP 8: Dashboards page ═══")
-        await goto_home(page)
-        if await click_item(page, "Dashboards", "Dashboard", "National Dashboard"):
-            try:
-                await page.wait_for_load_state("networkidle", timeout=10000)
-            except Exception:
-                pass
-            await asyncio.sleep(2)
-            snap = await save_snapshot(
-                page, HOME_URL + "__PAGE_Dashboards",
-                await scroll_and_stitch(page)
-            )
-            await diff_and_store(HOME_URL + "__PAGE_Dashboards", snap, har_path)
-            pages_visited += 1
-            logger.info("  Dashboards done ✓")
-
-        # ── STEP 9: Lodge Complaint dropdown ─────────────────────────────────
-        logger.info("═══ STEP 9: Lodge Complaint dropdown ═══")
-        pages_visited = await dropdown_screenshot(
-            page, HOME_URL + "__DROPDOWN_LodgeComplaint", har_path,
-            "Lodge Complaint", pages_visited
+        # ── STEP 8: Bulk Upload dropdown (if present) ────────────────────────
+        logger.info("═══ STEP 8: Bulk Upload dropdown ═══")
+        pages_visited = await do_dropdown(
+            page, HOME_URL + "__DROPDOWN_BulkUpload", har_path, pages_visited,
+            "Bulk Upload"
         )
 
         await context.close()
         await browser.close()
 
     finish_crawl_log(crawl_id, pages_visited, status="done")
-    logger.info("═══ EPR E-WASTE ALL DONE: %d pages ═══", pages_visited)
+    logger.info("═══ EPR BATTERY ALL DONE: %d pages ═══", pages_visited)
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
@@ -338,4 +296,4 @@ if __name__ == "__main__":
         (p for p in config.get("portals", []) if p["name"] == PORTAL_NAME),
         {"name": PORTAL_NAME, "auth": "none"},
     )
-    asyncio.run(crawl_ewaste_portal(portal_cfg))
+    asyncio.run(crawl_battery_portal(portal_cfg))

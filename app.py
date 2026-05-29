@@ -258,10 +258,31 @@ PID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)) or ".", ".cra
 LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)) or ".", ".crawler.log")
 
 
+# Maps portal name → which crawler script to run
+PORTAL_CRAWLER_MAP = {
+    "EPR PLASTIC": "crawler.py",
+    "EPR EWASTE":  "crawler_ewaste.py",
+}
+
+
 def launch_crawl(portal=None):
-    cmd = [sys.executable, "crawler.py", "--once"]
-    if portal:
-        cmd += ["--portal", portal]
+    """
+    Launch the correct crawler script for the given portal.
+    EPR PLASTIC → crawler.py
+    EPR EWASTE  → crawler_ewaste.py
+    All Portals → crawler.py --once (which routes internally)
+    """
+    # Pick the right script
+    if portal and portal in PORTAL_CRAWLER_MAP:
+        script = PORTAL_CRAWLER_MAP[portal]
+        cmd    = [sys.executable, script, "--once"]
+    elif portal:
+        # Unknown portal — use main crawler with --portal flag
+        cmd = [sys.executable, "crawler.py", "--once", "--portal", portal]
+    else:
+        # All Portals — main crawler handles routing
+        cmd = [sys.executable, "crawler.py", "--once"]
+
     log_fh = open(LOG_FILE, "w", encoding="utf-8", buffering=1)
     proc = subprocess.Popen(
         cmd,
@@ -275,6 +296,7 @@ def launch_crawl(portal=None):
             f.write(str(proc.pid))
     except Exception:
         pass
+    print(f"Launched {cmd[1]} for portal={portal or 'all'} PID={proc.pid}")
 
 
 def read_log(tail=60):
