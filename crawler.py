@@ -20,6 +20,8 @@ Steps:
 """
 
 import asyncio
+import os
+os.environ.setdefault('PWDEBUG', '0')   # disable Playwright inspector
 import io
 import json
 import logging
@@ -122,13 +124,14 @@ async def scroll_and_stitch(page) -> bytes:
     vw = page.viewport_size["width"]
     vh = page.viewport_size["height"]
 
+    # Start from the very top
     await page.evaluate("window.scrollTo(0, 0)")
     await asyncio.sleep(0.5)
 
-    total_h  = await page.evaluate("document.body.scrollHeight")
+    total_h = await page.evaluate("document.body.scrollHeight")
     logger.info("  Page scrollHeight=%dpx  viewport=%dpx", total_h, vh)
 
-    pieces   = []
+    pieces  = []
     scroll_y = 0
 
     while scroll_y < total_h:
@@ -151,49 +154,17 @@ async def scroll_and_stitch(page) -> bytes:
     for y_pos, img in pieces:
         stitched.paste(img, (0, y_pos))
 
+    # Scroll back to top and let Angular settle
     await page.evaluate("window.scrollTo(0, 0)")
     await asyncio.sleep(1.5)
 
     buf = io.BytesIO()
     stitched.save(buf, format="PNG")
-    logger.info("  Stitched: %dx%d px from %d pieces", vw, total_h, len(pieces))
+    logger.info(
+        "  Stitched: %dx%d px from %d pieces",
+        vw, total_h, len(pieces),
+    )
     return buf.getvalue()
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Shared helpers
-# ─────────────────────────────────────────────────────────────────────────────
-
-async def _goto_home(page):
-    """Navigate to home and wait for the page to fully settle."""
-    await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
-    try:
-        await page.wait_for_load_state("networkidle", timeout=12000)
-    except Exception:
-        pass
-    await asyncio.sleep(2)
-
-
-async def _click_nav_item(page, label: str) -> bool:
-    """
-    Try several selector patterns to click a navbar item by visible text.
-    Returns True if the click succeeded.
-    """
-    selectors = [
-        f"a:has-text('{label}')",
-        f"button:has-text('{label}')",
-        f"li:has-text('{label}') > a",
-    ]
-    for sel in selectors:
-        try:
-            el = page.locator(sel).first
-            if await el.is_visible(timeout=3000):
-                await el.click()
-                await asyncio.sleep(1.5)
-                return True
-        except Exception:
-            continue
-    return False
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -211,9 +182,14 @@ async def crawl_portal(portal_config: dict):
 
     async with async_playwright() as p:
         browser_cfg = config.get("browser", {})
+        # Always headless — never open a browser window or Playwright inspector
         browser     = await p.chromium.launch(
-            headless=browser_cfg.get("headless", True),
-            args=["--no-sandbox", "--disable-dev-shm-usage"],
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-blink-features=AutomationControlled",
+            ],
         )
         context = await browser.new_context(
             viewport={
@@ -240,7 +216,12 @@ async def crawl_portal(portal_config: dict):
 
         # ── STEP 1: Home page ─────────────────────────────────────────────────
         logger.info("═══ STEP 1: Home page — scroll & stitch ═══")
-        await _goto_home(page)
+        await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
+        try:
+            await page.wait_for_load_state("networkidle", timeout=12000)
+        except Exception:
+            pass
+        await asyncio.sleep(2)
 
         snap = await save_snapshot(
             page, portal_name, HOME_URL,
@@ -252,10 +233,25 @@ async def crawl_portal(portal_config: dict):
 
         # ── STEP 2: "Plastic Waste Management" dropdown ───────────────────────
         logger.info("═══ STEP 2: Plastic Waste Management dropdown ═══")
-        await _goto_home(page)
         dropdown_key = HOME_URL + "__DROPDOWN_PlasticWasteManagement"
 
-        if await _click_nav_item(page, "Plastic Waste Management"):
+        clicked = False
+        for sel in [
+            "a:has-text('Plastic Waste Management')",
+            "button:has-text('Plastic Waste Management')",
+            "li:has-text('Plastic Waste Management') > a",
+        ]:
+            try:
+                el = page.locator(sel).first
+                if await el.is_visible(timeout=3000):
+                    await el.click()
+                    await asyncio.sleep(1.0)
+                    clicked = True
+                    break
+            except Exception:
+                continue
+
+        if clicked:
             snap2 = await save_snapshot(
                 page, portal_name, dropdown_key,
                 await page.screenshot(full_page=False, type="png"),
@@ -270,10 +266,25 @@ async def crawl_portal(portal_config: dict):
 
         # ── STEP 3: "About EPR" dropdown ──────────────────────────────────────
         logger.info("═══ STEP 3: About EPR dropdown ═══")
-        await _goto_home(page)
         about_epr_key = HOME_URL + "__DROPDOWN_AboutEPR"
 
-        if await _click_nav_item(page, "About EPR"):
+        async def open_about_epr() -> bool:
+            for sel in [
+                "a:has-text('About EPR')",
+                "button:has-text('About EPR')",
+                "li:has-text('About EPR') > a",
+            ]:
+                try:
+                    el = page.locator(sel).first
+                    if await el.is_visible(timeout=3000):
+                        await el.click()
+                        await asyncio.sleep(1.0)
+                        return True
+                except Exception:
+                    continue
+            return False
+
+        if await open_about_epr():
             snap3 = await save_snapshot(
                 page, portal_name, about_epr_key,
                 await page.screenshot(full_page=False, type="png"),
@@ -318,48 +329,139 @@ async def crawl_portal(portal_config: dict):
             logger.info("  ✓ '%s' saved", label)
 
         # ── STEP 5: "Important Documents" dropdown — click then scroll page ───
+        #
+        # KEY INSIGHT: this dropdown has NO internal scroller.
+        # When it opens, the dropdown items extend BELOW the viewport and the
+        # PAGE ITSELF gets a scrollbar.  So the correct approach is:
+        #   1. Navigate back to home so the navbar is present.
+        #   2. Click "Important Documents" to open the dropdown.
+        #   3. DO NOT close it — call scroll_and_stitch(page) which scrolls
+        #      window.scrollY down the whole page, capturing every item.
+        #   4. Save the stitched full-height screenshot.
+        #
         logger.info("═══ STEP 5: Important Documents dropdown — click + scroll page ═══")
-        await _goto_home(page)
         imp_docs_key = HOME_URL + "__DROPDOWN_ImportantDocuments"
 
-        if await _click_nav_item(page, "Important Documents"):
-            logger.info("  Dropdown opened — scrolling full page to capture all items")
-            snap5 = await save_snapshot(
-                page, portal_name, imp_docs_key,
-                await scroll_and_stitch(page),
-            )
+        # Go back to home so the navbar is visible
+        await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
+        try:
+            await page.wait_for_load_state("networkidle", timeout=12000)
+        except Exception:
+            pass
+        await asyncio.sleep(2)
+
+        # Click "Important Documents" to open the dropdown
+        imp_opened = False
+        for sel in [
+            "a:has-text('Important Documents')",
+            "button:has-text('Important Documents')",
+            "li:has-text('Important Documents') > a",
+        ]:
+            try:
+                el = page.locator(sel).first
+                if await el.is_visible(timeout=3000):
+                    await el.click()
+                    await asyncio.sleep(1.5)   # wait for the dropdown to fully expand
+                    logger.info("  Dropdown opened — page should now be scrollable")
+                    imp_opened = True
+                    break
+            except Exception:
+                continue
+
+        if imp_opened:
+            # The dropdown is open and the page scrollbar is now active.
+            # scroll_and_stitch scrolls window.scrollY from 0 → scrollHeight,
+            # capturing every piece of the open dropdown as it comes into view.
+            imp_screenshot = await scroll_and_stitch(page)
+
+            snap5 = await save_snapshot(page, portal_name, imp_docs_key, imp_screenshot)
             await diff_and_store(portal_name, imp_docs_key, snap5, har_path)
             pages_visited += 1
             logger.info("  Important Documents full snapshot done ✓")
         else:
             logger.warning("  Could not find 'Important Documents' link")
 
-        # ── STEP 6: "Bulk Upload" dropdown — click + single screenshot ────────
-        logger.info("═══ STEP 6: Bulk Upload dropdown — click + screenshot ═══")
-        await _goto_home(page)
+        # ── STEP 6: "Bulk Upload" dropdown — click then scroll page ──────────
+        #
+        # Same pattern as Important Documents: no internal scroller.
+        # Items: "Guidance Document - PIBO", "Guidance Document - PWP(Cement)"
+        # Click to open the dropdown, then scroll_and_stitch the whole page
+        # so both items are captured in one tall stitched screenshot.
+        #
+        logger.info("═══ STEP 6: Bulk Upload dropdown — click + scroll page ═══")
         bulk_upload_key = HOME_URL + "__DROPDOWN_BulkUpload"
 
-        if await _click_nav_item(page, "Bulk Upload"):
-            snap6 = await save_snapshot(
-                page, portal_name, bulk_upload_key,
-                await page.screenshot(full_page=False, type="png"),
-            )
+        # Go back to home so the navbar is visible
+        await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
+        try:
+            await page.wait_for_load_state("networkidle", timeout=12000)
+        except Exception:
+            pass
+        await asyncio.sleep(2)
+
+        # Click "Bulk Upload" to open the dropdown
+        bulk_opened = False
+        for sel in [
+            "a:has-text('Bulk Upload')",
+            "button:has-text('Bulk Upload')",
+            "li:has-text('Bulk Upload') > a",
+        ]:
+            try:
+                el = page.locator(sel).first
+                if await el.is_visible(timeout=3000):
+                    await el.click()
+                    await asyncio.sleep(1.5)   # wait for dropdown to fully expand
+                    logger.info("  Bulk Upload dropdown opened")
+                    bulk_opened = True
+                    break
+            except Exception:
+                continue
+
+        if bulk_opened:
+            # Dropdown is open — just take a single viewport screenshot.
+            # Only 2 items so everything is visible at once.
+            bulk_screenshot = await page.screenshot(full_page=False, type="png")
+
+            snap6 = await save_snapshot(page, portal_name, bulk_upload_key, bulk_screenshot)
             await diff_and_store(portal_name, bulk_upload_key, snap6, har_path)
             pages_visited += 1
-            logger.info("  Bulk Upload snapshot done ✓")
+            logger.info("  Bulk Upload full snapshot done ✓")
         else:
             logger.warning("  Could not find 'Bulk Upload' link")
 
-        # ── STEP 7: "Lodge Complaint" dropdown — click + single screenshot ────
+
+        # ── STEP 7: "Lodge Complaint" dropdown — click + single screenshot ─────
+        # Items: Create Ticket, How To Create A Ticket
         logger.info("═══ STEP 7: Lodge Complaint dropdown — click + screenshot ═══")
-        await _goto_home(page)
         lodge_key = HOME_URL + "__DROPDOWN_LodgeComplaint"
 
-        if await _click_nav_item(page, "Lodge Complaint"):
-            snap7 = await save_snapshot(
-                page, portal_name, lodge_key,
-                await page.screenshot(full_page=False, type="png"),
-            )
+        await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
+        try:
+            await page.wait_for_load_state("networkidle", timeout=12000)
+        except Exception:
+            pass
+        await asyncio.sleep(2)
+
+        lodge_opened = False
+        for sel in [
+            "a:has-text('Lodge Complaint')",
+            "button:has-text('Lodge Complaint')",
+            "li:has-text('Lodge Complaint') > a",
+        ]:
+            try:
+                el = page.locator(sel).first
+                if await el.is_visible(timeout=3000):
+                    await el.click()
+                    await asyncio.sleep(1.5)
+                    logger.info("  Lodge Complaint dropdown opened")
+                    lodge_opened = True
+                    break
+            except Exception:
+                continue
+
+        if lodge_opened:
+            lodge_screenshot = await page.screenshot(full_page=False, type="png")
+            snap7 = await save_snapshot(page, portal_name, lodge_key, lodge_screenshot)
             await diff_and_store(portal_name, lodge_key, snap7, har_path)
             pages_visited += 1
             logger.info("  Lodge Complaint snapshot done ✓")
@@ -367,15 +469,37 @@ async def crawl_portal(portal_config: dict):
             logger.warning("  Could not find 'Lodge Complaint' link")
 
         # ── STEP 8: "SOP" dropdown — click + single screenshot ───────────────
+        # Items: PWP, PIBOs
         logger.info("═══ STEP 8: SOP dropdown — click + screenshot ═══")
-        await _goto_home(page)
         sop_key = HOME_URL + "__DROPDOWN_SOP"
 
-        if await _click_nav_item(page, "SOP"):
-            snap8 = await save_snapshot(
-                page, portal_name, sop_key,
-                await page.screenshot(full_page=False, type="png"),
-            )
+        await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
+        try:
+            await page.wait_for_load_state("networkidle", timeout=12000)
+        except Exception:
+            pass
+        await asyncio.sleep(2)
+
+        sop_opened = False
+        for sel in [
+            "a:has-text('SOP')",
+            "button:has-text('SOP')",
+            "li:has-text('SOP') > a",
+        ]:
+            try:
+                el = page.locator(sel).first
+                if await el.is_visible(timeout=3000):
+                    await el.click()
+                    await asyncio.sleep(1.5)
+                    logger.info("  SOP dropdown opened")
+                    sop_opened = True
+                    break
+            except Exception:
+                continue
+
+        if sop_opened:
+            sop_screenshot = await page.screenshot(full_page=False, type="png")
+            snap8 = await save_snapshot(page, portal_name, sop_key, sop_screenshot)
             await diff_and_store(portal_name, sop_key, snap8, har_path)
             pages_visited += 1
             logger.info("  SOP snapshot done ✓")

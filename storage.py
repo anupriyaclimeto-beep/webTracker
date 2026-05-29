@@ -14,25 +14,33 @@ logger = logging.getLogger(__name__)
 with open("config.json") as f:
     config = json.load(f)
 
-DB_PATH = config["storage"]["db"]
+DB_PATH     = config["storage"]["db"]
 ARCHIVE_DIR = config["storage"]["archive_dir"]
 
 
 def init_db():
     os.makedirs(ARCHIVE_DIR, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    conn   = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS changes (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            portal      TEXT NOT NULL,
-            url         TEXT NOT NULL,
-            diff_type   TEXT NOT NULL,
-            diff_detail TEXT,
-            timestamp   TEXT NOT NULL
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            portal       TEXT NOT NULL,
+            url          TEXT NOT NULL,
+            diff_type    TEXT NOT NULL,
+            diff_detail  TEXT,
+            ai_summary   TEXT,
+            timestamp    TEXT NOT NULL
         )
     """)
+
+    # Add ai_summary column if this is an existing DB that predates the column
+    cursor.execute("PRAGMA table_info(changes)")
+    existing_cols = {row[1] for row in cursor.fetchall()}
+    if "ai_summary" not in existing_cols:
+        cursor.execute("ALTER TABLE changes ADD COLUMN ai_summary TEXT")
+        logger.info("Migrated changes table — added ai_summary column")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS baselines (
@@ -51,22 +59,7 @@ def init_db():
         ON baselines (portal, url)
     """)
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS crawl_log (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            portal        TEXT NOT NULL,
-            started_at    TEXT NOT NULL,
-            finished_at   TEXT,
-            pages_visited INTEGER DEFAULT 0,
-            status        TEXT DEFAULT 'running'
-        )
-    """)
-
-    conn.commit()
-
-    # ── Migration: drop UNIQUE constraint if the DB was created by an older
-    #    version of this file.  We do this by checking the table's SQL
-    #    definition; if it contains "UNIQUE", we rebuild the table without it.
+    # Migration: drop UNIQUE constraint from baselines if present (legacy schema)
     cursor.execute(
         "SELECT sql FROM sqlite_master WHERE type='table' AND name='baselines'"
     )
@@ -90,19 +83,33 @@ def init_db():
             DROP TABLE baselines_old;
         """)
         conn.commit()
-        logger.info("Migration complete.")
+        logger.info("Baselines migration complete.")
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS crawl_log (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            portal        TEXT NOT NULL,
+            started_at    TEXT NOT NULL,
+            finished_at   TEXT,
+            pages_visited INTEGER DEFAULT 0,
+            status        TEXT DEFAULT 'running'
+        )
+    """)
+
+    conn.commit()
     conn.close()
     logger.info("Database initialised at %s", DB_PATH)
 
 
-def save_diff(portal, url, diff_type, diff_detail):
-    conn = sqlite3.connect(DB_PATH)
+def save_diff(portal, url, diff_type, diff_detail, ai_summary=None):
+    conn   = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     timestamp = datetime.now().isoformat()
     cursor.execute(
-        "INSERT INTO changes (portal, url, diff_type, diff_detail, timestamp) VALUES (?, ?, ?, ?, ?)",
-        (portal, url, diff_type, json.dumps(diff_detail), timestamp)
+        """INSERT INTO changes
+               (portal, url, diff_type, diff_detail, ai_summary, timestamp)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (portal, url, diff_type, json.dumps(diff_detail), ai_summary, timestamp)
     )
     conn.commit()
     conn.close()
@@ -110,7 +117,7 @@ def save_diff(portal, url, diff_type, diff_detail):
 
 
 def get_baseline(portal, url):
-    conn = sqlite3.connect(DB_PATH)
+    conn   = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute(
         """SELECT html_path, screenshot_path, har_path
@@ -133,11 +140,10 @@ def get_baseline(portal, url):
 
 def update_baseline(portal, url, html_path, screenshot_path, har_path):
     """
-    Always insert a new baseline row so we keep a full history.
-    get_baseline() retrieves the most recent row via ORDER BY updated_at DESC,
-    so diffing always compares against the previous snapshot.
+    Always insert a new baseline row to keep full history.
+    get_baseline() retrieves the most recent row via ORDER BY updated_at DESC.
     """
-    conn = sqlite3.connect(DB_PATH)
+    conn   = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     updated_at = datetime.now().isoformat()
     cursor.execute(
@@ -185,11 +191,9 @@ def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
     if screenshot_bytes:
         with open(screenshot_path, "wb") as f:
             f.write(screenshot_bytes)
-
     if html_content:
         with open(html_path, "w", encoding="utf-8") as f:
             f.write(html_content)
-
     if har_data:
         with open(har_path, "w", encoding="utf-8") as f:
             json.dump(har_data, f, indent=2)
@@ -200,7 +204,7 @@ def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
 
 
 def start_crawl_log(portal):
-    conn = sqlite3.connect(DB_PATH)
+    conn   = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     started_at = datetime.now().isoformat()
     cursor.execute(
@@ -214,7 +218,7 @@ def start_crawl_log(portal):
 
 
 def finish_crawl_log(crawl_id, pages_visited, status="done"):
-    conn = sqlite3.connect(DB_PATH)
+    conn   = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     finished_at = datetime.now().isoformat()
     cursor.execute(
@@ -230,7 +234,7 @@ def finish_crawl_log(crawl_id, pages_visited, status="done"):
 
 
 def get_all_changes():
-    conn = sqlite3.connect(DB_PATH)
+    conn   = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM changes ORDER BY timestamp DESC")
     rows = cursor.fetchall()
@@ -239,7 +243,7 @@ def get_all_changes():
 
 
 def clear_baselines_for_portal(portal):
-    conn = sqlite3.connect(DB_PATH)
+    conn   = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("DELETE FROM baselines WHERE portal=?", (portal,))
     deleted = cursor.rowcount
@@ -251,7 +255,7 @@ def clear_baselines_for_portal(portal):
 def purge_old_records(keep_days):
     from datetime import timedelta
     cutoff = (datetime.now() - timedelta(days=keep_days)).isoformat()
-    conn = sqlite3.connect(DB_PATH)
+    conn   = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("DELETE FROM changes WHERE timestamp < ?", (cutoff,))
     deleted = cursor.rowcount

@@ -1,0 +1,56 @@
+2026-05-28 16:31:14,859 [INFO] Database initialised at changes.db
+2026-05-28 16:31:15,624 [INFO] Manual auth — opening https://eprplastic.cpcb.gov.in/#/plastic/home
+
+============================================================
+BROWSER IS OPEN
+Please do the following manually:
+  1. Type your username and password
+  2. Solve the CAPTCHA
+  3. Enter the OTP
+  4. Wait until you are fully logged in
+  5. Click the RESUME button in the Playwright toolbar
+============================================================
+
+2026-05-28 16:31:25,212 [INFO] Manual login completed — crawler taking over now
+2026-05-28 16:31:25,213 [INFO] \u2550\u2550\u2550 STEP 1: Home page — scroll & stitch \u2550\u2550\u2550
+2026-05-28 16:31:27,779 [INFO]   Page scrollHeight=1683px  viewport=800px
+2026-05-28 16:31:28,505 [INFO]   scrollY=0px  piece 1 captured
+2026-05-28 16:31:29,037 [INFO]   scrollY=800px  piece 2 captured
+2026-05-28 16:31:29,584 [INFO]   scrollY=883px  piece 3 captured
+2026-05-28 16:31:31,320 [INFO]   Stitched: 1280x1683 px from 3 pieces
+2026-05-28 16:31:31,873 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home\20260528_163131
+2026-05-28 16:31:31,882 [INFO] No current HAR found — skipping har diff
+2026-05-28 16:31:32,107 [INFO] HTML diff — changed=True diff_lines=22 summary=Page structure changed (no visible text differences found)
+2026-05-28 16:31:34,036 [INFO] Visual diff — changed_pixels=266512 ratio=0.1237 changed=True
+2026-05-28 16:31:34,173 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home — any_changed=True
+2026-05-28 16:31:34,187 [INFO] Baseline updated — portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home
+2026-05-28 16:31:34,201 [INFO] Diff saved — portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home type=visual
+2026-05-28 16:31:34,201 [INFO]   \u2705 Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home | visual
+2026-05-28 16:31:34,216 [INFO] Diff saved — portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home type=html
+2026-05-28 16:31:34,217 [INFO]   \u2705 Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home | html
+2026-05-28 16:31:34,217 [INFO] Home page done \u2713
+2026-05-28 16:31:34,217 [INFO] \u2550\u2550\u2550 STEP 2: Plastic Waste Management dropdown \u2550\u2550\u2550
+2026-05-28 16:31:36,201 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_PlasticWasteManagement\20260528_163136
+2026-05-28 16:31:36,205 [INFO] No current HAR found — skipping har diff
+2026-05-28 16:31:36,452 [INFO] HTML diff — changed=True diff_lines=22 summary=Page structure changed (no visible text differences found)
+2026-05-28 16:31:37,074 [INFO] Visual diff — changed_pixels=192028 ratio=0.1875 changed=True
+2026-05-28 16:31:37,099 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement — any_changed=True
+2026-05-28 16:31:37,105 [INFO] Baseline updated — portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement
+2026-05-28 16:31:37,110 [INFO] Diff saved — portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement type=visual
+2026-05-28 16:31:37,110 [INFO]   \u2705 Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement | visual
+2026-05-28 16:31:37,116 [INFO] Diff saved — portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement type=html
+2026-05-28 16:31:37,116 [INFO]   \u2705 Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement | html
+2026-05-28 16:31:37,638 [INFO]   Plastic Waste Management dropdown done \u2713
+2026-05-28 16:31:37,638 [INFO] \u2550\u2550\u2550 STEP 3: About EPR dropdown \u2550\u2550\u2550
+2026-05-28 16:31:39,474 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_AboutEPR\20260528_163139
+2026-05-28 16:31:39,477 [INFO] No current HAR found — skipping har diff
+2026-05-28 16:31:39,703 [INFO] HTML diff — changed=True diff_lines=43 summary=Page structure changed (no visible text differences found)
+2026-05-28 16:31:40,704 [INFO] Visual diff — changed_pixels=277713 ratio=0.2712 changed=True
+2026-05-28 16:31:40,755 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR — any_changed=True
+2026-05-28 16:31:40,769 [INFO] Baseline updated — portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR
+2026-05-28 16:31:40,782 [INFO] Diff saved — portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR type=visual
+2026-05-28 16:31:40,783 [INFO]   \u2705 Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR | visual
+2026-05-28 16:31:40,796 [INFO] Diff saved — portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR type=html
+2026-05-28 16:31:40,796 [INFO]   \u2705 Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR | html
+2026-05-28 16:31:41,304 [INFO]   About EPR dropdown done \u2713
+2026-05-28 16:31:41,304 [INFO] \u2550\u2550\u2550 STEP 4.1: Categories Of Plastic Waste \u2550\u2550\u2550
