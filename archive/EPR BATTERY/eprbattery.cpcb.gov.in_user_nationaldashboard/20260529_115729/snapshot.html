@@ -1,0 +1,1009 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="WKlJjcxvzXr9PpWBWob6mhktyZU3JmhAX1h2hceX">
+
+    <title>EPR Battery</title>
+
+    <!-- Scripts -->
+
+<script src="https://eprbattery.cpcb.gov.in/js/app.js" defer=""></script>
+    <!-- Fonts -->
+   <link rel="dns-prefetch" href="//fonts.gstatic.com">
+   <link href="https://eprbattery.cpcb.gov.in/css/bootstrap.min.css" rel="stylesheet">
+   <link rel="stylesheet" href="https://eprbattery.cpcb.gov.in/css/font-awesome/font-awesome.min.css">
+   <script src="https://eprbattery.cpcb.gov.in/js/jquery/jquery.js"></script>
+	 <script src="https://eprbattery.cpcb.gov.in/js/popper.min.js"></script>
+	  <script src="https://eprbattery.cpcb.gov.in/js/bootstrap.bundle.min.js"></script>
+
+
+
+    <!-- Styles -->
+    <link href="https://eprbattery.cpcb.gov.in/css/app.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://eprbattery.cpcb.gov.in/css/home.css">
+</head>
+<body>
+    <div id="app">
+     <!---code added by abhishek--->
+
+     <div class="container-fluid">
+        <div class="row">
+		<header class="py-2 bg-white">
+			 <!----header start here-->
+             <div class="header-top">
+
+          <div class=" justify-content-between align-items-center">
+
+                  <div class="row">
+                      <div class="col-sm-1">
+                           <img src="https://eprbattery.cpcb.gov.in/assets/images/logo/logo3.jpg" class="circle responsive-img valign profile-image cyan" style="width:100px">
+
+                      </div>
+
+                      <div class="col-sm-2 pt-2">
+                         <div class="inner-column" style="color: #2b598a!important;font-size:14px;font-family: var(--bs-body-font-family);padding-top:15px;margin-left: -7%;">
+					<p style="margin:0px;">
+						Central pollution Control Board
+</p>
+                    <p style="margin:0px;">(Ministry of Environment, Forest <br>and Climate Change)</p>
+
+
+
+
+
+
+				</div>
+                      </div>
+                      <div class="col-sm-4 text-center">
+                        <div class="logo-img">
+                        <img src="https://eprbattery.cpcb.gov.in/assets/images/logo/site-logo.jpg" width="30" class=" circle responsive-img valign profile-image cyan">
+                        </div>
+
+                            <a class="h5 text-dark" style="color:#2b598a!important; text-decoration:none" href="#">EPR Portal for Battery
+                            Waste Management </a>
+
+                                <div class="row">
+                            <div class="col-sm-12 small mt-1 text-center clr1" style="font-size:14px;">
+
+                            (Portal for Grant of Registration to Producer and Recycler/Refurbisher of Battery under Battery Waste Management Rules, 2022)
+
+
+                            </div>
+
+                            </div>
+                      </div>
+                      <div class="col-sm-5 text-right">
+                      <div class="img" style="float:right;width:25%">
+                      <img src="https://eprbattery.cpcb.gov.in/assets/images/logo/right_logo.png" class="circle responsive-img valign profile-image cyan" style="width:100px">
+                      </div>
+                      
+                      
+                     <div class="img" style="float:right;width:25%;padding-top:20px">
+                      <img src="https://eprbattery.cpcb.gov.in/upload/adminDoc/LifeLogo.png" class="circle responsive-img valign profile-image cyan" style="width:100px">
+                      </div>
+                  </div>
+
+
+
+
+
+          </div>
+
+
+
+        </div>
+
+         <!-----header end here-->
+		</div></header>
+     </div>
+	</div>
+    <!--
+     <div class="row mt-5" style="background:rgb(235, 9, 21);color:#e7e5e5">
+
+       <h2><marquee><strong>This site will go under maintenance from 9am to 5pm on 30th August, 2023, Please do not perform any actions on the Portal.
+        Sorry for inconvenience!
+         </strong></marquee></h2>
+        </div>
+    -->
+
+        <main>
+            
+    <script type="text/javascript" src="https://eprbattery.cpcb.gov.in/assets/js/chart.js"></script>
+    <link href="https://eprbattery.cpcb.gov.in/assets/css/national-dashboard.css" rel="stylesheet">
+
+<div class="row mt-2">
+   <div class="container-fluid">
+      <nav class="navbar  navbar-expand-sm  batterynavigation main-navigation" style="max-height:45px;padding:15px 0px">
+         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-list-3" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+         <span class="navbar-toggler-icon"></span>
+         </button>
+         <div class="collapse navbar-collapse" id="navbar-list-3">
+            <style>
+    .dropdown-submenu {
+        position: relative;
+    }
+
+    .dropdown-submenu > .dropdown-menu {
+        top: 0;
+        left: 100%;
+        margin-top: -1px;
+        display: none;
+        position: absolute;
+    }
+</style>
+<ul class="navbar-nav ml-4 mt-2">
+    <li class="nav-item active"><a class="nav-link headerMenuu" href="https://eprbattery.cpcb.gov.in/login">Home</a></li>
+    <li class="nav-item active"><a class="nav-link headerMenuu" target="_blank" href="/viewunitcertificates">Registration
+            Issued</a></li>
+
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <span> <img src="https://eprbattery.cpcb.gov.in/assets/images/logo/new.gif"> </span>
+            Important Communication
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/AR_Extension_Order_dt_16_January_2025_0001.pdf" target="_blank"><span> <img src="https://eprbattery.cpcb.gov.in/assets/images/logo/new.gif"> </span>
+                <span>
+                    <strong>Deadline Extended:</strong> The deadline for filing Annual Returns by the Producer for FY 2023-24 has been extended till <strong>31<sup>st</sup> March 2025</strong>.
+                </span>
+            </a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/MoEFCC Order dated 10.07.2025 - reg. extension of timeline for return filing for FY 2024-25-BWMR (1).pdf" target="_blank"><span> <img src="https://eprbattery.cpcb.gov.in/assets/images/logo/new.gif"> </span>
+                <span>
+                    <strong>Deadline Extended:</strong> Extension of deadline for filing AR for FY 2024–25.
+                </span>
+            </a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Notice_EC Guidelines.pdf" target="_blank">Notice and EC Guidlines</a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/MoEFCC_Order_dated_10.07.2024 - reg. extension_of_timeline_for_return_filing-BWMR.pdf" target="_blank">Extension of
+                Timelines for Filing Annual Retunrs by Producers : 31<sup>st</sup> December, 2024</a>
+            
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Notice_regarding_Labelling_Requirements_and_Recycled_Material.pdf" target="_blank"> Notice regarding Labelling Requirements and Recycled Material </a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/NOTICE_30-04-2024_Timeline_for_compliance_with_EPR _Targets_and_Submission_of_Annual_Returns_for_FY_2022-23_and_2023-24_under_BWM_Rules,_2022.pdf" target="_blank">Timelines for Compliance with EPR Targets and Submission of Annual Returns </a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/NOTICE_30-04-2024_Transaction_of_EPR _credits _by_the_Producers_registered_on _the_EPR_portal_for_BWM.pdf" target="_blank"> Notice for Transaction of EPR credits by the Producers </a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/MoEF&amp;CC-Office-memorandum-for -FY-22-23-portable-battery-target.pdf" target="_blank"> Memorandum </a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Letter_to_SPCBs_and_RDs_Registration_of_Recyclers_19-12-2023_0001.pdf" target="_blank"> Registration of
+                Waste Lithium Ion Battery recyclers - reg </a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Custom_letter_23-12-2022.pdf" target="_blank">Rules Compliance letter to SPCB</a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/SPCB_Letter_23-12-2022.pdf" target="_blank">Recycler/Refurbisher Registration Module letter to SPCB</a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Custom_letter_23-12-2022.pdf" target="_blank">Letter to Custom Department</a>
+        </div>
+    </li>
+    
+    <li class="nav-item active">
+        <a class="nav-link headerMenuu" target="_blank" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Frequently Asked Questions (General).pdf">FAQs</a>
+    </li>
+    <!-- <li class="nav-item active">
+           <a class="nav-link headerMenuu" target="_blank" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Battery-WasteManagementRules-2022.pdf"> Battery Waste Managment Rules,2022 </a>
+      </li> -->
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Rules
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Battery_Waste_Management_(Amendment)_Rules,_2025.pdf" target="_blank"><span> <img src="https://eprbattery.cpcb.gov.in/assets/images/logo/new.gif"> </span> Battery Waste Management Rules, 24 February, 2025 </a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Battery_Waste_Management_Rules_20_June_2024.pdf" target="_blank"><span> <img src="https://eprbattery.cpcb.gov.in/assets/images/logo/new.gif"> </span> Battery Waste Management Rules, 20 June, 2024 </a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Battery_Waste_Management_(Amendment),_Rules_2024.pdf" target="_blank"><span> <img src="https://eprbattery.cpcb.gov.in/assets/images/logo/new.gif"> </span> Battery Waste Management Rules, 14 March, 2024 </a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Battery-Waste-Management-(Amendment)-Rules-2023.pdf" target="_blank"><span> <img src="https://eprbattery.cpcb.gov.in/assets/images/logo/new.gif"> </span> Battery Waste
+                Managment Rules,2023 </a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Battery-WasteManagementRules-2022.pdf" target="_blank"><span> <img src="https://eprbattery.cpcb.gov.in/assets/images/logo/new.gif"> </span> Battery Waste
+                Managment Rules,2022 </a>
+
+
+        </div>
+    </li>
+    <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownVideoTutorial" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Video Tutorial
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdownVideoTutorial">
+                <!-- Original entry -->
+                
+
+                <!-- Producer -->
+                <div class="dropdown-submenu">
+                    <a class="dropdown-item dropdown-toggle" href="#">Producer</a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" target="_blank" href="https://eprbattery.cpcb.gov.in/training-video/eyJpdiI6IitRS0E2U2ZxMWliSElBemxLZGNJNWc9PSIsInZhbHVlIjoianBlSXhvcG1pLzRPbE9MNlJTOUJjdz09IiwibWFjIjoiZTc4N2I1NzhiZGZiYWYzNTFlNjkwMGM1NWZhMWM0YjExM2NlZjIyNTRkMTMyYTkwNzUyMGNkNjg5MTAxODUwNyIsInRhZyI6IiJ9/eyJpdiI6InhUTWdCWFJRVTZTUWU4anlUYUJ1R3c9PSIsInZhbHVlIjoiMG8xWnlMbjJ2RnQ2cEtOZ0pSS1BCQklMWVdTaG93L3Y3alRUQ1dsQXZmYz0iLCJtYWMiOiIwZTNlYWI5ZTVjMWE1MDU2Nzc2YzdhMmZiYWJjYjRjZDVmOTJkM2M3NWI4YWE4OTQ0ZjViNzkzZjAwYmYxNWNmIiwidGFnIjoiIn0=">
+                                Producer Sign Up - English
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" target="_blank" href="https://eprbattery.cpcb.gov.in/training-video/eyJpdiI6InBHakp0MS9KckZmSHBMMkRLRVQxQWc9PSIsInZhbHVlIjoiTmdkK01sbm12MlFLUmR4RXNTYUlzdz09IiwibWFjIjoiYjIxOTM5MWViNjRlNDdmNjZiNzIzZjhlZTNhMDBjNWQ1OWIwN2E2MWQ5N2U1NWJlMDk1OTlmYmJjNmNlNDQ5YyIsInRhZyI6IiJ9/eyJpdiI6IkQzTE9GS3FUOURCWlladmhUYWtnZlE9PSIsInZhbHVlIjoibnFnYWgzaXRZOGRzbFFuNXBnYTQwWFJSVFd2bzZrN3BXUnpKTFo0cnZibz0iLCJtYWMiOiI0MmVhZTQ0NTE3NGQ4ODAxMjkyMjUyNGEwOTJlOWViNGFiZjk0MmY2ZmE4YmIyYWYzMzExNmQzZjE4MTVmY2FhIiwidGFnIjoiIn0=">
+                                Producer Sign Up - Hindi
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Recycler -->
+                <div class="dropdown-submenu">
+                    <a class="dropdown-item dropdown-toggle" href="#">Recycler</a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" target="_blank" href="https://eprbattery.cpcb.gov.in/training-video/eyJpdiI6InJpYkl5K1M1NnpPUWJBbXJwbEllc1E9PSIsInZhbHVlIjoiSjE3TlF0MHZPV1REM1c2aDI0WXRnUT09IiwibWFjIjoiMzllOTZiNmI3NDQxZGQ3YTVhZDgzMDBlYTM0YzYzODk0MTFhNDNmYWVmM2VjZDA1MzE5Y2Y1OTY5MDlmNmZkNSIsInRhZyI6IiJ9/eyJpdiI6Ilp2c1hwZVNuaVVPeXQvRXdXL250U0E9PSIsInZhbHVlIjoiRWJrdjFHc09KTlFHMFhNRzVPYmFrL2o1VWlBQkNnMUVhaFNoK3hKSXloQT0iLCJtYWMiOiI5ZWZkODlhMDYwNWUyMGNmZGIyYjAzOGJlYzkyMGVhNDRiNzBkYTI0MjdiZTZhMzQyMzRmYjMwYThjMGU5YzZiIiwidGFnIjoiIn0=">
+                                Recycler Sign Up - English
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" target="_blank" href="https://eprbattery.cpcb.gov.in/training-video/eyJpdiI6IkpWdXNoT0xmZmE3MU5SK04xdEp0N3c9PSIsInZhbHVlIjoiUVdKWTRtU0dQVVRuMkhBRC9GZ2krZz09IiwibWFjIjoiMzdhYmNmM2VjODhlYzc3MTc0ZDUxMTJkNjk5NDIzNzFhMzIyNTNiOTg4OTNlODI0MzI0ODUwMjY2NGFkZDRlYiIsInRhZyI6IiJ9/eyJpdiI6IlNEY0hXZTNOeXRPUFo3ZjBtcHN5Rmc9PSIsInZhbHVlIjoid3I5OUJ3UGNESURLQUtpUmVoZGtkbXl3cUt1dzJxQXh1cHFIWWpNVUQwTT0iLCJtYWMiOiI1MTVkMWM1YjFjYThkMTI0OWE1OGQ2NGVkNWQ4Zjc5YzU2ZDRhYTVkNzFjNjEyZDIzMGNlNDUxMmY2Mzc1M2E3IiwidGFnIjoiIn0=">
+                                Recycler Sign Up - Hindi
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Refurbisher -->
+                <div class="dropdown-submenu">
+                    <a class="dropdown-item dropdown-toggle" href="#">Refurbisher</a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" target="_blank" href="https://eprbattery.cpcb.gov.in/training-video/eyJpdiI6IlRYTVZucVcwQzY0SU1KMnI1NG5Sd1E9PSIsInZhbHVlIjoidENqckR1Q1ROMEp1eEl3b010NFZjUT09IiwibWFjIjoiMmJiYTQwMTY0MzUyODJiODMyZjQxODQ2MWNjNWUyZmNiZmUzZjYzNDYyYzMyM2QxNGZkMDkzYWU2NTdkMTJiZSIsInRhZyI6IiJ9/eyJpdiI6IjZXQkNZRElpVmx6bzkzc3lsNUQycFE9PSIsInZhbHVlIjoiMW8wc1laU0h2bm5tS0pwVkEyTFgxUStrVzRYNmczVmlDZnM3WDhhc2ZIR3ZRazBLUkczVVBvVkQ3WG5GeEMwTnNwb05QMVo0aVhEaE13aGh1L3J5ZGc9PSIsIm1hYyI6IjU0YTQ5NWVmYjZiMDBmOTVkMDEwOTZhMmViMGI1MGUyMWY2ODNmMjIxNmVmM2ZjOWVjNGQ3OWU4YjQ0MGI3OGEiLCJ0YWciOiIifQ==">
+                                Refurbisher Sign Up - English
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" target="_blank" href="https://eprbattery.cpcb.gov.in/training-video/eyJpdiI6IlZzb2JiYXdjUS9NQ1Zza0M5TW5GV3c9PSIsInZhbHVlIjoiZWVtc2N5bTlTNlBHbmVTU0h2L2tnZz09IiwibWFjIjoiYTIyOGRhMzRkODJiYzUwZWMyMmVmZDJiYWQ3OWM4ODNlMDAyNTEzMWZiNmIyMWY5MmVjNWEzOWM0NmM1NTdmYSIsInRhZyI6IiJ9/eyJpdiI6IlZKTDNiMjE1WDYycnQ1Z0dpdFBkU3c9PSIsInZhbHVlIjoiY3dqS3ZXRC8yejB2RnFlU2gvcXo0WjN3bThhSm9mb24xdUZjRU5oU0VLdFVxdUwrZjJjY0Z2eWczTVBSMlVneFNPcWpXb2pMR2pWNXpuN1p6NUprV0E9PSIsIm1hYyI6IjI1NTMzY2VhMjhiZTEyMTBlYzAyNTBmODRkOGM4ZWIyNmY0NDUxNGJkNGU4MDkzNWE2YTUwOTM0NjU2MGY3YjQiLCJ0YWciOiIifQ==">
+                                Refurbisher Sign Up - Hindi
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+    </li>
+    <li class="nav-item active">
+        <a class="nav-link headerMenuu" target="_blank" href="https://eprbattery.cpcb.gov.in/user/nationaldashboard">
+            National Dashboard </a>
+    </li>
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span> <img src="https://eprbattery.cpcb.gov.in/assets/images/logo/new.gif"> </span>
+            SOP for Registration
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/SOP.pdf" target="_blank">SOP for
+                Registration
+                of Producer</a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/SoP_for_recyclers.pdf" target="_blank">SOP
+                for
+                Registration of Recycler</a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/EPR_certificate_generation_Final.pdf" target="_blank">SOP for EPR Certificate generation and EPR Targets</a>
+        </div>
+    </li>
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span><img src="https://eprbattery.cpcb.gov.in/assets/images/logo/new.gif"></span>
+            Guidance Manuals
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/InstructionSheet.pdf" target="_blank">Registration of Producer</a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Instruction sheet_Recycler.pdf" target="_blank">Registration of Recyclers</a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/GuidanceManuals/Guidance Manual Producers.pdf" target="_blank">
+                Guidance Manual for Producers
+            </a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/GuidanceManuals/Guidance Manual Recyclers.pdf" target="_blank">
+                Guidance Manual for Recyclers
+            </a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/GuidanceManuals/Guidance Manual Refurbisher.pdf" target="_blank">
+                Guidance Manual for Refurbishers
+            </a>
+            <a class="dropdown-item" target="_blank" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/Guidance_Document_final.pdf"><span> <img src="https://eprbattery.cpcb.gov.in/assets/images/logo/new.gif"> </span>Edit Sales Data &amp; Account Unblock</a>
+        </div>
+    </li>
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span><img src="https://eprbattery.cpcb.gov.in/assets/images/logo/new.gif"></span>
+            Lodge Complaint
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <a class="dropdown-item" href="https://eprsupport.cpcb.gov.in/" target="_blank">Create Ticket</a>
+            <a class="dropdown-item" href="https://eprbattery.cpcb.gov.in/upload/adminDoc/how_to_create_a_ticket.pdf" target="_blank">How To Create A Ticket?</a>
+        </div>
+    </li>
+</ul>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.dropdown-submenu > a').forEach(function (element) {
+            element.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                let submenu = this.nextElementSibling;
+                if (submenu && submenu.classList.contains('dropdown-menu')) {
+                    submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+                }
+
+                // Close others
+                document.querySelectorAll('.dropdown-submenu .dropdown-menu').forEach(function (el) {
+                    if (el !== submenu) {
+                        el.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Close on click outside
+        document.addEventListener('click', function () {
+            document.querySelectorAll('.dropdown-submenu .dropdown-menu').forEach(function (el) {
+                el.style.display = 'none';
+            });
+        });
+    });
+</script>
+            
+         </div>
+      </nav>
+   </div>
+</div>
+<!-------national dashbaord start here --->
+<!----navigation start here-->
+<!--end here-->
+<div class="container-fluid">
+<div class="row  no-pad mt-2">
+<div class="col-sm-12">
+<div class="main-content bg-white mr-0 pr-0">
+   <!----div main here start here -->
+   <div class="heading  container">
+      <!----div heading container start here -->
+      <div class="row mt-2">
+         <div class="col-md-6 d-flex align-items-center ">
+            <h5 class="display-6 mt-2">National Dashboard</h5>
+         </div>
+         <div class="col-md-6 d-flex align-items-center justify-content-end">
+            <!-- <div  class="mx-3" style="max-width: 300px;">
+               <select name="finc_year" id="finc_year" class="form-control" required="">
+                  <option value="" selected disabled>Select Financial Year</option>
+                  <option value="202324">2023 - 2024</option>
+               </select>
+            </div> -->
+            <div role="group" aria-label="Basic example" class="btn-group btn-toggle-group">
+               <a href="https://eprbattery.cpcb.gov.in/user/nationaldashboard/graphView" id="btnGraph" class="btn" style="width:100px">Graph</a>
+               <a href="#" id="btnTable" class="btn btn-active" style="width:100px">Table</a>
+            </div>
+         </div>
+      </div>
+   </div>
+   <!----div heading container end here -->
+   <!-----div grph are-->
+   <div class="container-fluid">
+      <!----div for Table display--->
+      <div id="Table" class="">
+         <!---abhishek new added--->
+        <div class="container mt-4">
+            <div class="card">
+               <div class="card-header" style="background: linear-gradient(45deg, #0288d1 0%, #26c6da 100%);color:#fff">
+               Metal-wise EPR Targets (in Tonnes) for registered Producers
+               </div>
+               <div class="card-body">
+                  <table class="table table-bordered table-hover table-hover-cells">
+                     <thead>
+                        <tr>
+                        <td rowspan="2" style="padding:6px;text-align:center !important" valign="top"><strong>SNo
+                              </strong></td>
+                        
+                        <td rowspan="2" style="padding:6px;text-align:center !important" valign="top"><strong>Key End Products (Battery Metals)
+                              </strong></td>
+                        
+                        <td rowspan="2" style="padding:6px;text-align:center !important" valign="top"><strong>EPR Target (in Tonnes)
+                        </strong></td>
+
+                        <td rowspan="2" style="padding:6px;text-align:center !important" valign="top"><strong>EPR Credits Procured So Far (in Tonnes)
+                        </strong></td>
+                        </tr>
+                     
+                     </thead>
+                     
+                     <tbody>
+                                                <tr>
+                           <td>1.</td>
+                           <td>
+                              <a href="https://eprbattery.cpcb.gov.in/producerTargetCredit/eyJpdiI6IjNKWUE3U0l2MkEzNEpKOGxVYklZckE9PSIsInZhbHVlIjoiems5aW8zVE9XQW95ZkdzWEF1a3JQdz09IiwibWFjIjoiYmM4NmZlM2FlNTZiMmZiNzA2OWJjNzliZjc2YTU5YWQ1OTA1MmE3OTkyNDFmZGU4ZTdjZDYxNDllMTc0NzEzMyIsInRhZyI6IiJ9/eyJpdiI6InhXVFM0clh2bkZpMzd1c3liYjRIdWc9PSIsInZhbHVlIjoieStiRnd5b25CRlJRYU9tR2w4NWRmZz09IiwibWFjIjoiMzhkYmFlMTAzYzc4MmJhYjcyOWY1ZmEyM2FhNzg1NGRjNjVjNDU1MmJkZjMxNTUxMmVmM2JiNTA1OTJlODhlMSIsInRhZyI6IiJ9">
+                                 <button class="button1">lead</button>
+                              </a>
+                           </td>
+                           <td>2479137.014</td>
+                           <td>1382629.044</td>
+                        </tr>
+                                                <tr>
+                           <td>2.</td>
+                           <td>
+                              <a href="https://eprbattery.cpcb.gov.in/producerTargetCredit/eyJpdiI6IkhVNmlGUFcyTlBWVndEQlVjMVQxaUE9PSIsInZhbHVlIjoiZEpOendNZXpZOCtPVGdjNnZzUGhrZz09IiwibWFjIjoiZTQwNjMzZGVkY2ZjYjFkOWI5ZjJmYjMxNzExOGZkYTM5N2VlZjQ5ZWRhMTFlYWQwMWYxZDNkODQ0NmEzYTk4NyIsInRhZyI6IiJ9/eyJpdiI6Ild1bVFyeUFuQWpzeHlTRVBNNzFsOHc9PSIsInZhbHVlIjoiaGZYS25hcjZFZUNyTUp2c2c1QW84dz09IiwibWFjIjoiMDIzMmY5YjU2OTcyY2QwYjZiMTVjOWYzMzEzMTczYjZlNGUwMzU3NGQ4OGQwYzVjMTEwNmFhNjVlNmVlZDkxMCIsInRhZyI6IiJ9">
+                                 <button class="button1">lithium</button>
+                              </a>
+                           </td>
+                           <td>86455.063</td>
+                           <td>541.112</td>
+                        </tr>
+                                                <tr>
+                           <td>3.</td>
+                           <td>
+                              <a href="https://eprbattery.cpcb.gov.in/producerTargetCredit/eyJpdiI6IjBWL2R5SGF2L3QvVDg2eTlPZlNwQkE9PSIsInZhbHVlIjoidmJMMXZFNG9lVlVySnQwdy8xTHBXQT09IiwibWFjIjoiMWY4MWVmNDBlYTk5N2RlOTAwYjI0YjM5ZTkzODkxOTQ3ZjJhOWY1YzczNjQxOTc1Y2VmOTU1NTMxOTBiMjc3OSIsInRhZyI6IiJ9/eyJpdiI6IkNZM0hUMzVkMENjZUtVYTZpVEZ2RFE9PSIsInZhbHVlIjoicUpSYU52ZExNVDgveHluY3U4TGw0QT09IiwibWFjIjoiZmZiMjYwNDgxNDdjZDJlNzk3ZTBkMTViYmQwMzBiYWVlMGE0MTlhY2Q3OTlmNTQ0ZGUzYzkxNTc0N2NlYTQzMSIsInRhZyI6IiJ9">
+                                 <button class="button1">nickel</button>
+                              </a>
+                           </td>
+                           <td>1852.439</td>
+                           <td>636.205</td>
+                        </tr>
+                                                <tr>
+                           <td>4.</td>
+                           <td>
+                              <a href="https://eprbattery.cpcb.gov.in/producerTargetCredit/eyJpdiI6InlVb0t2Mmhaa2FCKzQwY2tqVVlQZVE9PSIsInZhbHVlIjoiK3VsbnhJQkNiZ3B4cHVwdEIvdmcwQT09IiwibWFjIjoiNGUzYTU2NjQ2OWI1YTY4MWQ2ODBkZTk2YTM3ZmEwNWFjMDIyZjUyNDAzYzY3YjI4NWJhNGFjNzczZGE5MDg5NCIsInRhZyI6IiJ9/eyJpdiI6InR0cmdXOG1LWjJyM09pcEp0cDlYWkE9PSIsInZhbHVlIjoiMnVGU0RKZWttdWpaaWpEblhtNlFGQT09IiwibWFjIjoiZjBlY2ViYjNlNWVlNTExMzRmYTk4MTJlNTA1OTIzYzE4MDAzY2Q0NjA3MjdkYmM2N2ZhMzdlMTFjZGNkMzc2NCIsInRhZyI6IiJ9">
+                                 <button class="button1">cadmium</button>
+                              </a>
+                           </td>
+                           <td>480.601</td>
+                           <td>1.696</td>
+                        </tr>
+                                                <tr>
+                           <td>5.</td>
+                           <td>
+                              <a href="https://eprbattery.cpcb.gov.in/producerTargetCredit/eyJpdiI6IlgvSnIySjBQdVNyU3N1czZsQmlrRmc9PSIsInZhbHVlIjoiM1hmVXlrT0tkb21yRE1VVHFUV1k0Zz09IiwibWFjIjoiNDIwNDQwZGMxZThlZjhmYzRiODQwYWZiZmE1OTkwZGU1YjE3MGU1YjY2MjQ0N2I5ZDFhYTViYjdjNjhiMjhmMyIsInRhZyI6IiJ9/eyJpdiI6IlhrZnJsU3M2cU9uOFJvVWNVdGVCUnc9PSIsInZhbHVlIjoiOWlUeGVEMGQzVkVTRk0xR0k4OEpuQT09IiwibWFjIjoiZjA0NTExODQyMWFkN2QwYTlkZDAyOWU0NGIzYjk5MWZlNTEyMTdjZTUwN2NlMDk3NWU0NDA2OTdkYjdmN2Q1MyIsInRhZyI6IiJ9">
+                                 <button class="button1">cobalt</button>
+                              </a>
+                           </td>
+                           <td>5650.455</td>
+                           <td>3494.961</td>
+                        </tr>
+                                                <tr>
+                           <td>6.</td>
+                           <td>
+                              <a href="https://eprbattery.cpcb.gov.in/producerTargetCredit/eyJpdiI6IlRTOW8xR3k4WGhSUGs2aWMra3pVWGc9PSIsInZhbHVlIjoiVFlTNUJabFpONmN1RzNoU3ZNcnhwZz09IiwibWFjIjoiYmYyOTQ5ZTExM2Y5YThlYWI2MjVmODE2YTM2MTZjMmNkMjhlZDM4MGEzOGI0YzZhNWY0YmVkMTY1YWE0MzAxOCIsInRhZyI6IiJ9/eyJpdiI6Ii9RNlZ6WUxoclB5RFpQSThHbTRuamc9PSIsInZhbHVlIjoiY2xUL1pGVmc5MGJBN2hEWDREdFdaZz09IiwibWFjIjoiYjMxODU4MjdjYjU5ZWFmNDEwM2M2MjFiM2M0ZDVkZDllNDRkOTgwYWIwODZmZWM2ZDI5MGVmZjQ2NWQ1ZGY4MyIsInRhZyI6IiJ9">
+                                 <button class="button1">manganese</button>
+                              </a>
+                           </td>
+                           <td>5961.228</td>
+                           <td>765.293</td>
+                        </tr>
+                                                <tr>
+                           <td>7.</td>
+                           <td>
+                              <a href="https://eprbattery.cpcb.gov.in/producerTargetCredit/eyJpdiI6IkVVR29sMGRhK295UmNmMjZDWDgwS3c9PSIsInZhbHVlIjoiYWFqMnZJZHNmenpQV0JTcUFkc2Z3Zz09IiwibWFjIjoiZDdiZjBiNjkwZDJlZTlmODQzMzg3MmY1YjIyYTVhNjIwMzgxNWUzZmQzMWM5Y2I2N2UwMTQxODRhY2MyOTFhNCIsInRhZyI6IiJ9/eyJpdiI6InovZzlGTDhwcXBwVndIVnYxQ0J2c2c9PSIsInZhbHVlIjoiSkJHeGUrK3NhK29Rd1laang2SFBKdz09IiwibWFjIjoiNTQ4ZGViNzQwNDg2MGM5NGM0NTcwOGNhOWE5NjVhNDAyNTMyNGE5MDQwOTJmZGUxN2ZhZDIzZDQwOGYyYmFlZCIsInRhZyI6IiJ9">
+                                 <button class="button1">iron</button>
+                              </a>
+                           </td>
+                           <td>7841.902</td>
+                           <td>1136.987</td>
+                        </tr>
+                                                <tr>
+                           <td>8.</td>
+                           <td>
+                              <a href="https://eprbattery.cpcb.gov.in/producerTargetCredit/eyJpdiI6ImVmMVFHcHpnK2tXM3pGZG5NU3FGblE9PSIsInZhbHVlIjoiNzZWNWZuOFc0K1h2T0JQQUlkTHhzQT09IiwibWFjIjoiMzM3NjNjYmU0MTIyMzM1YWVlOWYwMGFhNTY4ODhhNTUwMGZlYWRmNTU0Y2I4MWJkZGUxMWViMzc4Nzk2YTY4NCIsInRhZyI6IiJ9/eyJpdiI6IlczeklXWU51MGM4K1dqYjBzdzN4ZVE9PSIsInZhbHVlIjoic1dBeTQzaUZuZVR2TVM5ZDdjaHc5Zz09IiwibWFjIjoiNzIwNDhiM2M5ZGUyOTYzNGE4NWY3NjM2NmJiYmQyNzdlNThkMGUxMzk0Y2U1YzlkYTkwNDFkZjhmZTkwYmU3OSIsInRhZyI6IiJ9">
+                                 <button class="button1">aluminium</button>
+                              </a>
+                           </td>
+                           <td>2215.537</td>
+                           <td>1441.6</td>
+                        </tr>
+                                                <tr>
+                           <td>9.</td>
+                           <td>
+                              <a href="https://eprbattery.cpcb.gov.in/producerTargetCredit/eyJpdiI6Img5YTlqbkt3K0FBU1pEL1BtV3c1cHc9PSIsInZhbHVlIjoiZ1JaYnZqVU9GWS94N1p4NlFUZHMvZz09IiwibWFjIjoiY2RhOGZlYzY2NTQ0Y2FiYjg0OTBlNWRkNDNjYzlhYWJjNmRmMmE0NDQ4ZDgwOTlmNjU1NjVmMDllOWExNjFkZCIsInRhZyI6IiJ9/eyJpdiI6InM5UXlwMEtIQXk0Ym1qRkFmVVhTSVE9PSIsInZhbHVlIjoiQVdNWGpETTNqVTdxVjBBbHVCcy8rUT09IiwibWFjIjoiNWMwZjcyMGZkN2RkOTE1MDY4MTNmMzlmM2QxMDg5MDY5ZjVjYjE0Zjg0MmVjMWRlOTA5ZmExMWFmZGVlYjYwZSIsInRhZyI6IiJ9">
+                                 <button class="button1">copper</button>
+                              </a>
+                           </td>
+                           <td>2701.929</td>
+                           <td>1751.82</td>
+                        </tr>
+                                                <tr>
+                           <td>10.</td>
+                           <td>
+                              <a href="https://eprbattery.cpcb.gov.in/producerTargetCredit/eyJpdiI6IjY4SXJRVHJUMkdGZ2l6QmxRdTdWblE9PSIsInZhbHVlIjoiUlc1OG93SDJPOTVCcjlBM2h5U3FtUT09IiwibWFjIjoiODM4MDc0NTlmNjYwZjJjMDEwOWRmODQ1NjQ2NzMyZWQ2ZDhlNjhkOTg4MTM5ODY5MmY2ODI0NDVkYzQxYTlmNCIsInRhZyI6IiJ9/eyJpdiI6IjR0L2lYS2UxZ0EzZkFxdWhJRmNVaWc9PSIsInZhbHVlIjoiWnlVQXBMMVN0Q2xXb0ovR2k1U09YQT09IiwibWFjIjoiYWUyOTViZTFjN2I3ZmMxMWMwZGVmMjg1ZDQ2OGMyY2JiMjE5NTUyMmVhZjJhYTc0Njg4OWEwMGY2ZmRjYTQzMSIsInRhZyI6IiJ9">
+                                 <button class="button1">zinc</button>
+                              </a>
+                           </td>
+                           <td>5647.839</td>
+                           <td>280.278</td>
+                        </tr>
+                                             </tbody>
+                  </table>
+               </div>
+            </div>
+         </div>
+       
+         <div class="container mt-4">
+            <!----container start here --->
+            <div class="card">
+               <div class="card-header" style="background: linear-gradient(45deg, #0288d1 0%, #26c6da 100%);color:#fff">
+                  Application Status of Battery Registration
+               </div>
+               <!---card body start here-->
+               <div class="card-body">
+                  <table class="table table-bordered table-hover table-hover-cells">
+                     <thead>
+                        <tr>
+                           <th scope="col">Category </th>
+                           <th scope="col">Total Received </th>
+                           <th scope="col">In-Process </th>
+                           <th scope="col">Rejected </th>
+                           <th scope="col">Incomplete</th>
+                           <th scope="col">Registration Issued </th>
+                           <!--<th scope="col">Total Received </th>-->
+                        </tr>
+                     </thead>
+                     <tbody>
+                    
+                        <tr><td>Producer</td>
+                        <td>5849</td>
+                        <td>135</td>
+                        <td>0</td>
+                        <td>1031</td>
+                        <td><a href="https://eprbattery.cpcb.gov.in/user/producerview">4683</a></td>
+                      
+                     </tr></tbody>
+                     <tbody>
+                        <tr><td>Recycler</td>
+                        <td>770 </td>
+                        <td>80</td>
+                        <td>0</td>
+                        <td>143</td>
+                        <td><a href="https://eprbattery.cpcb.gov.in/user/recyclerview">547</a></td>
+                       
+                     </tr></tbody>
+                     <tbody>
+                        <tr><td>Refurbisher</td>
+                        <td>2 </td>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td><a href="https://eprbattery.cpcb.gov.in/user/refurbisherView">1</a></td>
+                       
+                     </tr></tbody>
+                  </table>
+               </div>
+               <!---end card body ---here---->
+            </div>
+         </div>
+         <!----container 1 div end here --->
+         <div class="container mt-4">
+            <!----container 2 start here --->
+            <div class="card">
+               <div class="card-header" style="background: linear-gradient(45deg, #0288d1 0%, #26c6da 100%);color:#fff">
+                  EPR Credits Availability Status with Recyclers
+               </div>
+               <!---card body start here-->
+               <div class="card-body">
+                  <table class="table table-bordered table-hover table-hover-cells">
+                     <thead>
+                        <tr>
+                        <th scope="col">SNo</th>
+                           <th scope="col">End Products</th>
+                           <th scope="col">EPR Credits Generated (in tonnes)</th>
+                           <th scope="col">EPR Credits Transfered (in tonnes)</th>
+                           <th scope="col">EPR Credits Available (in tonnes)</th>
+                           
+                          <!-- <th scope="col">Total Received </th>-->
+                        </tr>
+                     </thead>
+                     <tbody>
+                        <tr>
+                         <td>1.</td>  
+                        <td>
+                           <a href="https://eprbattery.cpcb.gov.in/viewrecmetals/eyJpdiI6Im9LSDRweC9oQU5PbndCTnNrVHVBS0E9PSIsInZhbHVlIjoiSDd0UUQ2L3FaU0oyWWk2Wi8zZmJZZz09IiwibWFjIjoiYTZmMjRjNTM4NmE2YzYwZDI2OWYzYzAyNGU3MmI2NWJlMzdmOTk5YWU1OTQ1NmQyNzdjMjE0ZTNiYThlMjlhMiIsInRhZyI6IiJ9">
+                              <button class="button1">Lithium</button>
+                           </a>
+                           
+                        </td>
+                        <td>954.057</td>
+                        <td>
+                           541.112
+                        </td>
+                        <td>
+                           
+                        412.945</td>
+                        </tr>
+                        <tr>
+                           <td>2.</td>
+                        <td>
+                        <a href="https://eprbattery.cpcb.gov.in/viewrecmetals/eyJpdiI6Ik0vZ1NPN2xqNlRNK2NESW0yS29EWnc9PSIsInZhbHVlIjoiekZtYjNnMHhTY3VjVkhIblVMcmJ5Zz09IiwibWFjIjoiMzY4Y2YzYTExZTg3Zjc4OWFkZTgyYmUzNDM5MDliZWY5MTVhODE2YjNkYjNmMmVmNzg5MDdiZDE0NTc4OTg5YSIsInRhZyI6IiJ9">
+                           <button class="button1">Lead</button>
+                        </a>
+                           
+                           </td>
+                           <td>2380519.389</td>
+                        <td>
+                           1382629.044
+                        </td>
+                        <td>
+                           
+                        997890.345</td>
+                          </tr>
+                        <tr>
+                           <td>3.</td>
+                        <td>
+                        <a href="https://eprbattery.cpcb.gov.in/viewrecmetals/eyJpdiI6IjVTUDRqd0g5VkFaK3orUXlEZFZDS2c9PSIsInZhbHVlIjoibGxYSEZNRTJ2RFllakhqdzNPZG54UT09IiwibWFjIjoiYzJjYjYwOWNhMTEwYzBhNzU2YTA5MzIxOWYzMTE1NDY0NmY0OGRiZWY0MzBmMDFjZjY4OTViNDE5OWU0ZWNjNCIsInRhZyI6IiJ9">
+                              <button class="button1">Nickel</button>
+                           </a>
+                        
+                        </td>
+                        <td>1965.019</td>
+                        <td>
+                        636.205
+                        </td>
+                        <td>
+                           
+                        1328.814</td>
+                        </tr>
+                        <tr>
+                           <td>4.</td>
+                        <td>
+                        <a href="https://eprbattery.cpcb.gov.in/viewrecmetals/eyJpdiI6IjBIZmRGV1RsTkJoeXNJZUNPL1U4c0E9PSIsInZhbHVlIjoib3lyOXMwT0lzME9sUmlKcCtFMzNKQT09IiwibWFjIjoiZDM0MDMxYTg4OTVhNTc1ODIzOGExYjQ2NWJlNDA5OTRjYTE1ZTVmZmRmMzAwNmQ0N2E3Zjc3YmNjNDY4MDY3NiIsInRhZyI6IiJ9">
+                           <button class="button1">Manganese</button>
+                        </a>
+                        
+                        </td>
+                        <td>4349.436</td>
+                        <td>
+                        765.293
+                        </td>
+                        <td>
+                           
+                        3584.143</td>
+                        </tr>
+                        <tr>
+                           <td>5.</td>
+                        <td>
+                        <a href="https://eprbattery.cpcb.gov.in/viewrecmetals/eyJpdiI6Inl3andjdjhnbGVSYjlMenNoekdEcHc9PSIsInZhbHVlIjoiR0s3NFJWYUU4dXZlakRDdW1OWnJpdz09IiwibWFjIjoiZTk1NzA2OTNlYjYwMzk2NjRhOThmMTE3YTViYzNiNmJkN2RkNzljMmJjMzI2NGMzYzBlNzZkMmVmMjE5MzRiZiIsInRhZyI6IiJ9">
+                           <button class="button1">Cobalt</button>
+                        </a>
+                        
+                        </td>
+                        <td>5302.321</td>
+                         <td>
+                        3494.961
+                        </td>
+                        <td>
+                           
+                        1807.361</td>
+                        </tr>
+                        <tr>
+                           <td>6.</td>
+                        <td>
+
+                        <a href="https://eprbattery.cpcb.gov.in/viewrecmetals/eyJpdiI6IkF1NFdQYzNEazBybndPajhqQitoRVE9PSIsInZhbHVlIjoiTlJsVU1USmFhVmRqZTdWMXZMaHRyUT09IiwibWFjIjoiYTU5YjVjNWI2MmI4Mjg4OTcwZDg0NDIyODgzNjA5Njc3MTIwYTBmNTcxMTc5MzgxOWZjNGU0YzQ2YzAxMjNlYyIsInRhZyI6IiJ9">
+                           <button class="button1">Aluminium</button>
+                        </a>
+                        
+                        </td>
+                        <td>13164.23</td>
+                         <td>
+                        1441.6
+                        </td>
+                        <td>
+                           
+                        11722.63</td>
+                        </tr>
+                        <tr>
+                           <td>7.</td>
+                        <td>
+                        <a href="https://eprbattery.cpcb.gov.in/viewrecmetals/eyJpdiI6ImJFZGQxZ3pSdnpYbDlEdkttbTRWVUE9PSIsInZhbHVlIjoiZjVNbVh4Q1h5ZzhFZFdjYXNqK1FGZz09IiwibWFjIjoiNGNkN2Y0ZDMzNGNhMjRkYWEzZDZlYjM5NmY2MTQ4ZjkwYjcwMDg4ZWE5YzFhZGVkZjI3NzBiZGE4YzI2NGRmOCIsInRhZyI6IiJ9">
+                           <button class="button1">Iron</button>
+                        </a>
+                        
+                        </td>
+                        <td>16056.425</td>
+                         <td>
+                        1136.987
+                        </td>
+                        <td>
+                           
+                        14919.438</td>
+                        </tr>
+                        <tr>
+                           <td>8.</td>
+                        <td>
+
+                        <a href="https://eprbattery.cpcb.gov.in/viewrecmetals/eyJpdiI6IjBqTlFQVWlDdXptUzJjaVJ4V2oxSlE9PSIsInZhbHVlIjoiZmNFQWhRbksyOEorajBkY0ZOZHhKdz09IiwibWFjIjoiMDBiNzRlY2QzMjM3N2Q2YmViMjMwYzMxOTMyMmZiMzFjNGM3YWE4OTllZWY5MmVlMGVmNmI3YTRlYjdmYWU2YyIsInRhZyI6IiJ9">
+                           <button class="button1">Cadmium</button>
+                        </a>  
+                          
+                        </td>
+                           
+                        <td>33.759</td>
+                        <td>1.696</td>
+                        <td>32.064</td>
+                        </tr>
+                        <tr>
+                           <td>9.</td>
+                                                   <td>
+                        <a href="https://eprbattery.cpcb.gov.in/viewrecmetals/eyJpdiI6IlYwOUFVR3VlYzgvTGdIR3JUdkF4Mnc9PSIsInZhbHVlIjoiZ2Nta3RaZXJxZUswR0VWVGhqMDJDQT09IiwibWFjIjoiZTdjOGYzNmVjMTJlNDVhMTU5ZDExODUyOWY0YTQwZTRmODkyNGUwMzI4ZTY0ZmYwMjQ5MzEzMGI0ZTg1OGI3ZSIsInRhZyI6IiJ9">
+                           <button class="button1">Copper</button>
+                        </a>  
+                        
+                        </td>
+                        <td>12449.677</td>
+                        <td>1751.82</td>
+                        <td>10697.857</td>
+                        </tr>
+                        
+                        <tr>
+                           <td>10.</td>
+                                                   <td>
+                        <a href="https://eprbattery.cpcb.gov.in/viewrecmetals/eyJpdiI6ImJRUUxhN3RmUGNROWViQmNwL2NxK0E9PSIsInZhbHVlIjoic0UxWTYySXdNK3k0R1lJbThlWUZIZz09IiwibWFjIjoiMjUyNjRjM2Q1YjM5MDgzN2M4MjY5M2I2MWRhZjRjMmYwZTA2M2I1ZWExNjU2NjAzN2ZkZmIyNjU5YWE4ZGU0NSIsInRhZyI6IiJ9">
+                           <button class="button1">Zinc</button>
+                        </a> 
+                        
+                        </td>
+                        <td>2805.137</td>
+                        <td>280.278</td>
+                        <td>2524.859</td>
+                        </tr>
+                       
+                        <!--<td>0</td>-->
+                     </tbody>
+                     
+                  </table>
+               </div>
+               <!---end card body ---here---->
+            </div>
+         </div> <!----container 2 div end here --->
+        
+      </div>  <!----container 23div end here --->
+      <!----Table div end here --->
+        </div></div></div></div></div></main>
+    </div>
+    <script>
+    function makeFormSubmitEncryption() {
+        const fields = document.querySelectorAll('.makeEncryption');
+
+        // Iterate through each field
+        fields.forEach(function(field) {    
+            // Get the current value of the field
+            const currentValue = field.value;
+            // Apply the encode method (example: base64 encoding)
+            const encodedValue = sdEncode(currentValue);
+            // Update the field with the encoded value
+            field.value = encodedValue;
+        });
+    }
+
+    function sdEncode(string) {
+
+        let base64Encoded = btoa(string);
+        let xorEncodedResult = "";
+
+        for (let index = 0; index < base64Encoded.length; index++) {
+            let asciiValue = base64Encoded.charCodeAt(index);
+            let xorValue = asciiValue ^ 10; // bitwise XOR with the same number used in encoding
+            xorEncodedResult += String.fromCharCode(xorValue);
+        }
+
+        return xorEncodedResult;
+    }
+
+    function sdDecode(encodedString) {
+        var decoded = "";
+        for (var i = 0; i < encodedString.length; i++) {
+            var a = encodedString.charCodeAt(i);
+            var b = a ^ 10; // bitwise XOR with the same number used in encoding
+            decoded += String.fromCharCode(b);
+        }
+        return atob(decoded);
+    }
+    document.addEventListener('contextmenu', function(event) {
+        event.preventDefault();
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            const acceptTypes = 'image/*,application/pdf,video/mp4';
+            const validMimeTypes = ['image/', 'application/pdf', 'video/mp4'];
+
+            // Select all file input elements
+            const fileInputs = document.querySelectorAll('input[type="file"]');
+
+            // Function to validate file types
+            function isValidFileType(file) {
+                return validMimeTypes.some(type => file.type.startsWith(type));
+            }
+
+            // Iterate over each file input
+            fileInputs.forEach(function(input) {
+                // Set the 'accept' attribute if it's not already present
+                if (!input.hasAttribute('accept')) {
+                    input.setAttribute('accept', acceptTypes);
+                }
+
+                // Add event listener to validate the file type on change
+                document.body.addEventListener('change', function(event) {
+                    const input = event.target;
+                    if (input.type === 'file') {
+                        const files = input.files;
+                        for (let i = 0; i < files.length; i++) {
+                            if (!isValidFileType(files[i])) {
+                                alert(
+                                    'Invalid file type selected. Please select a valid file.'
+                                );
+                                input.value = ''; // Clear the selected files
+                                event.preventDefault(); // Prevent the default behavior
+                                event
+                                    .stopImmediatePropagation(); // Stop further event propagation
+                                return; // Exit the function to prevent further execution
+                            }
+                        }
+                    }
+                }, true);
+            });
+
+            function setMaxLengthBufferOverflow() {
+                // Define classes that should not have maxlength
+                const excludeClasses = ['overflow_complaint', 'overflow_remark', 'overflow_summary'];
+
+                // Get all relevant input fields
+                const inputs = document.querySelectorAll(
+                    'input[type="text"], input[type="password"], input[type="email"]');
+
+                inputs.forEach(input => {
+                    // Check if input has any of the exclude classes
+                    const hasExcludeClass = excludeClasses.some(cls => input.classList.contains(cls));
+
+                    // If the input does not have maxlength and does not have exclude classes
+                    if (!input.hasAttribute('maxlength') && !hasExcludeClass) {
+                        input.setAttribute('maxlength', '100');
+                    }
+                });
+            }
+            // setMaxLengthBufferOverflow();
+        } catch (err) {
+            // console.log(err);
+        }
+        // Define the acceptable file types
+
+    });
+
+    /**
+     * Method will encode the given string
+     */
+    function encode(string) {
+
+        let encodedValue = btoa(string);
+        let xorEncodedResult = "";
+
+        for (let index = 0; index < encodedValue.length; index++) {
+            let asciiValue = encodedValue.charCodeAt(index);
+            let xorValue = asciiValue ^ 10; // bitwise XOR with the same number used in encoding
+            xorEncodedResult += String.fromCharCode(xorValue);
+        }
+
+        return xorEncodedResult;
+    }
+
+    /**
+    * Method will decode the base64 decode
+    */
+    function decode(encodedString) {
+        let decoded = "";
+        for (let i = 0; i < encodedString.length; i++) {
+            let a = encodedString.charCodeAt(i);
+            let b = a ^ 10; // bitwise XOR with the same number used in encoding
+            decoded += String.fromCharCode(b);
+        }
+        return atob(decoded);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        function applyDecodeToFields() {
+            // Get all elements with the class 'su_decrypt_field_data'
+            const elements = document.querySelectorAll('.su_decrypt_field_data');
+
+            elements.forEach(element => {
+                // Check if the element has a value (e.g., input, textarea)
+                if (element.value !== undefined) {
+                    const decodedValue = decode(element.value);
+                    // Update the element's value with the decoded result
+                    element.value = decodedValue;
+                }
+            });
+        }
+
+        try {
+            applyDecodeToFields();
+        } catch (err) {
+        }
+
+        function applyDecodeToView() {
+            // Get all elements with the class 'su_decrypt_field_data'
+            const elements = document.querySelectorAll('.su_decrypt_view_data');
+
+            elements.forEach(element => {
+            // Check if the element has a value (e.g., input, textarea)
+                if (element.innerText !== undefined) {
+                    const decodedValue = decode(element.innerText);
+                    // Update the element's value with the decoded result
+                    element.innerText = decodedValue;
+                }
+            });
+        }
+
+        try {
+            applyDecodeToView();
+        } catch (err) {
+
+        }
+
+        function suAllowCharsOnInput() {
+            // const allowedCharacters = /^[A-Za-z0-9.,!?:@()/\[\]\-_ \t]$/;
+            const allowedCharacters = /^[A-Za-z0-9.,:,@!?()\[\]\-_\'\/& \t\n\r]*$/;
+
+            document.addEventListener('keydown', function(event) {
+                // Get the target element
+                const target = event.target;
+
+                // Check if the target is an input or textarea element
+                if ((target.tagName === 'INPUT' && target.type === 'text' && !target.classList.contains(
+                        'suItsPassword')) ||
+                    (target.tagName === 'TEXTAREA' && !target.classList.contains('suItsPassword'))) {
+
+                    // Get the character from the event
+                    const key = event.key;
+
+                    // Allow control keys like Backspace, Tab, Enter, etc.
+                    const isControlKey = event.ctrlKey || event.altKey || event.metaKey || key
+                        .length !== 1;
+
+                    // If the key is not a control key and doesn't match the allowed characters, prevent the input
+                    if (!isControlKey && !allowedCharacters.test(key)) {
+                        event.preventDefault();
+                    }
+                }
+            });
+        }
+
+
+        function suAllowOnlyNumeric() {
+            const allowedCharacters = /^[0-9]$/;
+
+            document.addEventListener('keydown', function(event) {
+                // Get the target element
+                const target = event.target;
+
+                // Check if the target is an input or textarea element
+                if (target.classList.contains('suOnlyNumericClass')) {
+
+                    // Get the character from the event
+                    const key = event.key;
+
+                    // Allow control keys like Backspace, Tab, Enter, etc.
+                    const isControlKey = event.ctrlKey || event.altKey || event.metaKey || key
+                        .length !== 1;
+
+                    // If the key is not a control key and doesn't match the allowed characters, prevent the input
+                    if (!isControlKey && !allowedCharacters.test(key)) {
+                        event.preventDefault();
+                    }
+                }
+            });
+        }
+
+        function addItsPassWord() {
+            const passwordFields = document.querySelectorAll('input[type="password"]');
+
+            // Loop through each field and add a class
+            passwordFields.forEach(field => {
+                field.classList.add('suItsPassword');
+            });
+        }
+        /** 
+         * Disable autocomplete for sensitive inputs
+         */
+        function disableSensitiveAutoComplete() {
+            document.querySelectorAll('input, textarea').forEach(input => {
+                input.setAttribute('autocomplete', 'off');
+                input.setAttribute('autocorrect', 'off');
+                input.setAttribute('autocapitalize', 'off');
+                input.setAttribute('spellcheck', 'false');
+            });
+        }
+
+
+        try {
+            addItsPassWord();
+            suAllowCharsOnInput();
+            suAllowOnlyNumeric();
+            disableSensitiveAutoComplete();
+        } catch (err) {
+
+        }
+
+    });
+</script>
+
+
+</body></html>

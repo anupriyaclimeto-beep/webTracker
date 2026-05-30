@@ -6,12 +6,8 @@
       "auth": "manual",
       "crawl_interval_minutes": 60,
       "crawl": {
-        "max_pages": 100,
-        "follow_links": true,
-        "depth": 4,
         "only_home": true,
-        "capture_dropdowns": true,
-        "dropdown_targets": ["Plastic Waste Management Rules"]
+        "capture_dropdowns": true
       }
     },
     {
@@ -21,9 +17,45 @@
       "crawl_interval_minutes": 60,
       "crawl": {
         "only_home": true,
-        "capture_dropdowns": true,
-        "dropdown_targets": []
+        "capture_dropdowns": true
       }
+    },
+    {
+      "name": "EPR BATTERY",
+      "url": "https://eprbattery.cpcb.gov.in/",
+      "auth": "none",
+      "crawl_interval_minutes": 60,
+      "crawl": {
+        "only_home": true,
+        "capture_dropdowns": true
+      }
+    },
+    {
+      "name": "EPR TYRES",
+      "url": "https://eprtyres.cpcb.gov.in/",
+      "auth": "none",
+      "crawl_interval_minutes": 60,
+      "crawl": {
+        "only_home": true,
+        "capture_dropdowns": true
+      }
+    },
+    {
+      "name": "EPR USEDOIL",
+      "url": "https://eprusedoil.cpcb.gov.in/",
+      "auth": "none",
+      "crawl_interval_minutes": 60,
+      "crawl": {
+        "only_home": true,
+        "capture_dropdowns": true
+      }
+    },
+    {
+      "name": "EPR ELV",
+      "url": "https://eprelv.cpcb.gov.in/",
+      "auth": "none",
+      "crawl_interval_minutes": 60,
+      "crawl": { "only_home": true, "capture_dropdowns": true }
     }
   ],
   "schedule": {
@@ -43,7 +75,7 @@
     "keep_days": 30
   },
   "browser": {
-    "headless": false,
+    "headless": true,
     "timeout_ms": 30000,
     "persistent": true,
     "user_data_dir": "browser_session",
@@ -52,4 +84,4 @@
       "height": 800
     }
   }
-} 
+}

@@ -568,15 +568,29 @@ async def run_all_portals(portal_name_filter=None):
             continue
 
         if name == "EPR EWASTE":
-            # Import and run the e-waste crawler
             from crawler_ewaste import crawl_ewaste_portal
             await crawl_ewaste_portal(portal)
+
+        elif name == "EPR BATTERY":
+            from crawler_battery import crawl_battery_portal
+            await crawl_battery_portal(portal)
+
+        elif name == "EPR ELV":
+            from crawler_elv import crawl_elv_portal
+            await crawl_elv_portal(portal)
+
+        elif name == "EPR TYRES":
+            from crawler_tyres import crawl_tyres_portal
+            await crawl_tyres_portal(portal)
+
+        elif name == "EPR USEDOIL":
+            from crawler_usedoil import crawl_usedoil_portal
+            await crawl_usedoil_portal(portal)
 
         elif name == "EPR PLASTIC":
             await crawl_portal(portal)
 
         else:
-            # Default fallback — try plastic crawler
             logger.warning("Unknown portal '%s' — using default plastic crawler", name)
             await crawl_portal(portal)
 

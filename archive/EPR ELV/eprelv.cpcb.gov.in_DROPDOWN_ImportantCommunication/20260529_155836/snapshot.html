@@ -1,0 +1,1435 @@
+<!DOCTYPE html><html lang="en" class="wf-publicsans-n3-active wf-publicsans-n4-active wf-publicsans-n5-active wf-publicsans-n6-active wf-publicsans-n7-active wf-fontawesome5solid-n4-active wf-fontawesome5regular-n4-active wf-fontawesome5brands-n4-active wf-simplelineicons-n4-active wf-active"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="XIVFFf7y1vQtOUbZ1lfsmkIjmgTbyU9gATMYWsyLW29UM9urnk7j3BDyBNDsxc4d">
+  <title>EPR ELV - End-of-Life Vehicles</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script defer="">
+    document.addEventListener("DOMContentLoaded", function () {
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+      [...tooltipTriggerList].forEach(el => new bootstrap.Tooltip(el));
+    });
+  </script>
+
+  <style>
+    .navbar {
+      background: linear-gradient(to right, #0a4d7a, #2d1c68);
+      color: white;
+    }
+
+    .navbar-nav .nav-link {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #fff !important;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .navbar-nav .nav-link:hover {
+      color: #ffcc00 !important;
+    }
+
+    .navbar-nav .active>.nav-link {
+      color: #ffcc00 !important;
+      font-weight: 600;
+    }
+
+    .required::after {
+      content: " *";
+      color: #D9534F;
+      font-weight: bold;
+    }
+
+    .loader-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999999;
+    }
+
+    .spinner {
+      width: 70px;
+      height: 70px;
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #007bff;
+      border-right: 8px solid #28a745;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .mainsection {
+      position: relative;
+      height: 595px;
+    }
+
+    .carousel-inner img {
+      object-fit: cover;
+      height: 595px;
+    }
+
+    .loginform {
+      position: absolute;
+      top: 50%;
+      right: 5%;
+      transform: translateY(-50%);
+      width: 470px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+      z-index: 1040;
+    }
+
+    .popup_adress {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .popup_adress li {
+      margin-bottom: 10px;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 992px) {
+      header img {
+        height: 90px !important;
+      }
+
+      .navbar-nav .nav-link {
+        font-size: 1rem;
+        padding: 8px 12px;
+      }
+
+      .loginform {
+        position: relative;
+        top: auto;
+        right: auto;
+        transform: none;
+        width: 90%;
+        margin: 20px auto;
+      }
+
+      .header-top .text-info h5 {
+        font-size: 1rem;
+      }
+
+      .header-top .text-info h6 {
+        font-size: 0.85rem;
+      }
+
+      .header-top img {
+        height: 80px !important;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .header-top img {
+        height: 70px !important;
+      }
+
+      .navbar-nav {
+        text-align: center;
+      }
+
+      .header-top h5 {
+        font-size: 0.95rem;
+      }
+
+      .header-top h6 {
+        font-size: 0.75rem;
+      }
+    }
+    /* Main container styling */
+.main-txt-static {
+    /* background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); */
+    border-left: 5px solid #2c80b8;
+    border-radius: 8px;
+    padding: 3px;
+    /* padding: 1.5rem 2rem;
+    margin: 1.5rem 0; */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Optional subtle background pattern */
+.main-txt-static::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(44, 128, 184, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.6;
+    z-index: 0;
+}
+
+/* Heading styling */
+/* .main-txt-static h6 {
+    color: #2c3e50;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    font-weight: 600;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    padding: 0.5rem 0;
+} */
+ .main-txt-static h6 {
+    color: #000000;
+    font-size: 1.05rem;
+    /* line-height: 1.6; */
+    /* font-weight: 600; */
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    /* padding: 0.0rem 285px; */
+    padding-left: 329px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+/* Highlight important text */
+.main-txt-static h6 strong {
+    color: #2c80b8;
+    background-color: rgba(44, 128, 184, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+/* Button link styling */
+.main-txt-static .btn {
+    background: linear-gradient(to right, #2c80b8, #3498db);
+    color: white !important;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin: 0.5rem 1rem 0.5rem 0.5rem;
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(44, 128, 184, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Button hover effects */
+.main-txt-static .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(44, 128, 184, 0.4);
+    background: linear-gradient(to right, #2573a7, #2980b9);
+}
+
+/* Button click effect */
+.main-txt-static .btn:active {
+    transform: translateY(0);
+}
+
+/* Add icon before button (optional) */
+.main-txt-static .btn::before {
+    content: "🔗";
+    margin-right: 8px;
+    font-size: 0.9em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .main-txt-static {
+        padding: 1.2rem 1.5rem;
+        margin: 1rem 0;
+    }
+    
+    .main-txt-static h6 {
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+    
+    .main-txt-static .btn {
+        padding: 0.5rem 1.2rem;
+        margin: 0.5rem 0;
+        display: inline-block;
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Animation for attention */
+@keyframes subtlePulse {
+    0% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
+    50% { box-shadow: 0 4px 20px rgba(44, 128, 184, 0.15); }
+    100% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
+}
+
+.main-txt-static {
+    animation: subtlePulse 3s infinite;
+}
+.join-meeting-btn {
+    display: inline-block;
+    padding: 12px 28px;
+        margin-top: 15px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #1a73e8, #34a853);
+    box-shadow: 0 8px 20px rgba(26, 115, 232, 0.35);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    animation: pulse 2s infinite;
+}
+
+.join-meeting-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 12px 28px rgba(26, 115, 232, 0.5);
+    background: linear-gradient(135deg, #34a853, #1a73e8);
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.6); }
+    70% { box-shadow: 0 0 0 15px rgba(26, 115, 232, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(26, 115, 232, 0); }
+}
+.rowbagclr {
+    background-color: darkgray;
+}
+  </style><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Public+Sans:300,400,500,600,700" media="all"><link rel="stylesheet" href="/static/css/fonts.min.css" media="all"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" media="all">
+</head>
+
+<body>
+  <!-- Loader -->
+  <div id="loader" class="loader-overlay" style="display: none; opacity: 0; transition: opacity 0.5s;">
+    <div class="d-flex flex-column align-items-center">
+      <div class="spinner"></div>
+      <p class="mt-3 fw-bold text-primary">Processing, <span class="text-success">please wait...</span> </p>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="container-fluid bg-white">
+    <header class="py-3">
+      <div class="row align-items-center text-center text-md-start g-3">
+
+        <!-- Left -->
+        <div class="col-12 col-md-4 d-flex flex-column flex-md-row align-items-center justify-content-center justify-content-md-start">
+          <img src="/static/img/golden_jubilee_logo.png" loading="lazy" style="height:120px; width:auto;">
+          <div class="text-info ms-md-2 mt-2 mt-md-0">
+            <h5 class="mb-0 fw-bold">Central Pollution Control Board</h5>
+            <h6 class="mb-0">(Under Ministry of Environment, Forest and Climate Change)</h6>
+          </div>
+        </div>
+
+        <!-- Center -->
+        <div class="col-12 col-md-4 text-center">
+          <img src="/static/img/site_logo.jpg" loading="lazy" class="img-fluid mb-2" style="max-width:70px;" alt="Site Logo">
+          <h5 class="text-dark fw-bold">EPR Portal for End-of-Life Vehicles</h5>
+          <div class="h6">Under Environment Protection (End-of-Life Vehicles) Rules, 2025</div>
+        </div>
+
+        <!-- Right -->
+        <div class="col-12 col-md-4 d-flex justify-content-center justify-content-md-end align-items-center gap-2">
+          <img src="/static/img/life_logo.png" loading="lazy" style="height:70px; width:auto;">
+          <img src="/static/img/ministry_logo.png" loading="lazy" style="height:130px; width:auto;">
+        </div>
+      </div>
+    </header>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand d-lg-none fw-bold text-white" href="/">EPR ELV</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav text-center text-lg-start">
+          <li class="nav-item active">
+    <a class="nav-link px-3" href="/" onclick="localStorage.setItem('selectedLoginType', '/')">Home</a>
+</li>
+          <li class="nav-item ">
+            <a class="nav-link px-3" href="/aboutus/">About Us</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle px-3" href="#" data-bs-toggle="dropdown">Rules</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="/static/doc/ELV_Rules_2025.pdf" target="_blank">End-of-Life Vehicles Rules, 2025</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle px-3" href="#" data-bs-toggle="dropdown">Guidelines / SOPs</a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="/static/doc/Producer_Sop.pdf" target="_blank">Registration of Producer</a></li>
+              <li><a class="dropdown-item" href="/static/doc/Rvsf_Sop.pdf" target="_blank">Registration of RVSFs</a></li>
+              <li><a class="dropdown-item" href="/static/doc/ELV_Guidelines.pdf" target="_blank">Guidelines for Handling and Scrapping of
+End-of- Life Vehicles (ELVs)</a></li>
+            </ul>
+          </li>
+          <li class="nav-item ">
+            <a class="nav-link px-3" href="/national-dashboard/">National Dashboard</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle px-3" href="#" data-bs-toggle="dropdown">Lodge Complaint</a>
+           <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="https://eprsupport.cpcb.gov.in/" target="_blank">Create Ticket</a></li>
+              <li><a class="dropdown-item" href="/static/doc/Lodge_Complaint_Instruction_Sheet.pdf" target="_blank">How To Create A Ticket</a></li>
+             
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle px-3 show" href="#" data-bs-toggle="dropdown" aria-expanded="true">Important Communication</a>
+           <ul class="dropdown-menu show" data-bs-popper="static">
+
+             <!-- <li><a class="dropdown-item" href="/static/doc/17022026_MRAI_RVSF_Assn.pdf" target="_blank">17022026_MRAI_RVSF Assn</a></li> -->
+              <li><a class="dropdown-item" href="/static/doc/Directions_to_SPCBs_(April_2026).pdf" target="_blank">Directions_to_SPCBs_(April_2026)</a></li>
+             <li><a class="dropdown-item" href="/static/doc/17022026_MRAI_RVSF_Assn.pdf" target="_blank">CPCB Letter (Feb 2026)_RVSFs</a></li>
+              <!-- <li><a class="dropdown-item" href="/static/doc/20260305_Customs.pdf" target="_blank">20260305_Customs</a></li> -->
+               <li><a class="dropdown-item" href="/static/doc/20260305_Customs.pdf" target="_blank">CPCB Letter (March 2026)_Customs</a></li>
+              <!-- <li><a class="dropdown-item" href="/static/doc/20260305_DS_Transport_Dept.pdf" target="_blank">20260305_DS Transport Dept</a></li> -->
+               <li><a class="dropdown-item" href="/static/doc/20260305_DS_Transport_Dept.pdf" target="_blank">CPCB Letter (March 2026)_MoRTH</a></li>
+             
+              <!-- <li><a class="dropdown-item" href="/static/doc/20260305_MS_SPCB_PCC.pdf" target="_blank">20260305_MS_SPCB_PCC</a></li> -->
+               <li><a class="dropdown-item" href="/static/doc/20260305_MS_SPCB_PCC.pdf" target="_blank">CPCB Letter (March 2026)_SPCBs</a></li>
+              <!-- <li><a class="dropdown-item" href="/static/doc/20260305_SIAM_ICEMA_TMA_SMEV.pdf" target="_blank">20260305_SIAM_ICEMA_TMA_SMEV</a></li> -->
+               <!-- <li><a class="dropdown-item" href="/static/doc/20260305_SIAM_ICEMA_TMA_SMEV.pdf" target="_blank">CPCB Letter (March 2026)_Producers</a></li> -->
+             
+             <li><a class="dropdown-item text-primary fw-bold" href="/important-communications/">
+                View All Documents →
+            </a>
+        </li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link px-3" href="/static/doc/EPR_ELVs_FAQ.pdf" target="_blank">FAQs</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link px-3" href="#" data-bs-toggle="modal" data-bs-target="#contactModal">Contact Us</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  
+
+  <!-- Contact Modal -->
+  <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="contactModalLabel">Contact Us</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="contactSuccess" class="alert alert-success alert-dismissible fade show d-none" role="alert">
+            Your message has been sent successfully!
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          <form name="contact_form" id="contact_form" method="post" action="/contact-us/" class="col-12">
+            <input type="hidden" name="csrfmiddlewaretoken" value="XIVFFf7y1vQtOUbZ1lfsmkIjmgTbyU9gATMYWsyLW29UM9urnk7j3BDyBNDsxc4d" style="">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label>Name<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="name" placeholder="Name" required="" style="">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label>Email<span class="text-danger">*</span></label>
+                <input type="email" class="form-control" name="email" placeholder="Email" required="" style="">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label>Phone<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="phone" id="phone" maxlength="10" placeholder="Phone" required="" style="">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label>Designation<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="designation" placeholder="Designation" required="" style="">
+              </div>
+              <div class="col-12 mb-3">
+                <label>Subject<span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="subject" placeholder="Subject" required="" style="">
+              </div>
+              <div class="col-12 mb-3">
+                <label>Description<span class="text-danger">*</span></label>
+                <textarea class="form-control" name="description" placeholder="Description" required="" style=""></textarea>
+              </div>
+              <div class="my-1 d-flex align-items-center captcha-container1">
+                <div class="me-3" id="captcha-container1"><img src="/captcha/image/3a8419af9537e0ba99d93f5eccbd2811cd6bf60c/" alt="captcha" class="captcha">
+<input type="hidden" name="captcha_0" value="3a8419af9537e0ba99d93f5eccbd2811cd6bf60c" class="form-control custom-captcha-input fst-italic" placeholder="Enter Captcha" maxlength="6" style="margin-top: 9px;" required="" id="id_captcha_0" autocomplete="off"><input type="text" name="captcha_1" class="form-control custom-captcha-input fst-italic" placeholder="Enter Captcha" maxlength="6" style="margin-top: 9px;" required="" id="id_captcha_1" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></div>
+                <button type="button" id="refresh_captcha1" class="btn btn-outline-secondary">
+                  <i class="fas fa-sync-alt"></i>
+                </button>
+              </div>
+              <div class="my-3">
+                <button type="submit" class="btn btn-info text-white">Submit</button>
+              </div>
+            </div>
+          </form>
+
+          <ul class="popup_adress mt-3">
+            <li><i class="fa fa-map-pin text-danger me-2"></i> Central Pollution Control Board, Parivesh Bhawan, East Arjun Nagar, Delhi-110032</li>
+            <li><i class="fa fa-phone-volume text-success me-2"></i> +91-11-43102319/439/326</li>
+            <li><i class="fa fa-envelope text-info me-2"></i> eprelv[dot]cpcb[at]gov[dot]in</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Cookie Consent Popup -->
+<div id="cookieConsentPopup" class="cookie-popup" style="display: block;">
+  <div class="cookie-content">
+    <h6>🍪 Cookie Consent</h6>
+    <p>
+      We use cookies to improve your experience and analyze site usage.  
+      Please accept cookies to continue enjoying all features.
+    </p>
+    <div class="cookie-buttons">
+      <button id="acceptCookies" class="btn btn-success btn-sm">Accept</button>
+      <button id="declineCookies" class="btn btn-outline-secondary btn-sm">Decline</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Popup styles */
+.cookie-popup {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  width: 320px;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 16px;
+  display: none;
+  z-index: 9999;
+  animation: slideDown 0.5s ease-out;
+  font-family: "Segoe UI", Roboto, sans-serif;
+}
+
+.cookie-content h6 {
+  margin: 0 0 6px;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.cookie-content p {
+  margin: 10px 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.cookie-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.cookie-buttons .btn {
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const popup = document.getElementById("cookieConsentPopup");
+    const cookiesAccepted = localStorage.getItem("cookiesAccepted");
+
+    // Show popup only if user not logged in and not accepted yet
+    const userLoggedIn = false;
+    if (!cookiesAccepted && !userLoggedIn) {
+        popup.style.display = "block";
+    }
+
+    // Accept cookies
+    document.getElementById("acceptCookies").addEventListener("click", function () {
+        localStorage.setItem("cookiesAccepted", "true");
+        popup.style.display = "none";
+
+        // Optional: send consent to server
+        fetch("/save-cookie-consent/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken(),
+            },
+            body: JSON.stringify({ consent: true }),
+        }).catch(() => {});
+    });
+
+    // Decline cookies
+    document.getElementById("declineCookies").addEventListener("click", function () {
+        localStorage.removeItem("cookiesAccepted");
+        popup.style.display = "none";
+    });
+
+    // Helper to get CSRF token
+    function getCSRFToken() {
+        const name = "csrftoken=";
+        const decoded = decodeURIComponent(document.cookie);
+        const parts = decoded.split(";");
+        for (let i = 0; i < parts.length; i++) {
+            let c = parts[i].trim();
+            if (c.indexOf(name) === 0) return c.substring(name.length, c.length);
+        }
+        return "";
+    }
+});
+</script>
+
+
+  
+  <script>
+    document.addEventListener('contextmenu', event => event.preventDefault());
+    document.getElementById("phone").addEventListener("input", function (e) {
+      this.value = this.value.replace(/\D/g, '');
+    });
+
+    document.getElementById('refresh_captcha1').addEventListener('click', function () {
+      fetch("/refresh-captcha/")
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById('captcha-container1').innerHTML = data.captcha_html;
+        })
+        .catch(error => console.error('Error refreshing captcha:', error));
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+      document.getElementById("loader").style.display = "none";
+    });
+
+    function restrictInput(event) {
+      const regex = /^[a-zA-Z0-9 .,]*$/;
+      if (!regex.test(event.target.value)) {
+        event.target.value = event.target.value.replace(/[^a-zA-Z0-9 .,]/g, '');
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelectorAll('input[type="text"], textarea').forEach(function (input) {
+        input.addEventListener("input", restrictInput);
+      });
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+    const contactForm = document.getElementById("contact_form");
+    if (!contactForm) return;
+
+    contactForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const submitBtn = contactForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Processing...";
+
+        try {
+            const response = await fetch("/contact-us/", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: new FormData(contactForm)
+            });
+
+            let data = {};
+            const contentType = response.headers.get("content-type");
+
+            if (contentType && contentType.includes("application/json")) {
+                data = await response.json();
+            } else {
+                // backend returned HTML / redirect
+                data = {
+                    status: "success",
+                    message: "Your message has been sent successfully!"
+                };
+            }
+
+            alert(data.message);
+
+            if (data.status === "success") {
+                contactForm.reset();
+
+                try {
+                    const modalEl = document.getElementById("contactModal");
+                    if (modalEl && window.bootstrap) {
+                        const modal =
+                            bootstrap.Modal.getInstance(modalEl) ||
+                            new bootstrap.Modal(modalEl);
+                        modal.hide();
+                    }
+                } catch (uiErr) {
+                    console.warn("Modal close skipped:", uiErr);
+                }
+            }
+
+        } catch (err) {
+            console.error("Contact form error:", err);
+            alert("An unexpected error occurred. Please try again.");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Submit";
+        }
+    });
+});
+  </script>
+
+
+  
+
+
+
+
+
+
+
+    <style>
+  /* Password input container */
+  .password-wrapper {
+      position: relative;
+  }
+
+  /* Add space for eye icon */
+  .password-wrapper input {
+      padding-right: 2.5rem;
+  }
+
+  /* Eye icon position inside input */
+  .password-wrapper .toggle-password {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: color 0.3s;
+  }
+
+  /* Hover effect */
+  .password-wrapper .toggle-password:hover {
+      color: #0d6efd;
+  }
+
+  /* Responsive fix */
+  @media (max-width: 576px) {
+      .password-wrapper input {
+          padding-right: 2rem;
+      }
+      .password-wrapper .toggle-password {
+          right: 0.6rem;
+      }
+  }
+    /* Main container styling */
+.main-txt-static {
+    /* background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); */
+    border-left: 5px solid #2c80b8;
+    border-radius: 8px;
+    padding: 3px;
+    /* padding: 1.5rem 2rem;
+    margin: 1.5rem 0; */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Optional subtle background pattern */
+.main-txt-static::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(44, 128, 184, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.6;
+    z-index: 0;
+}
+
+/* Heading styling */
+/* .main-txt-static h6 {
+    color: #2c3e50;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    font-weight: 600;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    padding: 0.5rem 0;
+} */
+ .main-txt-static h6 {
+    color: #000000;
+    font-size: 1.05rem;
+    /* line-height: 1.6; */
+    /* font-weight: 600; */
+    margin: 0;
+    position: relative;
+    z-index: 1;
+    /* padding: 0.0rem 285px; */
+    padding-left: 329px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+/* Highlight important text */
+.main-txt-static h6 strong {
+    color: #2c80b8;
+    background-color: rgba(44, 128, 184, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+}
+
+/* Button link styling */
+.main-txt-static .btn {
+    background: linear-gradient(to right, #2c80b8, #3498db);
+    color: white !important;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    margin: 0.5rem 1rem 0.5rem 0.5rem;
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(44, 128, 184, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Button hover effects */
+.main-txt-static .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(44, 128, 184, 0.4);
+    background: linear-gradient(to right, #2573a7, #2980b9);
+}
+
+/* Button click effect */
+.main-txt-static .btn:active {
+    transform: translateY(0);
+}
+
+/* Add icon before button (optional) */
+.main-txt-static .btn::before {
+    content: "🔗";
+    margin-right: 8px;
+    font-size: 0.9em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .main-txt-static {
+        padding: 1.2rem 1.5rem;
+        margin: 1rem 0;
+    }
+    
+    .main-txt-static h6 {
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+    
+    .main-txt-static .btn {
+        padding: 0.5rem 1.2rem;
+        margin: 0.5rem 0;
+        display: inline-block;
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* Animation for attention */
+@keyframes subtlePulse {
+    0% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
+    50% { box-shadow: 0 4px 20px rgba(44, 128, 184, 0.15); }
+    100% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); }
+}
+
+.main-txt-static {
+    animation: subtlePulse 3s infinite;
+}
+.join-meeting-btn {
+    display: inline-block;
+    padding: 12px 28px;
+        margin-top: 15px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #1a73e8, #34a853);
+    box-shadow: 0 8px 20px rgba(26, 115, 232, 0.35);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    animation: pulse 2s infinite;
+}
+
+.join-meeting-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 12px 28px rgba(26, 115, 232, 0.5);
+    background: linear-gradient(135deg, #34a853, #1a73e8);
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.6); }
+    70% { box-shadow: 0 0 0 15px rgba(26, 115, 232, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(26, 115, 232, 0); }
+}
+.rowbagclr {
+    background-color: darkgray;
+}
+</style>
+    <div id="app" class="w-100">
+        
+        <!-- Main Section -->
+        <div class="mainsection" style="background: linear-gradient(to right, #1d6799, #3e3070);">
+            <div id="carouselExampleControls" class="carousel slide h-100" data-ride="carousel">
+                <div class="carousel-inner h-100">
+                    <div class="carousel-item active">
+                        <img class="d-block w-100" src="/static/img/elv1.jpeg" alt="Slide">
+                    </div>
+                    <div class="carousel-item">
+                        <img class="d-block w-100" src="/static/img/elv2.png" alt="Slide">
+                    </div>
+                    <div class="carousel-item">
+                        <img class="d-block w-100" src="/static/img/elv3.jpeg" alt="Slide">
+                    </div>
+                    <div class="carousel-item">
+                        <img class="d-block w-100" src="/static/img/elv4.jpeg" alt="Slide">
+                    </div>
+                    <div class="carousel-item">
+                        <img class="d-block w-100" src="/static/img/elv5.png" alt="Slide">
+                    </div>
+                    <div class="carousel-item">
+                        <img class="d-block w-100" src="/static/img/elv6.png" alt="Slide">
+                    </div>
+                </div>
+
+                <a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+                </a>
+                <a class="carousel-control-next" href="#carouselExampleControls" role="button" data-slide="next">
+                <span class="carousel-control-next-icon"></span>
+                </a>
+            </div>
+
+            <!-- Login Form Overlay -->
+            <div class="loginform pb-3">
+                <div class="card border-0">
+                    <div class="card-header text-center bg-white mb-3">
+                        <h4 class="fw-bold">Producer Login</h4>
+                        
+                    </div>
+                    
+                    <form method="POST" action="/otpviewpage1" class="px-4">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="XIVFFf7y1vQtOUbZ1lfsmkIjmgTbyU9gATMYWsyLW29UM9urnk7j3BDyBNDsxc4d" style=""> 
+                         
+                        <!-- Radio Buttons for Login Type --> 
+                        <div class="mb-2"> 
+                            <label class="form-label fw-bold "><b class="mr-3">Login As:</b></label> 
+                            <input type="radio" name="login_type" value="/" onclick="window.location.href=this.value" required="" style=""> 
+                            <span class="mr-3">Producer</span> 
+                            <input type="radio" name="login_type" value="/rvsf/" onclick="window.location.href=this.value" style=""> 
+                            <span class="mr-3">RVSFs</span>
+                            
+                        </div> 
+                        <div class="mb-3"> 
+                                <label for="username" class="form-label required" autocorrect="off" autofocus="off">Username</label> <input type="text" name="username" id="username" class="form-control" placeholder="Enter Username" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" onpaste="return false;" oncopy="return false;" oncut="return false;" maxlength="64" required="" style=""> 
+                            </div> 
+                                <div class="mb-3">
+                                    <label for="password" class="form-label required" autocorrect="off" autofocus="off">Password</label>
+                                    <div class="password-wrapper">
+                                        <input type="password" name="password" id="password" class="form-control" placeholder="Enter Password" autocomplete="new-password" autocorrect="off" autocapitalize="none" spellcheck="false" onpaste="return false;" oncopy="return false;" oncut="return false;" required="" style="">
+                                        <i class="fa fa-eye toggle-password" id="togglePassword"></i>
+                                    </div>
+                                </div>
+                                <div class="my-4 d-flex align-items-center captcha-container"> 
+                                    <div class="me-3" id="captcha-container"> 
+                                        <img src="/captcha/image/a26cd2a43ecf9e43b7a145e1daaa95c4e52c8954/" alt="captcha" class="captcha">
+<input type="hidden" name="captcha_0" value="a26cd2a43ecf9e43b7a145e1daaa95c4e52c8954" class="form-control custom-captcha-input fst-italic" placeholder="Enter Captcha" maxlength="6" style="margin-top: 9px;" required="" id="id_captcha_0" autocomplete="off"><input type="text" name="captcha_1" class="form-control custom-captcha-input fst-italic" placeholder="Enter Captcha" maxlength="6" style="margin-top: 9px;" required="" id="id_captcha_1" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"> 
+                                    </div> 
+                                    <button type="button" id="refresh_captcha" class="mt-2"> 
+                                        <i class="fas fa-sync-alt"></i> 
+                                    </button> 
+                                </div> 
+                                <!-- <div class="d-flex align-items-center mt-2"> 
+                                    <button type="submit" id="submitBtn" class="btn btn-primary btn-md">Login</button> 
+                                    <a href="/cpcb/" class="btn btn-success btn-md mx-4" id="Admin">Login As Admin</a> 
+                                </div>  -->
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button type="submit" id="submitBtn" class="btn btn-primary btn-md">Login</button>  
+                                    <a href="/forgetPassword/" class="fw-bold text-primary">Forgot Password?</a> 
+                                </div> 
+                                <!-- <div>
+                                    <a href="/forgot_password/" class="forgot-password">Forgot Password?</a>
+                                </div> -->
+                               <div class="mt-3 d-flex justify-content-between">
+                                    <span class="mt-1 fw-bold">Don't have an account ? </span> 
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#signupModal" class="text-decoration-none">
+                                        <b class="text-dark fw-extrabold btn btn-warning ">Create Account</b>
+                                    </a>
+                                
+			     </div>  
+                                <p class="fw-bold mb-0 mt-3">Go to Official's Login Page - 
+                                    <a href="/cpcb/" onclick="localStorage.setItem('selectedLoginType', '/cpcb/')" class="link-danger">Official Login</a>
+                                </p>
+                                
+                    </form>
+                </div>
+            </div>
+        </div>
+         <div class="row rowbagclr">
+                 
+                    <div class="main-txt-static col-md-8 rowbagclr">
+                        <h6 class="rowbagclr">CPCB is conducting meeting through Video Conferencing to address the issues related to Signup and Registration of Entities. The entities can join the meeting through VC from Monday to Friday between 4 PM to 5 PM. </h6>
+                    </div>
+                
+                <div class=" col-md-4 ">
+                    
+                        <a class="join-meeting-btn" href="https://meet.google.com/nfk-hzkj-bmr" target="_blank"> Click Here to Join Meeting.</a>
+                    
+                </div>
+            </div>
+        <!-- Marquee -->
+        <div class="col-md-12 " style="background: linear-gradient(to right, #0a4d7a, #2d1c68); opacity: 87%;">
+            <div class="pt-2 pb-2 text-white" style="color: #ffff !important;">
+                <marquee style="font-size:18px;" onmouseover="this.stop();" onmouseout="this.start();">
+                    <img src="/static/img/unnamed.gif">
+                    Registration for Producers and Rvsfs under End-of-Life Vehicles Rules, 2025 is now open.  Certificate Generation and Transfer Module is now live. <!-- , Bulk Consumers and RVSFs -->
+                </marquee>
+            </div>
+        </div>
+
+        <!-- Content Section -->
+        <section class="grey-back ng-star-inserted py-4 my-3">
+            <div class="container-fluid">
+                <div class="row">
+                <!-- Left Section -->
+                <div class="col-md-2"></div>
+                <div class="col-md-8 pt-3">
+                    <div class="card shadow-lg bg-white border-0 rounded-4" style="max-height: 400px; overflow-y: auto;">
+                    
+                        <!-- <div class="card-header theme-color font-weight-bold text-center text-dark"> -->
+                        <div class="card-header text-center text-white fw-bold fs-5" style="background: linear-gradient(90deg, #0066cc, #00b894); font-size: 1.2rem;">
+                            Environment Protection (End-of-Life Vehicles) Rules, 2025
+                        </div>
+                        <div class="card-body">
+                        <p class="text-justify large">
+                            Government of India has notified the 
+                            Environment Protection (End-of-Life Vehicles) Rules, 2025
+                            under the Environment (Protection) Act, 1986, dated 
+                            January 6, 2025 for implementation of 
+                            Extended Producer Responsibility (EPR)
+                            for End-of-Life Vehicles (ELVs).
+                            These rules came into force from April 1, 2025, 
+                            to regulate the management, recycling, and disposal of ELVs 
+                            in an environmentally sustainable manner.
+                        </p>
+                        </div>
+                    
+                    </div>
+                </div>
+                <div class="col-md-2"></div>
+
+                <!-- Right Section: Ministers -->
+                <!-- <div class="col-md-6 mt-4 mt-md-0 d-flex justify-content-around align-items-start flex-wrap gap-3">
+                    
+                    <div class="text-center">
+                    
+                    <img src="/static/img/narendra-modi-bjp2.jpg" class="img-fluid rounded shadow-sm"
+                        style="width: 140px; height: 160px; object-fit: cover;" alt="Narendra Modi">
+                    <p class="fw-bold mt-2">Sh. Narendra Modi <br> Hon'ble Prime Minister</p>
+                    </div>
+
+                    
+                    <div class="text-center pl-5">
+                    <img src="/static/img/bhupendr2.jpg" class="img-fluid rounded shadow-sm"
+                        style="width: 140px; height: 160px; object-fit: cover;" alt="Bhupender Yadav">
+                    <p class="fw-bold mt-2">Sh. Bhupender Yadav <br> Hon'ble Minister of EF&CC</p>
+                    </div>
+
+                    
+
+                    
+                    <div class="text-center">
+                    <img src="/static/img/Kirtivardhansingh2.jpg" class="img-fluid rounded shadow-sm"
+                        style="width: 140px; height: 160px; object-fit: cover;" alt="Kirtivardhan Singh">
+                    <p class="fw-bold mt-2">Sh. Kirtivardhan Singh <br> Hon'ble Minister of State of EF&CC</p>
+                    </div>
+                </div> -->
+                </div>
+                <div class="d-flex justify-content-center my-4">
+        </div>
+            </div>
+        </section>
+
+        <section class="bg-dark text-white pt-3">
+            <div class="container-fluid">
+                <div class="row">
+                <div class="col-12 text-center large">
+                    <a href="/termsAndCondition/" class="text-white mx-2 text-decoration-none">Terms and Conditions</a> |
+                    <a href="/refundPolicy/" class="text-white mx-2 text-decoration-none">Refund Policy</a> |
+                    <a href="/privacyPolicy/" class="text-white mx-2 text-decoration-none">Privacy Policy</a> |
+                    <a href="#" class="text-white mx-2 text-decoration-none">Copyright Policy</a> |
+                    <a href="#" class="text-white mx-2 text-decoration-none">Hyperlinking Policy</a> |
+                    <a href="#" class="text-white mx-2 text-decoration-none">Accessibility Statement</a> |
+                    <a href="#" class="text-white mx-2 text-decoration-none">Help</a>
+                </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+    
+<style>
+    .row1.bg-dark {
+    margin: 0px;
+}
+</style>
+<!-- Fonts and icons -->
+<script src="/static/js/plugin/webfont/webfont.min.js"></script>
+<script>
+    WebFont.load({
+        google: { families: ["Public Sans:300,400,500,600,700"] },
+        custom: {
+        families: [
+            "Font Awesome 5 Solid",
+            "Font Awesome 5 Regular",
+            "Font Awesome 5 Brands",
+            "simple-line-icons",
+        ],
+        urls: ["/static/css/fonts.min.css", "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"],
+        },
+        active: function () {
+        sessionStorage.fonts = true;
+        },
+    });
+</script>
+
+<div>
+    <div class="row1 bg-dark">
+        <p class="w-100 pl-3 mb-0 large" style="color: #FFFFFF; padding: 13px 10px; text-align: center;">
+            Website designed, developed &amp; hosted by : IT Division, Central Pollution Control Board.
+        </p>
+    </div>
+</div>
+
+
+<!-- Add these in your <head> or before the closing </body> -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- ✅ jQuery first -->
+<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> -->
+ <script src="/static/js/jquery-3.6.0.min.js"></script>
+
+<!-- ✅ Correct Popper.js version for Bootstrap 4 -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script> -->
+
+<!-- ✅ Then Bootstrap -->
+<!-- <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script> -->
+
+
+    
+        <script>
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        </script>
+    
+    
+    <!-- Signup Modal -->
+    <div class="modal fade" id="signupModal" tabindex="-1" aria-labelledby="signupModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-3">
+            <div class="modal-header">
+                <h5 class="modal-title" id="signupModalLabel">Applicant Type</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <select id="signupType" class="form-control">
+                    <option value="">Choose Option</option>
+                    <option value="/register/">Producer</option>
+                    <option value="/rvsf/signup">RVSFs</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="proceedSignup" class="btn btn-primary">Proceed</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+
+    document.getElementById('refresh_captcha').addEventListener('click', function() {
+        
+        fetch("/refresh-captcha/")
+            .then(response => response.json())
+            .then(data => {
+                // alert(data.captcha_html);
+                document.getElementById('captcha-container').innerHTML = data.captcha_html;
+            })
+            .catch(error => console.error('Error refreshing captcha:', error));
+    });
+</script>
+
+<script>
+    function toggleReadMore() {
+        var dots = document.getElementById("dots");
+        var moreText = document.getElementById("more");
+        var btnText = document.getElementById("readMoreBtn");
+
+        if (dots.style.display === "none") {
+            dots.style.display = "inline";
+            moreText.style.display = "none";
+            btnText.innerHTML = "Read more";
+        } else {
+            dots.style.display = "none";
+            moreText.style.display = "inline";
+            btnText.innerHTML = "Read less";
+        }
+    }
+</script>
+
+
+<script>
+    // Auto-dismiss alerts after 4 seconds (4000ms)
+    document.addEventListener("DOMContentLoaded", function () {
+        setTimeout(function () {
+            document.querySelectorAll('.auto-dismiss-alert').forEach(function (el) {
+                // Bootstrap 5 fade-out and hide
+                el.classList.remove('show');
+                el.classList.add('fade');
+                setTimeout(() => {
+                    el.remove();
+                }, 1000); // Wait for fade transition
+            });
+        }, 4000);
+    });
+</script>
+
+
+<!-- input text validations -->
+    <script>
+        // Function to restrict input to alphabets, numbers, spaces, dot, and comma
+        function restrictInput(event) {
+            const regex = /^[a-zA-Z0-9 .,]*$/;
+            if (!regex.test(event.target.value)) {
+                // Replace anything not allowed
+                event.target.value = event.target.value.replace(/[^a-zA-Z0-9 .,]/g, '');
+            }
+        }
+
+        // Attach restriction to all input[type="text"] fields
+        document.addEventListener("DOMContentLoaded", function () {
+            // Select all text inputs and textareas
+            document.querySelectorAll('input[type="text"], textarea').forEach(function(input) {
+                input.addEventListener("input", restrictInput);
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.getElementById("contact_form");
+            const submitBtn = form.querySelector("button[type=submit]");
+
+            form.addEventListener("submit", function () {
+                submitBtn.disabled = true;
+                submitBtn.innerText = "Submitting...";
+            });
+        });
+    </script>
+
+    <script>
+    document.getElementById("proceedSignup").addEventListener("click", function() {
+        var selected = document.getElementById("signupType").value;
+        if (selected) {
+            window.location.href = selected;  // redirect to selected signup page
+        } else {
+            alert("Please select an applicant type");
+        }
+    });
+    </script>
+
+      <script>
+    // Run after page loads
+    document.addEventListener("DOMContentLoaded", function() {
+    let radios = document.querySelectorAll("input[name='login_type']");
+    let currentPath = window.location.pathname;
+
+    radios.forEach(radio => {
+
+        // Auto select based on current URL
+        if (radio.value === currentPath) {
+            radio.checked = true;
+        }
+
+        // Redirect when clicked
+        radio.addEventListener("click", function() {
+            window.location.href = this.value;
+        });
+    });
+});
+    </script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let loader = document.getElementById("loader");
+    loader.style.opacity = "1";
+
+    setTimeout(() => {
+        loader.style.transition = "opacity 0.5s ease";
+        loader.style.opacity = "0";
+        setTimeout(() => loader.style.display = "none", 500);
+    }, 500); // short delay
+});
+
+</script>
+
+<!-- CryptoJS for client-side hashing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const key = CryptoJS.enc.Utf8.parse("16charSecretKey!");
+    const iv = CryptoJS.enc.Utf8.parse("16charSecretIV!!");
+
+    const form = document.querySelector('form[action$="otpviewpage1"]');
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+
+    if (!form || !usernameInput || !passwordInput) return;
+
+    // Function to detect if a string is encrypted (base64 format)
+    function isEncrypted(str) {
+        if (!str) return false;
+        try {
+            // Check if it looks like base64 encoded AES
+            return /^[A-Za-z0-9+/]*={0,2}$/.test(str) && str.length % 4 === 0 && str.length > 50;
+        } catch {
+            return false;
+        }
+    }
+
+    // Restore original values on page load
+    // function restoreValues() {
+    //     // Get values from sessionStorage if available (from previous failed submission)
+    //     const storedUsername = sessionStorage.getItem('originalProducerUsername');
+    //     const storedPassword = sessionStorage.getItem('originalProducerPassword');
+
+    //     if (storedUsername) {
+    //         usernameInput.value = storedUsername;
+    //         sessionStorage.removeItem('originalProducerUsername');
+    //     }
+    //     if (storedPassword) {
+    //         passwordInput.value = storedPassword;
+    //         sessionStorage.removeItem('originalProducerPassword');
+    //     }
+
+    //     // If values appear to be encrypted but we don't have stored originals,
+    //     // clear them to avoid showing encrypted text
+    //     if (isEncrypted(usernameInput.value) && !storedUsername) {
+    //         usernameInput.value = '';
+    //     }
+    //     if (isEncrypted(passwordInput.value) && !storedPassword) {
+    //         passwordInput.value = '';
+    //     }
+    // }
+
+    // Handle form submission
+    form.addEventListener("submit", function(e) {
+        // Only store original values if they're not already encrypted
+        // if (!isEncrypted(usernameInput.value)) {
+        //     sessionStorage.setItem('originalProducerUsername', usernameInput.value);
+        // }
+        // if (!isEncrypted(passwordInput.value)) {
+        //     sessionStorage.setItem('originalProducerPassword', passwordInput.value);
+        // }
+
+        // Only encrypt if values aren't already encrypted
+        if (!isEncrypted(usernameInput.value)) {
+            usernameInput.value = CryptoJS.AES.encrypt(usernameInput.value, key, {
+                iv: iv,
+                padding: CryptoJS.pad.Pkcs7
+            }).toString();
+        }
+
+        if (!isEncrypted(passwordInput.value)) {
+            passwordInput.value = CryptoJS.AES.encrypt(passwordInput.value, key, {
+                iv: iv,
+                padding: CryptoJS.pad.Pkcs7
+            }).toString();
+        }
+
+        // Mark form as submitting to prevent cleanup
+        // sessionStorage.setItem('producerFormSubmitting', 'true');
+    });
+
+    // Clean up session storage when leaving page (if not submitting)
+    // window.addEventListener('beforeunload', function() {
+    //     if (!sessionStorage.getItem('producerFormSubmitting')) {
+    //         sessionStorage.removeItem('originalProducerUsername');
+    //         sessionStorage.removeItem('originalProducerPassword');
+    //     }
+    // });
+
+    // Clear the submitting flag when page loads (in case of failed submission)
+    // window.addEventListener('load', function() {
+    //     sessionStorage.removeItem('producerFormSubmitting');
+    // });
+
+    // Restore values when page loads
+    // restoreValues();
+});
+</script>
+<script>
+  // Toggle password visibility and icon
+  const togglePassword = document.querySelector('#togglePassword');
+  const passwordInput = document.querySelector('#password');
+
+  togglePassword.addEventListener('click', function () {
+      const isPassword = passwordInput.getAttribute('type') === 'password';
+      passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+
+      // Toggle icon
+      this.classList.toggle('fa-eye');
+      this.classList.toggle('fa-eye-slash');
+  });
+</script>
+
+
+
+
+</body></html>

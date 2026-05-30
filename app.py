@@ -23,107 +23,339 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-/* ── Hide everything Streamlit default ── */
-[data-testid="stToolbar"],[data-testid="stHeader"],#MainMenu,header,
-[data-testid="stDecoration"],[data-testid="stSidebar"],
-[data-testid="stSidebarCollapsedControl"],[data-testid="stSidebarCollapseButton"],
-button[aria-label="Close sidebar"],button[aria-label="Collapse sidebar"]
-{display:none!important;visibility:hidden!important;width:0!important;height:0!important}
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
 
-/* ── Page background ── */
-[data-testid="stAppViewContainer"]{background:#0f1117}
-.main .block-container{padding:0 2rem 2rem 2rem;max-width:1400px}
+/* ── Reset & base ── */
+*, *::before, *::after { box-sizing: border-box; }
+[data-testid="stToolbar"], [data-testid="stHeader"], #MainMenu, header,
+[data-testid="stDecoration"], [data-testid="stSidebar"],
+[data-testid="stSidebarCollapsedControl"], [data-testid="stSidebarCollapseButton"],
+button[aria-label="Close sidebar"], button[aria-label="Collapse sidebar"]
+{ display:none!important; visibility:hidden!important; width:0!important; height:0!important }
 
-/* ── TOP NAVBAR ── */
-.topnav{
-  position:sticky;top:0;z-index:9999;
-  background:#13161f;
-  border-bottom:1px solid #2a2d3e;
-  padding:0 24px;
-  display:flex;align-items:center;gap:0;
-  height:54px;
-  margin:-1rem -2rem 1.5rem -2rem;
+html, body, [data-testid="stAppViewContainer"] {
+    font-family: 'IBM Plex Sans', sans-serif !important;
+    background: #080b10 !important;
 }
-.topnav-brand{
-  font-size:15px;font-weight:700;color:#e6edf3;
-  display:flex;align-items:center;gap:8px;
-  padding-right:24px;border-right:1px solid #2a2d3e;
-  white-space:nowrap;
+.main .block-container {
+    padding: 0 !important;
+    max-width: 100% !important;
 }
-.topnav-tabs{display:flex;align-items:center;gap:2px;padding:0 16px;flex:1}
-.topnav-tab{
-  padding:6px 14px;border-radius:6px;
-  font-size:13px;font-weight:500;color:#8b95a8;
-  cursor:pointer;border:none;background:transparent;
-  transition:background .12s,color .12s;white-space:nowrap;
+
+/* ── NAVBAR ── */
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 9999;
+    background: #0c0f16;
+    border-bottom: 1px solid #1a1f2e;
+    padding: 0 28px;
+    display: flex;
+    align-items: center;
+    height: 52px;
+    gap: 0;
 }
-.topnav-tab:hover{background:#1e2130;color:#c9d1d9}
-.topnav-tab.active{background:#1e2130;color:#e6edf3}
-.topnav-right{display:flex;align-items:center;gap:8px;margin-left:auto}
-.nav-portal-select{
-  background:#1e2130;border:1px solid #2a2d3e;border-radius:6px;
-  color:#e6edf3;font-size:12px;padding:4px 8px;cursor:pointer;
+.navbar-brand {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #e2e8f0;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-right: 24px;
+    border-right: 1px solid #1a1f2e;
+    letter-spacing: 0.02em;
 }
-.crawl-status-pill{
-  font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;
-  background:#0d2b1a;color:#34d399;border:1px solid #155230;white-space:nowrap;
+.navbar-brand .dot { color: #3b82f6; }
+.navbar-tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 16px;
+    flex: 1;
 }
-.crawl-status-pill.running{
-  background:#1a2540;color:#60a5fa;border-color:#253a60;
+.nav-tab {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #64748b;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+.nav-tab:hover { background: #131929; color: #94a3b8; }
+.nav-tab.active {
+    background: #131929;
+    color: #e2e8f0;
+    border: 1px solid #1e2d47;
+}
+.nav-tab .tab-icon { font-size: 13px; }
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+/* ── Streamlit button overrides ── */
+[data-testid="stButton"] button {
+    font-family: 'IBM Plex Sans', sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    padding: 5px 12px !important;
+    height: 32px !important;
+    border-radius: 6px !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+    letter-spacing: 0.02em !important;
+    min-width: 0 !important;
+}
+/* Primary (active tab / run crawl) */
+[data-testid="stButton"] button[kind="primary"] {
+    background: #1d4ed8 !important;
+    border: 1px solid #2563eb !important;
+    color: #fff !important;
+}
+[data-testid="stButton"] button[kind="primary"]:hover {
+    background: #2563eb !important;
+}
+/* Secondary */
+[data-testid="stButton"] button[kind="secondary"] {
+    background: #0f1623 !important;
+    border: 1px solid #1e2d47 !important;
+    color: #94a3b8 !important;
+}
+[data-testid="stButton"] button[kind="secondary"]:hover {
+    background: #131929 !important;
+    color: #e2e8f0 !important;
+    border-color: #2a3a5c !important;
+}
+
+/* ── Page content wrapper ── */
+.page-content {
+    padding: 28px 32px 40px 32px;
+    max-width: 1360px;
+    margin: 0 auto;
 }
 
 /* ── Stat cards ── */
-.stat-card{background:#1e2130;border:1px solid #2a2d3e;border-radius:12px;padding:16px 20px}
-.stat-card .label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6e7891}
-.stat-card .value{font-size:30px;font-weight:700;color:#e6edf3;line-height:1.1;margin:4px 0}
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+}
+.stat-card {
+    background: #0c0f16;
+    border: 1px solid #1a1f2e;
+    border-radius: 10px;
+    padding: 16px 20px;
+    position: relative;
+    overflow: hidden;
+}
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent, #3b82f6);
+    opacity: 0.6;
+}
+.stat-card .s-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #3d4f6b;
+    margin-bottom: 8px;
+}
+.stat-card .s-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--accent, #e2e8f0);
+    line-height: 1;
+}
+
+/* ── Section header ── */
+.section-hdr {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #2d3a52;
+    border-bottom: 1px solid #131929;
+    padding-bottom: 8px;
+    margin: 24px 0 16px 0;
+}
+
+/* ── Page title ── */
+.page-title {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.page-subtitle {
+    font-size: 13px;
+    color: #3d4f6b;
+    margin-bottom: 24px;
+    font-weight: 400;
+}
 
 /* ── Expander dark ── */
-details,details[open]{background:#1e2130!important;border-radius:10px}
-details summary{font-size:14px!important;color:#e6edf3!important;font-weight:500!important;background:#1e2130!important}
-details>div{background:#1e2130!important}
-[data-testid="stExpander"]{background:#1e2130!important;border:1px solid #2a2d3e!important;border-radius:10px!important;margin-bottom:6px!important}
-[data-testid="stExpander"] summary{background:#1e2130!important;color:#e6edf3!important}
-[data-testid="stExpander"] summary *{color:#e6edf3!important;background:#1e2130!important}
-[data-testid="stExpander"] svg{stroke:#e6edf3!important;fill:none!important}
-[data-testid="stExpander"] div{background:#1e2130!important}
-[data-testid="stExpander"] section{background:#1e2130!important}
-[data-testid="stExpander"] p{color:#c9d1d9!important}
-[data-testid="stExpander"] strong,[data-testid="stExpander"] b{color:#e6edf3!important}
-[data-testid="stExpander"] [data-testid="stMetricValue"]{color:#e6edf3!important}
-[data-testid="stExpander"] [data-testid="stMetricLabel"] p{color:#8b95a8!important}
-[data-testid="stExpanderDetails"]{background:#1e2130!important}
-[data-testid="stExpanderDetails"] div{background:#1e2130!important}
+[data-testid="stExpander"] {
+    background: #0c0f16 !important;
+    border: 1px solid #1a1f2e !important;
+    border-radius: 8px !important;
+    margin-bottom: 6px !important;
+}
+[data-testid="stExpander"] summary {
+    background: #0c0f16 !important;
+    color: #c8d6e8 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    font-family: 'IBM Plex Sans', sans-serif !important;
+}
+[data-testid="stExpander"] summary * { color: #c8d6e8 !important; }
+[data-testid="stExpander"] svg { stroke: #3d4f6b !important; }
+[data-testid="stExpander"] div,
+[data-testid="stExpander"] section,
+[data-testid="stExpanderDetails"],
+[data-testid="stExpanderDetails"] div { background: #0c0f16 !important; }
+[data-testid="stExpander"] p { color: #8899b4 !important; }
+[data-testid="stExpander"] strong,
+[data-testid="stExpander"] b { color: #c8d6e8 !important; }
 
 /* ── General text ── */
-.main h1,.main h2,.main h3,.main h4{color:#e6edf3!important}
-.stMarkdown p,.stMarkdown span,.stMarkdown li{color:#c9d1d9!important}
-.stCaption,[data-testid="stCaptionContainer"]{color:#6e7891!important}
-code{background:#252a3d!important;color:#60a5fa!important;border-radius:4px}
-hr{border-color:#2a2d3e!important}
+.main h1, .main h2, .main h3, .main h4 {
+    color: #e2e8f0 !important;
+    font-family: 'IBM Plex Sans', sans-serif !important;
+}
+.stMarkdown p, .stMarkdown span, .stMarkdown li { color: #8899b4 !important; }
+.stCaption, [data-testid="stCaptionContainer"] { color: #3d4f6b !important; }
+code {
+    background: #0f1623 !important;
+    color: #60a5fa !important;
+    border-radius: 4px !important;
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 11.5px !important;
+}
+hr { border-color: #1a1f2e !important; }
 
 /* ── Selectbox ── */
-[data-testid="stSelectbox"]>div>div{background:#1e2130!important;border:1px solid #2a2d3e!important;color:#e6edf3!important;border-radius:8px!important}
-[data-testid="stSelectbox"] svg{fill:#6e7891!important}
-[data-testid="stSelectbox"] span{color:#e6edf3!important}
-[data-baseweb="popover"],[data-baseweb="menu"],[data-baseweb="select"] ul{background:#1e2130!important;border:1px solid #2a2d3e!important;border-radius:10px!important}
-[data-baseweb="menu"] li,[data-baseweb="option"],[role="option"]{background:#1e2130!important;color:#c9d1d9!important;font-size:14px!important}
-[data-baseweb="option"]:hover,[role="option"]:hover,[aria-selected="true"][role="option"]{background:#252a3d!important;color:#60a5fa!important}
+[data-testid="stSelectbox"] > div > div {
+    background: #0c0f16 !important;
+    border: 1px solid #1a1f2e !important;
+    color: #c8d6e8 !important;
+    border-radius: 7px !important;
+    font-size: 12.5px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    font-family: 'IBM Plex Sans', sans-serif !important;
+}
+[data-testid="stSelectbox"] span { color: #c8d6e8 !important; }
+[data-testid="stSelectbox"] svg { fill: #3d4f6b !important; }
+[data-baseweb="popover"], [data-baseweb="menu"], [data-baseweb="select"] ul {
+    background: #0c0f16 !important;
+    border: 1px solid #1a1f2e !important;
+    border-radius: 8px !important;
+}
+[data-baseweb="menu"] li, [data-baseweb="option"], [role="option"] {
+    background: #0c0f16 !important;
+    color: #8899b4 !important;
+    font-size: 12.5px !important;
+    font-family: 'IBM Plex Sans', sans-serif !important;
+}
+[data-baseweb="option"]:hover, [role="option"]:hover, [aria-selected="true"][role="option"] {
+    background: #0f1623 !important;
+    color: #60a5fa !important;
+}
 
 /* ── Text input ── */
-[data-testid="stTextInput"] input{background:#1e2130!important;border:1px solid #2a2d3e!important;color:#e6edf3!important;border-radius:8px!important}
-[data-testid="stTextInput"] input::placeholder{color:#4a5568!important}
+[data-testid="stTextInput"] input {
+    background: #0c0f16 !important;
+    border: 1px solid #1a1f2e !important;
+    color: #c8d6e8 !important;
+    border-radius: 7px !important;
+    font-size: 12.5px !important;
+    height: 32px !important;
+    font-family: 'IBM Plex Sans', sans-serif !important;
+}
+[data-testid="stTextInput"] input::placeholder { color: #2d3a52 !important; }
 
-/* ── Radio ── */
-[data-testid="stRadio"] label{color:#c9d1d9!important}
+/* ── Metric ── */
+[data-testid="stMetricValue"] {
+    color: #e2e8f0 !important;
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 22px !important;
+}
+[data-testid="stMetricLabel"] p { color: #3d4f6b !important; font-size: 11px !important; }
 
 /* ── Badges ── */
-.badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap}
-.badge-high{background:#3d1a1a;color:#f87171;border:1px solid #5c2626}
-.badge-medium{background:#3d2f0a;color:#fbbf24;border:1px solid #5c470f}
-.badge-low{background:#0d2b1a;color:#34d399;border:1px solid #155230}
-.badge-type{background:#1a2540;color:#60a5fa;border:1px solid #253a60}
-.badge-portal{background:#252a3d;color:#a78bfa;border:1px solid #3b3466;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap}
-.section-header{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#4a5568;border-bottom:1px solid #2a2d3e;padding-bottom:8px;margin-bottom:14px}
+.badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 4px;
+    white-space: nowrap;
+    letter-spacing: 0.04em;
+}
+.badge-high   { background:#1f0f0f; color:#f87171; border:1px solid #3d1a1a; }
+.badge-medium { background:#1a150a; color:#fbbf24; border:1px solid #3d2f0a; }
+.badge-low    { background:#091a10; color:#34d399; border:1px solid #0f3320; }
+.badge-type   { background:#0a1220; color:#60a5fa; border:1px solid #1e2d47; }
+.badge-portal { background:#120f20; color:#a78bfa; border:1px solid #2d2252; }
+
+/* ── Running crawl banner ── */
+.running-banner {
+    background: #091a10;
+    border: 1px solid #0f3320;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 12.5px;
+    color: #34d399;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+}
+.idle-banner {
+    background: #0c0f16;
+    border: 1px solid #1a1f2e;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 12.5px;
+    color: #3d4f6b;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -198,7 +430,9 @@ def time_ago(ts):
 def friendly_page_name(url):
     try:
         if "__DROPDOWN_" in url:
-            return "Dropdown: " + url.split("__DROPDOWN_")[-1].replace("_"," ").title()
+            return "↓ " + url.split("__DROPDOWN_")[-1].replace("_"," ").title()
+        if "__PAGE_" in url:
+            return url.split("__PAGE_")[-1].replace("_"," ").title()
         if "#/plastic/home/" in url.lower():
             name = url.lower().split("#/plastic/home/")[-1]
             return name.replace("/"," › ").replace("-"," ").replace("_"," ").title()
@@ -225,7 +459,6 @@ def severity_badge(diff_lines):
 
 
 def is_crawl_running():
-    """Only treat as running if started within last 15 min and pages_visited is still 0."""
     rows = query_db(
         "SELECT id,portal,started_at,pages_visited FROM crawl_log "
         "WHERE status='running' "
@@ -237,19 +470,15 @@ def is_crawl_running():
 
 
 def fix_stale_crawls():
-    """Auto-fix any stuck 'running' rows older than 15 min on startup."""
     try:
         conn = sqlite3.connect(DB_PATH)
-        fixed = conn.execute(
+        conn.execute(
             """UPDATE crawl_log SET status='done'
                WHERE status='running'
                AND started_at < datetime('now','-15 minutes')"""
         ).rowcount
         conn.commit()
         conn.close()
-        if fixed:
-            import logging
-            logging.getLogger(__name__).info("Auto-fixed %d stale running crawl(s)", fixed)
     except Exception:
         pass
 
@@ -257,50 +486,38 @@ def fix_stale_crawls():
 PID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)) or ".", ".crawler.pid")
 LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)) or ".", ".crawler.log")
 
-
-# Maps portal name → which crawler script to run
+# ── UPDATED: EPR USEDOIL added ─────────────────────────────────────────────
 PORTAL_CRAWLER_MAP = {
-    "EPR PLASTIC": "crawler.py",
-    "EPR EWASTE":  "crawler_ewaste.py",
+    "EPR PLASTIC":  "crawler.py",
+    "EPR EWASTE":   "crawler_ewaste.py",
+    "EPR BATTERY":  "crawler_battery.py",
+    "EPR TYRES":    "crawler_tyres.py",
+    "EPR USEDOIL":  "crawler_usedoil.py",
 }
 
 
 def launch_crawl(portal=None):
-    """
-    Launch the correct crawler script for the given portal.
-    EPR PLASTIC → crawler.py
-    EPR EWASTE  → crawler_ewaste.py
-    All Portals → crawler.py --once (which routes internally)
-    """
-    # Pick the right script
     if portal and portal in PORTAL_CRAWLER_MAP:
         script = PORTAL_CRAWLER_MAP[portal]
         cmd    = [sys.executable, script, "--once"]
     elif portal:
-        # Unknown portal — use main crawler with --portal flag
         cmd = [sys.executable, "crawler.py", "--once", "--portal", portal]
     else:
-        # All Portals — main crawler handles routing
         cmd = [sys.executable, "crawler.py", "--once"]
 
     log_fh = open(LOG_FILE, "w", encoding="utf-8", buffering=1)
     proc = subprocess.Popen(
-        cmd,
-        stdout=log_fh,
-        stderr=log_fh,
+        cmd, stdout=log_fh, stderr=log_fh,
         cwd=os.path.dirname(os.path.abspath(__file__)) or ".",
     )
-    # Save PID so Stop button can kill it
     try:
         with open(PID_FILE, "w") as f:
             f.write(str(proc.pid))
     except Exception:
         pass
-    print(f"Launched {cmd[1]} for portal={portal or 'all'} PID={proc.pid}")
 
 
 def read_log(tail=60):
-    """Read last `tail` lines from the crawler log file."""
     try:
         if not os.path.exists(LOG_FILE):
             return ["No log file yet — start a crawl first."]
@@ -312,9 +529,7 @@ def read_log(tail=60):
 
 
 def stop_crawl():
-    """Kill the running crawler process and mark DB row as stopped."""
     killed = False
-    # Kill by PID file
     try:
         if os.path.exists(PID_FILE):
             with open(PID_FILE) as f:
@@ -329,12 +544,9 @@ def stop_crawl():
             killed = True
     except Exception:
         pass
-    # Mark DB row as stopped
     try:
         conn = sqlite3.connect(DB_PATH)
-        conn.execute(
-            "UPDATE crawl_log SET status='stopped', finished_at=datetime('now') WHERE status='running'"
-        )
+        conn.execute("UPDATE crawl_log SET status='stopped', finished_at=datetime('now') WHERE status='running'")
         conn.commit()
         conn.close()
     except Exception:
@@ -457,7 +669,7 @@ def render_change_expander(change):
         detail={};sev="🟢 Low";sev_label="Low";summary=""
     icon,_ = DIFF_LABELS.get(change["diff_type"],("❓",""))
     label_str = {"html":"Content","visual":"Visual","json":"Data","har":"API"}.get(change["diff_type"],"?")
-    with st.expander(f"{icon} **[{change['portal']}]** {page_name} — {label_str} — {when}", expanded=False):
+    with st.expander(f"{icon} [{change['portal']}]  {page_name} — {label_str} — {when}", expanded=False):
         c1,c2,c3 = st.columns(3)
         with c1:
             st.markdown(f"**Portal:** `{change['portal']}`")
@@ -485,96 +697,90 @@ def render_change_expander(change):
 
 
 # ── STARTUP CLEANUP ─────────────────────────────────────────────────────────
-fix_stale_crawls()  # fix any stuck 'running' rows before rendering
+fix_stale_crawls()
 
-# ── SESSION STATE — active view & portal ──────────────────────────────────────
-
-if "view" not in st.session_state:
-    st.session_state.view = "overview"
-if "portal" not in st.session_state:
-    st.session_state.portal = "All Portals"
+# ── SESSION STATE ─────────────────────────────────────────────────────────────
+if "view"   not in st.session_state: st.session_state.view   = "overview"
+if "portal" not in st.session_state: st.session_state.portal = "All Portals"
 
 all_portals    = get_all_portals()
 portal_options = ["All Portals"] + all_portals
 running_crawl  = is_crawl_running()
 
-lc_row = query_db("SELECT * FROM crawl_log ORDER BY started_at DESC LIMIT 1")
-lc     = lc_row[0] if lc_row else {}
-
 total_crawls     = (query_db("SELECT COUNT(*) as c FROM crawl_log") or [{"c":0}])[0]["c"]
 all_time_changes = (query_db("SELECT COUNT(*) as c FROM changes")   or [{"c":0}])[0]["c"]
 
-portal_filter = None if st.session_state.portal == "All Portals" else st.session_state.portal
+portal_filter  = None if st.session_state.portal == "All Portals" else st.session_state.portal
 latest_changes = get_latest_crawl_changes(portal_filter)
 
 
-# ── TOP NAVBAR ────────────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════
+# NAVBAR — compact single row
+# ══════════════════════════════════════════════════════════════════
 
-# Tabs row
-col_brand, col_tabs, col_right = st.columns([2, 5, 3])
+nav_views = [
+    ("overview",    "🏠", "Overview"),
+    ("changes",     "🚨", "Changes"),
+    ("screenshots", "📸", "Screenshots"),
+    ("history",     "📅", "History"),
+    ("console",     "🖥️", "Console"),
+]
 
-with col_brand:
-    st.markdown("<div style='padding:10px 0;font-size:16px;font-weight:700;color:#e6edf3'>🔍 Change Monitor</div>",
-                unsafe_allow_html=True)
+nb_brand, nb_tabs_cols, nb_right = st.columns([2, 6, 4])
 
-with col_tabs:
-    t1,t2,t3,t4,col_tabs2 = st.columns(5)
-    with t1:
-        if st.button("🏠 Overview",   use_container_width=True,
-                     type="primary" if st.session_state.view=="overview"   else "secondary"):
-            st.session_state.view="overview";   st.rerun()
-    with t2:
-        if st.button("🚨 Changes",    use_container_width=True,
-                     type="primary" if st.session_state.view=="changes"    else "secondary"):
-            st.session_state.view="changes";    st.rerun()
-    with t3:
-        if st.button("📸 Screenshots",use_container_width=True,
-                     type="primary" if st.session_state.view=="screenshots" else "secondary"):
-            st.session_state.view="screenshots";st.rerun()
-    with t4:
-        if st.button("📅 History",    use_container_width=True,
-                     type="primary" if st.session_state.view=="history"    else "secondary"):
-            st.session_state.view="history";    st.rerun()
+with nb_brand:
+    st.markdown(
+        "<div style='padding:8px 0 6px;font-family:\"IBM Plex Mono\",monospace;"
+        "font-size:13px;font-weight:600;color:#e2e8f0;letter-spacing:0.02em'>"
+        "🔍 Change Monitor</div>",
+        unsafe_allow_html=True
+    )
 
-with col_tabs2:
-    if st.button("🖥️ Console", use_container_width=True,
-                 type="primary" if st.session_state.view=="console" else "secondary"):
-        st.session_state.view="console"; st.rerun()
+# Nav tabs — one button per column
+tab_cols = nb_tabs_cols.columns(len(nav_views))
+for col, (view_id, icon, label) in zip(tab_cols, nav_views):
+    with col:
+        is_active = st.session_state.view == view_id
+        if st.button(
+            f"{icon} {label}",
+            key=f"nav_{view_id}",
+            use_container_width=True,
+            type="primary" if is_active else "secondary",
+        ):
+            st.session_state.view = view_id
+            st.rerun()
 
-with col_right:
-    r1,r2,r3 = st.columns([3,2,2])
-    with r1:
-        sel = st.selectbox("Portal", portal_options,
-                           index=portal_options.index(st.session_state.portal)
-                                 if st.session_state.portal in portal_options else 0,
-                           label_visibility="collapsed", key="top_portal_select")
+with nb_right:
+    rc1, rc2, rc3 = st.columns([3, 2, 2])
+    with rc1:
+        sel = st.selectbox(
+            "portal_sel", portal_options,
+            index=portal_options.index(st.session_state.portal)
+                  if st.session_state.portal in portal_options else 0,
+            label_visibility="collapsed", key="top_portal_select"
+        )
         if sel != st.session_state.portal:
             st.session_state.portal = sel
             st.rerun()
-    with r2:
+    with rc2:
         if running_crawl:
-            if st.button("⏹ Stop Crawl", use_container_width=True, type="primary",
-                         help="Kill the running crawler process"):
-                stopped = stop_crawl()
-                if stopped:
-                    st.warning("🛑 Crawl stopped.")
-                else:
-                    st.info("Marked as stopped in DB.")
-                time.sleep(1)
-                st.rerun()
+            if st.button("⏹ Stop", use_container_width=True, type="primary"):
+                stop_crawl()
+                time.sleep(1); st.rerun()
         else:
-            if st.button("▶ Run Crawl", use_container_width=True, type="primary"):
+            if st.button("▶ Run", use_container_width=True, type="primary"):
                 launch_crawl(portal_filter)
-                time.sleep(2)
-                st.success("✅ Crawl started!")
-                st.rerun()
-    with r3:
-        if st.button("🔄 Refresh", use_container_width=True):
+                time.sleep(2); st.rerun()
+    with rc3:
+        if st.button("↺ Refresh", use_container_width=True):
             st.rerun()
 
-st.markdown("<hr style='margin:0 0 1.5rem 0;border-color:#2a2d3e'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin:4px 0 20px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 
-# Auto-refresh every 10s while crawl is running
+# Wrap remaining content in page-content padding
+st.markdown("<div style='padding:0 8px'>", unsafe_allow_html=True)
+
+# Auto-refresh
 if running_crawl:
     st.markdown("<script>setTimeout(()=>window.location.reload(),10000)</script>",
                 unsafe_allow_html=True)
@@ -584,8 +790,6 @@ if running_crawl:
 # VIEW: OVERVIEW
 # ════════════════════════════════════════════════════════════════════════════════
 if st.session_state.view == "overview":
-    st.markdown("<h2 style='color:#e6edf3;margin-bottom:4px'>🏠 Portal Overview</h2>", unsafe_allow_html=True)
-    st.caption("Health summary for every monitored portal.")
 
     portal_stats  = get_portal_stats(portal_filter)
     total_portals = len(portal_stats)
@@ -594,30 +798,41 @@ if st.session_state.view == "overview":
     portals_ok    = sum(1 for p in portal_stats if p["today_changes"]==0)
     total_today   = sum(p["today_changes"] for p in portal_stats)
 
-    c1,c2,c3,c4,c5 = st.columns(5)
-    for col,label,val,color in [
-        (c1,"Portals",       total_portals,  "#60a5fa"),
-        (c2,"Changes today", total_today,    "#f87171" if total_today else "#34d399"),
-        (c3,"🔴 Alert",      portals_alert,  "#f87171"),
-        (c4,"🟡 Warning",    portals_warn,   "#fbbf24"),
-        (c5,"🟢 Clean",      portals_ok,     "#34d399"),
-    ]:
-        with col:
-            st.markdown(f'<div class="stat-card"><div class="label">{label}</div>'
-                        f'<div class="value" style="color:{color};font-size:28px">{val}</div></div>',
-                        unsafe_allow_html=True)
+    st.markdown(
+        "<div class='page-title'>🏠 Portal Overview</div>"
+        "<div class='page-subtitle'>Health summary for every monitored portal</div>",
+        unsafe_allow_html=True
+    )
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<div class='section-header'>Per-portal status</div>", unsafe_allow_html=True)
+    # ── Stat cards ─────────────────────────────────────────────────────────────
+    cards = [
+        ("PORTALS",        total_portals, "#3b82f6"),
+        ("CHANGES TODAY",  total_today,   "#f87171" if total_today else "#34d399"),
+        ("🔴 ALERT",       portals_alert, "#f87171"),
+        ("🟡 WARNING",     portals_warn,  "#fbbf24"),
+        ("🟢 CLEAN",       portals_ok,    "#34d399"),
+    ]
+    cols = st.columns(5)
+    for col, (label, val, color) in zip(cols, cards):
+        with col:
+            st.markdown(
+                f"<div class='stat-card' style='--accent:{color}'>"
+                f"<div class='s-label'>{label}</div>"
+                f"<div class='s-value' style='color:{color}'>{val}</div>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
+
+    st.markdown("<div class='section-hdr'>Per-portal status</div>", unsafe_allow_html=True)
 
     if not portal_stats:
-        st.info("No portals crawled yet. Click **▶ Run Crawl** above to start.")
+        st.info("No portals crawled yet. Click **▶ Run** above to start.")
     else:
         for p in portal_stats:
-            chg = p["today_changes"]
+            chg    = p["today_changes"]
             status = "alert" if chg>3 else ("warn" if chg>0 else "ok")
             dot    = "🔴" if status=="alert" else ("🟡" if status=="warn" else "🟢")
-            lc_time= time_ago(p["last_crawl_at"]) if p["last_crawl_at"] else "never"
+            lc_time = time_ago(p["last_crawl_at"]) if p["last_crawl_at"] else "never"
             last_status = p["last_status"] or "unknown"
             pages_val   = p["pages_visited"] if p["pages_visited"] else "—"
 
@@ -628,45 +843,55 @@ if st.session_state.view == "overview":
                     stale = datetime.now()-datetime.fromisoformat(p["last_crawl_at"]) > timedelta(minutes=30)
                 except Exception: pass
 
-            display_status = ("❌ crashed" if stale else
-                              "🔄 running…" if last_status=="running" else
-                              "✅ done"     if last_status=="done"    else last_status)
+            display_status = (
+                "❌ crashed"  if stale else
+                "🔄 running…" if last_status=="running" else
+                "✅ done"     if last_status=="done" else last_status
+            )
 
             with st.expander(
-                f"{dot} **{p['portal']}** — "
-                f"{'⚠️ '+str(chg)+' change(s) today' if chg else '✅ Clean today'} — "
-                f"Last crawl: {lc_time}", expanded=(status!="ok")):
+                f"{dot}  {p['portal']}  —  "
+                f"{'⚠️ '+str(chg)+' change(s) today' if chg else '✅ Clean today'}  —  "
+                f"Last crawl: {lc_time}",
+                expanded=(status!="ok")
+            ):
                 pc1,pc2,pc3,pc4 = st.columns(4)
-                pc1.metric("Today's changes",  chg)
-                pc2.metric("All-time changes", p["all_time_changes"])
-                pc3.metric("Pages (last run)", pages_val)
-                pc4.metric("Last status",      display_status)
+                pc1.metric("Today",      chg)
+                pc2.metric("All-time",   p["all_time_changes"])
+                pc3.metric("Pages",      pages_val)
+                pc4.metric("Status",     display_status)
 
                 if last_status=="running" and not stale:
-                    st.warning("🔄 Crawl in progress — auto-refreshing…")
+                    st.warning("🔄 Crawl in progress…")
                 elif stale:
-                    st.error("❌ Crawl seems crashed. Restart from **▶ Run Crawl**.")
+                    st.error("❌ Crawl seems crashed. Use **▶ Run** to restart.")
 
                 st.caption(f"Last crawl: {p['last_crawl_at'][:16] if p['last_crawl_at'] else 'never'}")
 
                 if chg>0:
                     st.markdown("---")
                     st.markdown("**Latest changes:**")
-                    for ch in query_db("SELECT * FROM changes WHERE portal=? AND date(timestamp)=date('now') "
-                                       "ORDER BY timestamp DESC LIMIT 5", (p["portal"],)):
+                    for ch in query_db(
+                        "SELECT * FROM changes WHERE portal=? AND date(timestamp)=date('now') "
+                        "ORDER BY timestamp DESC LIMIT 5", (p["portal"],)
+                    ):
                         icon,lbl = DIFF_LABELS.get(ch["diff_type"],("❓","?"))
-                        st.markdown(f"&nbsp;&nbsp;{icon} `{friendly_page_name(ch['url'])}` — {lbl} — {time_ago(ch['timestamp'])}")
+                        st.markdown(
+                            f"&nbsp;&nbsp;{icon} `{friendly_page_name(ch['url'])}` — {lbl} — {time_ago(ch['timestamp'])}"
+                        )
 
 
 # ════════════════════════════════════════════════════════════════════════════════
 # VIEW: LATEST CHANGES
 # ════════════════════════════════════════════════════════════════════════════════
 elif st.session_state.view == "changes":
-    st.markdown("<h2 style='color:#e6edf3;margin-bottom:4px'>🚨 Latest Changes</h2>", unsafe_allow_html=True)
     scope = f"Portal: **{st.session_state.portal}**" if portal_filter else "All portals"
-    st.caption(f"Scope: {scope}  ·  Most recent crawl run")
+    st.markdown(
+        "<div class='page-title'>🚨 Latest Changes</div>"
+        f"<div class='page-subtitle'>Scope: {scope} · Most recent crawl run</div>",
+        unsafe_allow_html=True
+    )
 
-    # ── Filter bar ────────────────────────────────────────────────────────────
     f1,f2,f3,f4 = st.columns([2,2,2,3])
     with f1:
         filter_type = st.selectbox("Type",
@@ -683,7 +908,7 @@ elif st.session_state.view == "changes":
     with f4:
         search_q = st.text_input("🔍 Search page", placeholder="e.g. Home, SOP…", key="search_q")
 
-    st.markdown("<hr>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin:8px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 
     if not latest_changes:
         st.success("✅ No changes in the latest crawl.")
@@ -705,9 +930,7 @@ elif st.session_state.view == "changes":
         if search_q:
             filtered = [c for c in filtered if search_q.lower() in friendly_page_name(c["url"]).lower()]
 
-        st.markdown(f"<div style='font-size:13px;color:#6e7891;margin-bottom:12px'>"
-                    f"Showing <b style='color:#e6edf3'>{len(filtered)}</b> of {len(latest_changes)} change(s)</div>",
-                    unsafe_allow_html=True)
+        st.caption(f"Showing **{len(filtered)}** of {len(latest_changes)} change(s)")
         for change in filtered:
             render_change_expander(change)
 
@@ -716,8 +939,11 @@ elif st.session_state.view == "changes":
 # VIEW: SCREENSHOTS
 # ════════════════════════════════════════════════════════════════════════════════
 elif st.session_state.view == "screenshots":
-    st.markdown("<h2 style='color:#e6edf3;margin-bottom:4px'>📸 Changed Pages</h2>", unsafe_allow_html=True)
-    st.caption("Before / after screenshots of changed pages.")
+    st.markdown(
+        "<div class='page-title'>📸 Changed Pages</div>"
+        "<div class='page-subtitle'>Before / after screenshots of changed pages</div>",
+        unsafe_allow_html=True
+    )
 
     if not latest_changes:
         st.success("✅ No changed pages in the latest crawl.")
@@ -728,20 +954,23 @@ elif st.session_state.view == "screenshots":
             p   = chg.get("portal","")
             return f"[{p}] {friendly_page_name(url)}" if p else friendly_page_name(url)
 
-        labels        = [url_label(u) for u in changed_urls]
-        sel_label     = st.selectbox(f"Select page ({len(changed_urls)} changed)", labels)
-        selected_url  = changed_urls[labels.index(sel_label)]
+        labels       = [url_label(u) for u in changed_urls]
+        sel_label    = st.selectbox(f"Select page ({len(changed_urls)} changed)", labels)
+        selected_url = changed_urls[labels.index(sel_label)]
 
-        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin:8px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
+
         baseline     = query_db("SELECT * FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2", (selected_url,))
         page_changes = query_db("SELECT * FROM changes WHERE url=? ORDER BY timestamp DESC", (selected_url,))
         latest_b     = baseline[0] if len(baseline)>0 else None
         prev_b       = baseline[1] if len(baseline)>1 else None
         chg_portal   = page_changes[0]["portal"] if page_changes else "—"
 
-        st.markdown(f"<h3 style='color:#e6edf3'>📄 {friendly_page_name(selected_url)}"
-                    f" <span style='font-size:13px;color:#a78bfa'>[{chg_portal}]</span></h3>",
-                    unsafe_allow_html=True)
+        st.markdown(
+            f"<div class='page-title' style='font-size:17px'>{friendly_page_name(selected_url)}"
+            f" <span style='font-size:12px;color:#a78bfa;font-weight:500'>[{chg_portal}]</span></div>",
+            unsafe_allow_html=True
+        )
 
         sc1,sc2 = st.columns(2)
         with sc1:
@@ -776,11 +1005,14 @@ elif st.session_state.view == "screenshots":
 # VIEW: CRAWL HISTORY
 # ════════════════════════════════════════════════════════════════════════════════
 elif st.session_state.view == "history":
-    st.markdown("<h2 style='color:#e6edf3;margin-bottom:4px'>📅 Crawl History</h2>", unsafe_allow_html=True)
     scope = f"Portal: **{st.session_state.portal}**" if portal_filter else "All portals"
-    st.caption(f"Scope: {scope}")
+    st.markdown(
+        "<div class='page-title'>📅 Crawl History</div>"
+        f"<div class='page-subtitle'>Scope: {scope}</div>",
+        unsafe_allow_html=True
+    )
 
-    h1,h2 = st.columns([2,5])
+    h1,_ = st.columns([2,5])
     with h1:
         hist_filter = st.selectbox("Filter",
             ["All Crawls","✅ With Changes","🟢 No Changes"], key="hist_filter")
@@ -790,7 +1022,7 @@ elif st.session_state.view == "history":
     if not crawl_logs:
         st.info("No crawls recorded yet.")
     else:
-        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin:8px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
         for log in crawl_logs:
             count_row = query_db(
                 "SELECT COUNT(*) as c FROM changes WHERE portal=? AND timestamp>=? AND timestamp<=?",
@@ -807,12 +1039,13 @@ elif st.session_state.view == "history":
             with st.expander(
                 f"{'✅' if done else '🔄' if log['status']=='running' else '❌'} "
                 f"[{log['portal']}]  {started}  |  "
-                f"{'⚠️ '+str(count)+' change(s)' if count>0 else '🟢 No changes'}  |  "
-                f"{log['pages_visited']} pages", expanded=False):
-
+                f"{'⚠️ '+str(count)+' change(s)' if count>0 else '✅ No changes'}  |  "
+                f"{log['pages_visited']} pages",
+                expanded=False
+            ):
                 dc1,dc2,dc3,dc4 = st.columns(4)
-                dc1.metric("Pages scanned", log["pages_visited"])
-                dc2.metric("Changes found", count)
+                dc1.metric("Pages", log["pages_visited"])
+                dc2.metric("Changes", count)
                 dc3.markdown(f"**Started:** {started}")
                 dc4.markdown(f"**Finished:** {finished}")
                 st.markdown(f"**Portal:** `{log['portal']}`  **Status:** `{log['status']}`")
@@ -820,47 +1053,46 @@ elif st.session_state.view == "history":
                 if count>0:
                     st.markdown("---")
                     st.markdown("**Pages that changed:**")
-                    for p in query_db(
+                    for p_row in query_db(
                         "SELECT DISTINCT url,diff_type FROM changes WHERE portal=? AND timestamp>=? AND timestamp<=?",
-                        (log["portal"],log["started_at"],log["finished_at"] or datetime.now().isoformat()))[:10]:
-                        icon,lbl = DIFF_LABELS.get(p["diff_type"],("❓","?"))
-                        st.markdown(f"&nbsp;&nbsp;{icon} `{friendly_page_name(p['url'])}` — {lbl} change")
+                        (log["portal"],log["started_at"],log["finished_at"] or datetime.now().isoformat())
+                    )[:10]:
+                        icon,lbl = DIFF_LABELS.get(p_row["diff_type"],("❓","?"))
+                        st.markdown(f"&nbsp;&nbsp;{icon} `{friendly_page_name(p_row['url'])}` — {lbl}")
 
 
 # ════════════════════════════════════════════════════════════════════════════════
 # VIEW: CONSOLE
 # ════════════════════════════════════════════════════════════════════════════════
 elif st.session_state.view == "console":
-    st.markdown("<h2 style=\'color:#e6edf3;margin-bottom:4px\'>🖥️ Crawler Console</h2>", unsafe_allow_html=True)
-    st.caption("Live output from the crawler process.")
+    st.markdown(
+        "<div class='page-title'>🖥️ Crawler Console</div>"
+        "<div class='page-subtitle'>Live output from the crawler process</div>",
+        unsafe_allow_html=True
+    )
 
-    # Controls row
-    cc1, cc2, cc3 = st.columns([1,1,5])
+    cc1, cc2, _ = st.columns([1,1,5])
     with cc1:
-        if st.button("🔄 Refresh log", use_container_width=True):
-            st.rerun()
+        if st.button("↺ Refresh log", use_container_width=True): st.rerun()
     with cc2:
         tail_lines = st.selectbox("Lines", [30, 60, 100, 200], index=1,
                                   label_visibility="collapsed", key="tail_lines")
 
     log_lines = read_log(tail=tail_lines)
 
-    # Status banner
     if running_crawl:
-        st.markdown("""<div style='background:#0d2b1a;border:1px solid #155230;border-radius:8px;
-            padding:10px 14px;margin-bottom:12px;font-size:13px;color:#34d399;font-weight:600'>
-            🔄 Crawler is running — log is updating live. Page auto-refreshes every 5s.</div>""",
-            unsafe_allow_html=True)
-        # faster auto-refresh on console view
+        st.markdown(
+            "<div class='running-banner'>🔄 Crawler is running — refreshing every 5s</div>",
+            unsafe_allow_html=True
+        )
         st.markdown("<script>setTimeout(()=>window.location.reload(),5000)</script>",
                     unsafe_allow_html=True)
     else:
-        st.markdown("""<div style='background:#1e2130;border:1px solid #2a2d3e;border-radius:8px;
-            padding:10px 14px;margin-bottom:12px;font-size:13px;color:#6e7891'>
-            ⏸ Crawler is idle. Click <b>▶ Run Crawl</b> in the top bar to start.</div>""",
-            unsafe_allow_html=True)
+        st.markdown(
+            "<div class='idle-banner'>⏸ Crawler idle — click ▶ Run in the top bar to start</div>",
+            unsafe_allow_html=True
+        )
 
-    # Color-code log lines
     def colorize(line):
         if not line.strip(): return ""
         if any(x in line for x in ["ERROR","error","Exception","Traceback"]):
@@ -874,7 +1106,7 @@ elif st.session_state.view == "console":
         elif any(x in line for x in ["✅","Change","change"]):
             color = "#a78bfa"
         else:
-            color = "#c9d1d9"
+            color = "#8899b4"
         escaped = line.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
         return f"<span style='color:{color}'>{escaped}</span>"
 
@@ -882,15 +1114,14 @@ elif st.session_state.view == "console":
     log_html = "<br>".join(colored_lines)
 
     st.markdown(f"""
-        <div style='background:#0d1117;border:1px solid #2a2d3e;border-radius:10px;
-                    padding:16px 18px;font-family:monospace;font-size:12px;
-                    line-height:1.7;max-height:520px;overflow-y:auto;
+        <div style='background:#050709;border:1px solid #1a1f2e;border-radius:10px;
+                    padding:18px 20px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+                    line-height:1.75;max-height:520px;overflow-y:auto;
                     white-space:pre-wrap;word-break:break-all'>
             {log_html}
         </div>
     """, unsafe_allow_html=True)
 
-    # Download log button
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "rb") as f:
             st.download_button("⬇ Download full log", f, file_name="crawler.log",
@@ -898,6 +1129,12 @@ elif st.session_state.view == "console":
 
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
-st.markdown("---")
-st.caption(f"Portal Change Monitor · Scope: {st.session_state.portal} · "
-           f"Refreshed: {datetime.now().strftime('%d %b %Y, %I:%M %p')}")
+st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("<hr style='border-color:#1a1f2e;margin-top:32px'>", unsafe_allow_html=True)
+st.markdown(
+    f"<div style='font-family:\"IBM Plex Mono\",monospace;font-size:11px;color:#2d3a52;"
+    f"padding:0 8px 16px'>"
+    f"Portal Change Monitor · {st.session_state.portal} · "
+    f"{datetime.now().strftime('%d %b %Y, %I:%M %p')}</div>",
+    unsafe_allow_html=True
+)

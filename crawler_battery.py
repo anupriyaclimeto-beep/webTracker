@@ -2,16 +2,17 @@
 crawler_battery.py — CPCB EPR Battery Waste Portal Crawler
 URL: https://eprbattery.cpcb.gov.in/
 
-Known pages from search results:
-  1.  Home page                → scroll & stitch
-  2.  National Dashboard       → full page (public, no login needed)
-  3.  About EPR / BWM Rules    → dropdown screenshot
-  4.  SOP                      → dropdown screenshot
-  5.  Important Documents      → scroll page (likely many items)
-  6.  Lodge Complaint          → dropdown screenshot
-  7.  Any other dropdowns found
-
-NOTE: Update nav_items list once actual navbar screenshots are available.
+Navbar items crawled (from actual portal screenshots):
+  1.  Home page                        → scroll & stitch
+  2.  National Dashboard               → full scroll page (public)
+  3.  Important Communication          → dropdown screenshot  [NEW]
+  4.  FAQs                             → scroll page         [NEW]
+  5.  Rules                            → dropdown screenshot [NEW]
+  6.  Video Tutorial                   → dropdown screenshot [NEW]
+  7.  SOP for Registration             → dropdown screenshot [NEW]
+  8.  Guidance Manuals                 → dropdown screenshot [NEW]
+  9.  Lodge Complaint                  → dropdown screenshot
+  10. Registration Issued              → scroll page         [NEW]
 """
 
 import asyncio
@@ -41,9 +42,9 @@ logger = logging.getLogger(__name__)
 with open("config.json") as f:
     config = json.load(f)
 
-ARCHIVE_DIR = config["storage"]["archive_dir"]
-PORTAL_NAME = "EPR BATTERY"
-HOME_URL    = "https://eprbattery.cpcb.gov.in/"
+ARCHIVE_DIR   = config["storage"]["archive_dir"]
+PORTAL_NAME   = "EPR BATTERY"
+HOME_URL      = "https://eprbattery.cpcb.gov.in/"
 DASHBOARD_URL = "https://eprbattery.cpcb.gov.in/user/nationaldashboard"
 
 
@@ -162,7 +163,7 @@ async def click_item(page, *labels) -> bool:
 
 
 async def do_dropdown(page, key, har_path, pages_visited, *labels):
-    """Click dropdown → single screenshot → escape. Returns updated count."""
+    """Hover/click to open dropdown → single viewport screenshot → escape."""
     await goto_home(page)
     if await click_item(page, *labels):
         snap = await save_snapshot(page, key,
@@ -176,7 +177,7 @@ async def do_dropdown(page, key, har_path, pages_visited, *labels):
 
 
 async def do_scroll(page, key, har_path, pages_visited, *labels):
-    """Click item → scroll & stitch whole page. Returns updated count."""
+    """Click item → navigate → scroll & stitch whole page."""
     await goto_home(page)
     if await click_item(page, *labels):
         snap = await save_snapshot(page, key, await scroll_and_stitch(page))
@@ -239,46 +240,80 @@ async def crawl_battery_portal(portal_config: dict):
         pages_visited += 1
         logger.info("National Dashboard done ✓")
 
-        # ── STEP 3: About EPR / BWM Rules dropdown ────────────────────────────
-        logger.info("═══ STEP 3: About EPR dropdown ═══")
+        # ── STEP 3: Important Communication dropdown ──────────────────────────
+        # Seen in navbar (Image 5): many sub-items including deadline notices,
+        # EC Guidelines, labelling requirements, etc.
+        logger.info("═══ STEP 3: Important Communication dropdown ═══")
         pages_visited = await do_dropdown(
-            page, HOME_URL + "__DROPDOWN_AboutEPR", har_path, pages_visited,
-            "About EPR", "BWM Rules", "About"
+            page, HOME_URL + "__DROPDOWN_ImportantCommunication", har_path, pages_visited,
+            "Important Communication", "Important Communications"
         )
 
-        # ── STEP 4: SOP dropdown ──────────────────────────────────────────────
-        logger.info("═══ STEP 4: SOP dropdown ═══")
-        pages_visited = await do_dropdown(
-            page, HOME_URL + "__DROPDOWN_SOP", har_path, pages_visited,
-            "SOP"
-        )
-
-        # ── STEP 5: Important Documents — scroll page ─────────────────────────
-        logger.info("═══ STEP 5: Important Documents ═══")
+        # ── STEP 4: FAQs page ─────────────────────────────────────────────────
+        # Visible as a top-level nav link (Image 5). Scroll full page.
+        logger.info("═══ STEP 4: FAQs page ═══")
         pages_visited = await do_scroll(
-            page, HOME_URL + "__DROPDOWN_ImportantDocuments", har_path, pages_visited,
-            "Important Documents", "Important Document"
+            page, HOME_URL + "__PAGE_FAQs", har_path, pages_visited,
+            "FAQs", "FAQ"
         )
 
-        # ── STEP 6: Lodge Complaint dropdown ──────────────────────────────────
-        logger.info("═══ STEP 6: Lodge Complaint dropdown ═══")
+        # ── STEP 5: Rules dropdown ────────────────────────────────────────────
+        # Sub-items (Image 4):
+        #   • Battery Waste Management Rules, 24 February, 2025
+        #   • Battery Waste Management Rules, 20 June, 2024
+        #   • Battery Waste Management Rules, 14 March, 2024
+        #   • Battery Waste Management Rules, 2023
+        #   • Battery Waste Management Rules, 2022
+        logger.info("═══ STEP 5: Rules dropdown ═══")
+        pages_visited = await do_dropdown(
+            page, HOME_URL + "__DROPDOWN_Rules", har_path, pages_visited,
+            "Rules"
+        )
+
+        # ── STEP 6: Video Tutorial dropdown ──────────────────────────────────
+        # Sub-items (Image 2): Producer, Recycler, Refurbisher
+        logger.info("═══ STEP 6: Video Tutorial dropdown ═══")
+        pages_visited = await do_dropdown(
+            page, HOME_URL + "__DROPDOWN_VideoTutorial", har_path, pages_visited,
+            "Video Tutorial", "Video Tutorials"
+        )
+
+        # ── STEP 7: SOP for Registration dropdown ─────────────────────────────
+        # Visible in navbar (Images 4 & 5) as "SOP for Registration"
+        logger.info("═══ STEP 7: SOP for Registration dropdown ═══")
+        pages_visited = await do_dropdown(
+            page, HOME_URL + "__DROPDOWN_SOPforRegistration", har_path, pages_visited,
+            "SOP for Registration", "SOP"
+        )
+
+        # ── STEP 8: Guidance Manuals dropdown ────────────────────────────────
+        # Sub-items (Image 3):
+        #   • Registration of Producer
+        #   • Registration of Recyclers
+        #   • Guidance Manual for Producers
+        #   • Guidance Manual for Recyclers
+        #   • Guidance Manual for Refurbishers
+        #   • Edit Sales Data & Account Unblock  [NEW badge]
+        logger.info("═══ STEP 8: Guidance Manuals dropdown ═══")
+        pages_visited = await do_dropdown(
+            page, HOME_URL + "__DROPDOWN_GuidanceManuals", har_path, pages_visited,
+            "Guidance Manuals", "Guidance Manual"
+        )
+
+        # ── STEP 9: Lodge Complaint dropdown ──────────────────────────────────
+        logger.info("═══ STEP 9: Lodge Complaint dropdown ═══")
         pages_visited = await do_dropdown(
             page, HOME_URL + "__DROPDOWN_LodgeComplaint", har_path, pages_visited,
             "Lodge Complaint"
         )
 
-        # ── STEP 7: FAQ dropdown (if present) ────────────────────────────────
-        logger.info("═══ STEP 7: FAQ dropdown ═══")
-        pages_visited = await do_dropdown(
-            page, HOME_URL + "__DROPDOWN_FAQ", har_path, pages_visited,
-            "FAQ"
-        )
-
-        # ── STEP 8: Bulk Upload dropdown (if present) ────────────────────────
-        logger.info("═══ STEP 8: Bulk Upload dropdown ═══")
-        pages_visited = await do_dropdown(
-            page, HOME_URL + "__DROPDOWN_BulkUpload", har_path, pages_visited,
-            "Bulk Upload"
+        # ── STEP 10: Registration Issued page ────────────────────────────────
+        # Visible in navbar (Image 1) — likely a public stats/list page.
+        # Scroll & stitch to capture all rows.
+        logger.info("═══ STEP 10: Registration Issued page ═══")
+        pages_visited = await do_scroll(
+            page, HOME_URL + "__PAGE_RegistrationIssued", har_path, pages_visited,
+            "Registration Issued"
         )
 
         await context.close()
