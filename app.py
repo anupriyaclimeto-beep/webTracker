@@ -486,7 +486,6 @@ def fix_stale_crawls():
 PID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)) or ".", ".crawler.pid")
 LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)) or ".", ".crawler.log")
 
-# ── UPDATED: EPR USEDOIL added ─────────────────────────────────────────────
 PORTAL_CRAWLER_MAP = {
     "EPR PLASTIC":  "crawler.py",
     "EPR EWASTE":   "crawler_ewaste.py",
@@ -499,10 +498,16 @@ PORTAL_CRAWLER_MAP = {
 def launch_crawl(portal=None):
     if portal and portal in PORTAL_CRAWLER_MAP:
         script = PORTAL_CRAWLER_MAP[portal]
-        cmd    = [sys.executable, script, "--once"]
+        if script == "crawler.py":
+            # crawler.py is the multi-portal router — pass --portal to filter
+            cmd = [sys.executable, script, "--once", "--portal", portal]
+        else:
+            # dedicated single-portal scripts — no --portal flag needed
+            cmd = [sys.executable, script, "--once"]
     elif portal:
         cmd = [sys.executable, "crawler.py", "--once", "--portal", portal]
     else:
+        # No portal selected → run all portals
         cmd = [sys.executable, "crawler.py", "--once"]
 
     log_fh = open(LOG_FILE, "w", encoding="utf-8", buffering=1)
@@ -804,7 +809,6 @@ if st.session_state.view == "overview":
         unsafe_allow_html=True
     )
 
-    # ── Stat cards ─────────────────────────────────────────────────────────────
     cards = [
         ("PORTALS",        total_portals, "#3b82f6"),
         ("CHANGES TODAY",  total_today,   "#f87171" if total_today else "#34d399"),
@@ -1093,8 +1097,13 @@ elif st.session_state.view == "console":
             unsafe_allow_html=True
         )
 
+    # ── FIX: filter ScriptRunContext spam + full color logic ──────────────────
     def colorize(line):
-        if not line.strip(): return ""
+        # Suppress noisy Streamlit bare-mode warnings from subprocess
+        if "ScriptRunContext" in line:
+            return ""
+        if not line.strip():
+            return ""
         if any(x in line for x in ["ERROR","error","Exception","Traceback"]):
             color = "#f87171"
         elif any(x in line for x in ["WARNING","warning","WARN"]):
@@ -1111,7 +1120,8 @@ elif st.session_state.view == "console":
         return f"<span style='color:{color}'>{escaped}</span>"
 
     colored_lines = [colorize(l) for l in log_lines]
-    log_html = "<br>".join(colored_lines)
+    # Filter out empty strings from suppressed lines before joining
+    log_html = "<br>".join(c for c in colored_lines if c)
 
     st.markdown(f"""
         <div style='background:#050709;border:1px solid #1a1f2e;border-radius:10px;
