@@ -25,15 +25,12 @@ def clean_html(html: str) -> str:
     try:
         soup = BeautifulSoup(html, "html.parser")
 
-        # remove all script and style blocks
         for tag in soup.find_all(["script", "style"]):
             tag.decompose()
 
-        # remove all HTML comments
         for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
             comment.extract()
 
-        # walk every tag and clean attributes
         for tag in soup.find_all(True):
             attrs_to_remove = []
             attrs_to_clean = {}
@@ -41,23 +38,19 @@ def clean_html(html: str) -> str:
             for attr, value in tag.attrs.items():
                 attr_lower = attr.lower()
 
-                # remove Angular host/content attributes
                 if attr_lower.startswith("_nghost") or attr_lower.startswith("_ngcontent"):
                     attrs_to_remove.append(attr)
                     continue
 
-                # remove ECharts dynamic instance IDs (_echarts_instance_="ec_1234...")
                 if attr_lower.startswith("_echarts_instance"):
                     attrs_to_remove.append(attr)
                     continue
 
-                # remove other common dynamic instance/random ID attributes
                 if attr_lower in ("data-uid", "data-reactid", "data-reactroot",
                                   "data-ember-action", "data-guid"):
                     attrs_to_remove.append(attr)
                     continue
 
-                # remove ng-star-inserted from class list
                 if attr_lower == "class":
                     if isinstance(value, list):
                         cleaned = [v for v in value if "ng-star-inserted" not in v]
@@ -66,24 +59,20 @@ def clean_html(html: str) -> str:
                         attrs_to_clean[attr] = value.replace("ng-star-inserted", "").strip()
                     continue
 
-                # remove ng-reflect attributes
                 if attr_lower.startswith("ng-reflect"):
                     attrs_to_remove.append(attr)
                     continue
 
-                # remove autocomplete random tokens
                 if attr_lower == "autocomplete" and isinstance(value, str):
                     if re.fullmatch(r"[a-f0-9]{8,}", value):
                         attrs_to_remove.append(attr)
                         continue
 
-                # remove nonce and token attributes
                 if attr_lower in ("nonce", "data-nonce", "data-token",
                                   "data-csrf", "data-requestverificationtoken"):
                     attrs_to_remove.append(attr)
                     continue
 
-                # clean dynamic inline styles
                 if attr_lower == "style" and isinstance(value, str):
                     cleaned_style = re.sub(
                         r"max-height\s*:\s*calc\([^)]+\)\s*;?", "", value
@@ -96,11 +85,8 @@ def clean_html(html: str) -> str:
             for attr, val in attrs_to_clean.items():
                 tag.attrs[attr] = val
 
-        # normalize session countdown
         text = soup.prettify()
         text = re.sub(r"End Session \(\d+\)", "End Session (N)", text)
-
-        # collapse blank lines
         text = re.sub(r"\n{3,}", "\n\n", text)
 
         return text
@@ -110,10 +96,33 @@ def clean_html(html: str) -> str:
         return html
 
 
+def build_selector(tag) -> str:
+    """
+    Build a concise CSS-like selector for a BeautifulSoup tag.
+    e.g.  nav > ul > li > a.active  or  div#main > h2
+    """
+    parts = []
+    node = tag
+    for _ in range(5):   # walk up max 5 levels
+        if node is None or node.name is None:
+            break
+        label = node.name
+        if node.get("id"):
+            label += f'#{node["id"]}'
+        elif node.get("class"):
+            cls = " ".join(c for c in node["class"] if c)
+            if cls:
+                label += f'.{cls.split()[0]}'   # first class only for brevity
+        parts.append(label)
+        node = node.parent
+    parts.reverse()
+    return " > ".join(parts) if parts else "unknown"
+
+
 def extract_text_changes(diff_sample):
     """
-    Convert raw HTML diff lines into human-readable descriptions.
-    Instead of showing raw tags, extract meaningful text/labels from them.
+    Convert raw HTML diff lines into human-readable descriptions
+    including the selector context of each change.
     """
     added_texts = []
     removed_texts = []
@@ -121,31 +130,30 @@ def extract_text_changes(diff_sample):
     for line in diff_sample:
         if line.startswith("+") and not line.startswith("+++"):
             raw = line[1:].strip()
-            text = extract_readable_text(raw)
-            if text:
-                added_texts.append(text)
+            result = extract_readable_text(raw)
+            if result:
+                added_texts.append(result)
         elif line.startswith("-") and not line.startswith("---"):
             raw = line[1:].strip()
-            text = extract_readable_text(raw)
-            if text:
-                removed_texts.append(text)
+            result = extract_readable_text(raw)
+            if result:
+                removed_texts.append(result)
 
     return added_texts, removed_texts
 
 
 def extract_readable_text(html_fragment):
     """
-    Pull meaningful human-readable content from an HTML fragment.
-    Returns None if the fragment is noise (empty tags, dynamic IDs, etc).
+    Pull meaningful human-readable content AND selector from an HTML fragment.
+    Returns a dict {text, selector} or None if the fragment is noise.
     """
     try:
-        # skip lines that are only dynamic/structural noise
         noise_patterns = [
-            r"^<[^>]+>$",               # empty tag with no text
-            r"echarts",                  # echarts instance
-            r"_ngcontent|_nghost",       # angular internals
+            r"^<[^>]+>$",
+            r"echarts",
+            r"_ngcontent|_nghost",
             r"ng-reflect",
-            r"^\s*$",                    # blank
+            r"^\s*$",
         ]
         for pattern in noise_patterns:
             if re.search(pattern, html_fragment, re.IGNORECASE):
@@ -153,20 +161,19 @@ def extract_readable_text(html_fragment):
 
         soup = BeautifulSoup(html_fragment, "html.parser")
 
-        # try to get button/link/label text first
         for tag in soup.find_all(["button", "a", "label", "h1", "h2", "h3",
                                    "h4", "h5", "span", "td", "th", "li", "p"]):
             text = tag.get_text(strip=True)
             if text and len(text) > 1:
                 tag_name = tag.name.upper()
+                selector = build_selector(tag)
                 if tag_name in ("BUTTON", "A"):
-                    return f'{tag_name}: "{text}"'
-                return f'"{text}"'
+                    return {"text": f'{tag_name}: "{text}"', "selector": selector}
+                return {"text": f'"{text}"', "selector": selector}
 
-        # fallback: plain text of the fragment
         plain = soup.get_text(strip=True)
         if plain and len(plain) > 1:
-            return f'"{plain}"'
+            return {"text": f'"{plain}"', "selector": "unknown"}
 
         return None
 
@@ -176,39 +183,40 @@ def extract_readable_text(html_fragment):
 
 def summarize_changes(added_texts, removed_texts):
     """
-    Build a plain-English summary of what changed.
+    Build a plain-English summary of what changed, including selector context.
     """
     def humanize_item(item):
         if not item:
             return None
-        s = item.strip()
-        # strip leading tag indicators like BUTTON: "Label"
-        m = re.match(r'^(?P<tag>[A-Z]+):\s*"(.*)"$', s)
+        text = item.get("text", "").strip()
+        selector = item.get("selector", "")
+
+        m = re.match(r'^(?P<tag>[A-Z]+):\s*"(.*)"$', text)
         if m:
             tag = m.group('tag').lower()
             label = m.group(2)
-            if 'test' in label.lower() or 'test' in tag:
-                return f'Test button "{label}"'
             if tag == 'button':
-                return f'Button "{label}"'
-            if tag == 'a':
-                return f'Link "{label}"'
-            return f'{tag.capitalize()} "{label}"'
+                phrase = f'Button "{label}"'
+            elif tag == 'a':
+                phrase = f'Link "{label}"'
+            else:
+                phrase = f'{tag.capitalize()} "{label}"'
+        else:
+            q = re.match(r'^"(.*)"$', text)
+            if q:
+                label = q.group(1)
+                low = label.lower()
+                if any(word in low for word in ('button', 'add', 'submit', 'tracking')):
+                    phrase = f'UI label "{label}"'
+                else:
+                    phrase = f'"{label}"'
+            else:
+                phrase = text if len(text) < 100 else text[:97] + "..."
 
-        # quoted plain text: "Some label"
-        q = re.match(r'^"(.*)"$', s)
-        if q:
-            label = q.group(1)
-            low = label.lower()
-            if 'test' in low or 'test' in s.lower():
-                return f'Test element "{label}"'
-            # common UI words -> button/link label
-            if any(word in low for word in ('button','add','submit','tracking')):
-                return f'UI label "{label}"'
-            return f'"{label}"'
+        if selector and selector != "unknown":
+            phrase += f' [{selector}]'
 
-        # fallback: return raw truncated
-        return s if len(s) < 100 else s[:97] + "..."
+        return phrase
 
     added_phrases = []
     for a in added_texts:
@@ -301,9 +309,23 @@ def html_diff(baseline_path, current_html):
 
         changed = len(diff) > 0
 
-        # build human-readable summary (use larger sample so we don't miss localized inserts)
         added_texts, removed_texts = extract_text_changes(diff)
         summary = summarize_changes(added_texts, removed_texts) if changed else "No changes"
+
+        # Build structured change list with selector info
+        changes_with_selectors = []
+        for item in added_texts:
+            changes_with_selectors.append({
+                "type": "added",
+                "text": item.get("text", ""),
+                "selector": item.get("selector", "unknown"),
+            })
+        for item in removed_texts:
+            changes_with_selectors.append({
+                "type": "removed",
+                "text": item.get("text", ""),
+                "selector": item.get("selector", "unknown"),
+            })
 
         logger.info("HTML diff — changed=%s diff_lines=%s summary=%s",
                     changed, len(diff), summary)
@@ -313,8 +335,9 @@ def html_diff(baseline_path, current_html):
             "diff_lines": len(diff),
             "diff_sample": diff[:50],
             "summary": summary,
-            "added_texts": added_texts[:10],
-            "removed_texts": removed_texts[:10],
+            "added_texts": [i.get("text") for i in added_texts[:10]],
+            "removed_texts": [i.get("text") for i in removed_texts[:10]],
+            "changes_with_selectors": changes_with_selectors[:20],
         }
 
     except Exception as e:

@@ -1,46 +1,87 @@
 {
-    "portals": [
-      {
-        "name": "my-portal",
-        "url": "https://eprplastic.cpcb.gov.in/#/plastic/home",
-        "auth": "manual",
-        "crawl": {
-          "max_pages": 100,
-          "follow_links": true,
-          "depth": 4,
-          "only_home": true,
-          "capture_dropdowns": true,
-          "dropdown_targets": [
-            "Plastic Waste Management Rules"
-          ]
-        }
+  "portals": [
+    {
+      "name": "EPR PLASTIC",
+      "url": "https://eprplastic.cpcb.gov.in/#/plastic/home",
+      "auth": "manual",
+      "crawl_interval_minutes": 60,
+      "crawl": {
+        "only_home": true,
+        "capture_dropdowns": true
       }
-    ],
-    "schedule": {
-      "time": "07:00",
-      "timezone": "Asia/Kolkata"
     },
-    "diff": {
-      "visual": true,
-      "html": true,
-      "json": true,
-      "har": true,
-      "pixel_threshold": 0.05
-    },
-    "storage": {
-      "db": "changes.db",
-      "archive_dir": "archive",
-      "keep_days": 30
-    },
-   
-    "browser": {
-      "headless": false,
-      "timeout_ms": 30000,
-      "persistent": true,
-      "user_data_dir": "browser_session",
-      "viewport": {
-        "width": 1280,
-        "height": 800
+    {
+      "name": "EPR EWASTE",
+      "url": "https://eprewaste.cpcb.gov.in/#/",
+      "auth": "none",
+      "crawl_interval_minutes": 60,
+      "crawl": {
+        "only_home": true,
+        "capture_dropdowns": true
       }
+    },
+    {
+      "name": "EPR BATTERY",
+      "url": "https://eprbattery.cpcb.gov.in/",
+      "auth": "none",
+      "crawl_interval_minutes": 60,
+      "crawl": {
+        "only_home": true,
+        "capture_dropdowns": true
+      }
+    },
+    {
+      "name": "EPR TYRES",
+      "url": "https://eprtyres.cpcb.gov.in/",
+      "auth": "none",
+      "crawl_interval_minutes": 60,
+      "crawl": {
+        "only_home": true,
+        "capture_dropdowns": true
+      }
+    },
+    {
+      "name": "EPR USEDOIL",
+      "url": "https://eprusedoil.cpcb.gov.in/",
+      "auth": "none",
+      "crawl_interval_minutes": 60,
+      "crawl": {
+        "only_home": true,
+        "capture_dropdowns": true
+      }
+    },
+    {
+      "name": "EPR ELV",
+      "url": "https://eprelv.cpcb.gov.in/",
+      "auth": "none",
+      "crawl_interval_minutes": 60,
+      "crawl": { "only_home": true, "capture_dropdowns": true }
+    }
+  ],
+  "schedule": {
+    "time": "07:00",
+    "timezone": "Asia/Kolkata"
+  },
+  "diff": {
+    "visual": true,
+    "html": true,
+    "json": true,
+    "har": true,
+    "pixel_threshold": 0.05
+  },
+  "storage": {
+    "db": "changes.db",
+    "archive_dir": "archive",
+    "keep_days": 30
+  },
+  "browser": {
+    "headless": true,
+    "timeout_ms": 30000,
+    "persistent": true,
+    "user_data_dir": "browser_session",
+    "viewport": {
+      "width": 1280,
+      "height": 800
     }
   }
+}

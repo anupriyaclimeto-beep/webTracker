@@ -11,7 +11,7 @@ def main():
     for c in cols:
         print(c)
     print()
-    cur.execute("SELECT id, portal, url, diff_type, diff_detail, timestamp FROM changes WHERE portal='my-portal' ORDER BY timestamp DESC LIMIT 10")
+    cur.execute("SELECT id, portal, url, diff_type, diff_detail, timestamp FROM changes WHERE portal='EPR PLASTIC' ORDER BY timestamp DESC LIMIT 10")
     rows = cur.fetchall()
     for r in rows:
         print("----")
