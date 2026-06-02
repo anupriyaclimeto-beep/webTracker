@@ -44,6 +44,7 @@ USE_SUPABASE = all([
 
 if USE_SUPABASE:
     import psycopg2
+    import psycopg2.pool
     from psycopg2.extras import RealDictCursor
     _DSN = (
         f"host={SUPABASE_HOST} "
@@ -53,6 +54,11 @@ if USE_SUPABASE:
         f"password={SUPABASE_SERVICE_ROLE or SUPABASE_PWD} "
         f"sslmode=require"
     )
+
+    @st.cache_resource
+    def get_connection_pool():
+        return psycopg2.pool.ThreadedConnectionPool(1, 15, _DSN)
+
 
 
 def get_portal_config(portal_name):
@@ -320,12 +326,32 @@ def _pg_query_to_sqlite(query):
 def query_db(query, args=()):
     try:
         if USE_SUPABASE:
-            conn = psycopg2.connect(_DSN, cursor_factory=RealDictCursor)
-            cur = conn.cursor()
-            cur.execute(_pg_query_to_sqlite(query), args)
-            rows = cur.fetchall()
-            conn.close()
-            return [dict(r) for r in rows]
+            pool = get_connection_pool()
+            conn = pool.getconn()
+            returned = False
+            try:
+                with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                    cur.execute(_pg_query_to_sqlite(query), args)
+                    rows = cur.fetchall()
+                    return [dict(r) for r in rows]
+            except (psycopg2.OperationalError, psycopg2.InterfaceError):
+                try:
+                    pool.putconn(conn, close=True)
+                except Exception:
+                    pass
+                returned = True
+                conn = pool.getconn()
+                returned = False
+                with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                    cur.execute(_pg_query_to_sqlite(query), args)
+                    rows = cur.fetchall()
+                    return [dict(r) for r in rows]
+            finally:
+                if not returned:
+                    try:
+                        pool.putconn(conn)
+                    except Exception:
+                        pass
         else:
             conn = sqlite3.connect(DB_PATH)
             conn.row_factory = sqlite3.Row
@@ -341,10 +367,30 @@ def exec_db(query, args=()):
     """Execute a write query (INSERT/UPDATE/DELETE)."""
     try:
         if USE_SUPABASE:
-            conn = psycopg2.connect(_DSN, cursor_factory=RealDictCursor)
-            cur = conn.cursor()
-            cur.execute(_pg_query_to_sqlite(query), args)
-            conn.commit(); conn.close()
+            pool = get_connection_pool()
+            conn = pool.getconn()
+            returned = False
+            try:
+                with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                    cur.execute(_pg_query_to_sqlite(query), args)
+                    conn.commit()
+            except (psycopg2.OperationalError, psycopg2.InterfaceError):
+                try:
+                    pool.putconn(conn, close=True)
+                except Exception:
+                    pass
+                returned = True
+                conn = pool.getconn()
+                returned = False
+                with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                    cur.execute(_pg_query_to_sqlite(query), args)
+                    conn.commit()
+            finally:
+                if not returned:
+                    try:
+                        pool.putconn(conn)
+                    except Exception:
+                        pass
         else:
             conn = sqlite3.connect(DB_PATH)
             conn.execute(query, args)

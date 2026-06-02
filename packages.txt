@@ -10,3 +10,9 @@ libxss1
 libatk1.0-0
 libatk-bridge2.0-0
 libpangocairo-1.0-0
+libxkbcommon0
+libx11-xcb1
+libxcb-dri3-0
+libxshmfence1
+libdrm2
+libgtk-3-0
