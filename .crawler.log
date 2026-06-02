@@ -1,119 +1,111 @@
-2026-05-29 18:26:49,573 [INFO] Database initialised at changes.db
-2026-05-29 18:26:57,585 [WARNING] Unknown auth type 'none' — treating as public
-2026-05-29 18:26:57,585 [INFO] Public auth — navigating to https://eprewaste.cpcb.gov.in/#/
-2026-05-29 18:27:03,559 [INFO] Page loaded successfully
-2026-05-29 18:27:03,560 [INFO] \u2550\u2550\u2550 STEP 1: Home page \u2550\u2550\u2550
-2026-05-29 18:27:12,073 [INFO]   scrollHeight=1376px viewport=900px
-2026-05-29 18:27:12,760 [INFO]   scrollY=0px piece=1
-2026-05-29 18:27:13,339 [INFO]   scrollY=668px piece=2
-2026-05-29 18:27:15,051 [INFO]   Stitched 1280x1376 from 2 pieces
-2026-05-29 18:27:15,594 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in\20260529_182715
-2026-05-29 18:27:15,651 [INFO] No current HAR found — skipping har diff
-2026-05-29 18:27:15,691 [INFO] HTML diff — changed=True diff_lines=9 summary="EPR Portal for E-Waste Management" added | UI label "We are testing for the tracking app hellow this is anupriya" removed
-2026-05-29 18:27:17,285 [INFO] Visual diff — changed_pixels=5658 ratio=0.0032 changed=False
-2026-05-29 18:27:17,374 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/ — any_changed=True
-2026-05-29 18:27:17,388 [INFO] Baseline updated — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/
-2026-05-29 18:27:17,398 [INFO] Diff saved — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/ type=html
-2026-05-29 18:27:17,398 [INFO]   \u2705 Change: https://eprewaste.cpcb.gov.in/#/ | html
-2026-05-29 18:27:17,398 [INFO] Home done \u2713
-2026-05-29 18:27:17,398 [INFO] \u2550\u2550\u2550 STEP 2: EPR dropdown \u2550\u2550\u2550
-2026-05-29 18:27:51,134 [INFO]   Clicked: 'EPR'
-2026-05-29 18:27:51,920 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_EPR\20260529_182751
-2026-05-29 18:27:51,922 [INFO] No current HAR found — skipping har diff
-2026-05-29 18:27:52,020 [INFO] HTML diff — changed=True diff_lines=14 summary=Page structure changed (no visible text differences found)
-2026-05-29 18:27:53,005 [INFO] Visual diff — changed_pixels=15283 ratio=0.0133 changed=False
-2026-05-29 18:27:53,064 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EPR — any_changed=True
-2026-05-29 18:27:53,080 [INFO] Baseline updated — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EPR
-2026-05-29 18:27:53,091 [INFO] Diff saved — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EPR type=html
-2026-05-29 18:27:53,091 [INFO]   \u2705 Change: https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EPR | html
-2026-05-29 18:27:53,615 [INFO]   EPR done \u2713
-2026-05-29 18:27:53,616 [INFO] \u2550\u2550\u2550 STEP 3: E-Waste Rules dropdown + scroll \u2550\u2550\u2550
-2026-05-29 18:27:57,217 [INFO]   Clicked: 'E-Waste Rules'
-2026-05-29 18:27:57,738 [INFO]   scrollHeight=1376px viewport=900px
-2026-05-29 18:27:58,363 [INFO]   scrollY=0px piece=1
-2026-05-29 18:27:58,925 [INFO]   scrollY=668px piece=2
-2026-05-29 18:28:00,629 [INFO]   Stitched 1280x1376 from 2 pieces
-2026-05-29 18:28:01,189 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_EWasteRules\20260529_182801
-2026-05-29 18:28:01,192 [INFO] No current HAR found — skipping har diff
-2026-05-29 18:28:01,278 [INFO] HTML diff — changed=True diff_lines=14 summary=Page structure changed (no visible text differences found)
-2026-05-29 18:28:02,691 [INFO] Visual diff — changed_pixels=127561 ratio=0.0724 changed=True
-2026-05-29 18:28:02,771 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EWasteRules — any_changed=True
-2026-05-29 18:28:02,782 [INFO] Baseline updated — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EWasteRules
-2026-05-29 18:28:02,791 [INFO] Diff saved — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EWasteRules type=visual
-2026-05-29 18:28:02,791 [INFO]   \u2705 Change: https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EWasteRules | visual
-2026-05-29 18:28:02,799 [INFO] Diff saved — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EWasteRules type=html
-2026-05-29 18:28:02,800 [INFO]   \u2705 Change: https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EWasteRules | html
-2026-05-29 18:28:02,800 [INFO]   E-Waste Rules done \u2713
-2026-05-29 18:28:02,800 [INFO] \u2550\u2550\u2550 STEP 4: FAQ dropdown \u2550\u2550\u2550
-2026-05-29 18:28:06,395 [INFO]   Clicked: 'FAQ'
-2026-05-29 18:28:07,167 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_FAQ\20260529_182807
-2026-05-29 18:28:07,170 [INFO] No current HAR found — skipping har diff
-2026-05-29 18:28:07,265 [INFO] HTML diff — changed=False diff_lines=0 summary=No changes
-2026-05-29 18:28:08,194 [INFO] Visual diff — changed_pixels=175773 ratio=0.1526 changed=True
-2026-05-29 18:28:08,242 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_FAQ — any_changed=True
-2026-05-29 18:28:08,255 [INFO] Baseline updated — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_FAQ
-2026-05-29 18:28:08,263 [INFO] Diff saved — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_FAQ type=visual
-2026-05-29 18:28:08,263 [INFO]   \u2705 Change: https://eprewaste.cpcb.gov.in/#/__DROPDOWN_FAQ | visual
-2026-05-29 18:28:08,777 [INFO]   FAQ done \u2713
-2026-05-29 18:28:08,777 [INFO] \u2550\u2550\u2550 STEP 5: SOP dropdown \u2550\u2550\u2550
-2026-05-29 18:28:12,378 [INFO]   Clicked: 'SOP'
-2026-05-29 18:28:13,138 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_SOP\20260529_182813
-2026-05-29 18:28:13,140 [INFO] No current HAR found — skipping har diff
-2026-05-29 18:28:13,236 [INFO] HTML diff — changed=True diff_lines=14 summary=Page structure changed (no visible text differences found)
-2026-05-29 18:28:14,257 [INFO] Visual diff — changed_pixels=116585 ratio=0.1012 changed=True
-2026-05-29 18:28:14,304 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_SOP — any_changed=True
-2026-05-29 18:28:14,316 [INFO] Baseline updated — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_SOP
-2026-05-29 18:28:14,324 [INFO] Diff saved — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_SOP type=visual
-2026-05-29 18:28:14,324 [INFO]   \u2705 Change: https://eprewaste.cpcb.gov.in/#/__DROPDOWN_SOP | visual
-2026-05-29 18:28:14,333 [INFO] Diff saved — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_SOP type=html
-2026-05-29 18:28:14,333 [INFO]   \u2705 Change: https://eprewaste.cpcb.gov.in/#/__DROPDOWN_SOP | html
-2026-05-29 18:28:14,849 [INFO]   SOP done \u2713
-2026-05-29 18:28:14,849 [INFO] \u2550\u2550\u2550 STEP 6: Important Links dropdown \u2550\u2550\u2550
-2026-05-29 18:28:18,432 [INFO]   Clicked: 'Important Links'
-2026-05-29 18:28:19,195 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_ImportantLinks\20260529_182819
-2026-05-29 18:28:19,198 [INFO] No current HAR found — skipping har diff
-2026-05-29 18:28:19,319 [INFO] HTML diff — changed=True diff_lines=14 summary=Page structure changed (no visible text differences found)
-2026-05-29 18:28:20,224 [INFO] Visual diff — changed_pixels=164558 ratio=0.1428 changed=True
-2026-05-29 18:28:20,271 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_ImportantLinks — any_changed=True
-2026-05-29 18:28:20,282 [INFO] Baseline updated — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_ImportantLinks
-2026-05-29 18:28:20,292 [INFO] Diff saved — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_ImportantLinks type=visual
-2026-05-29 18:28:20,292 [INFO]   \u2705 Change: https://eprewaste.cpcb.gov.in/#/__DROPDOWN_ImportantLinks | visual
-2026-05-29 18:28:20,305 [INFO] Diff saved — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_ImportantLinks type=html
-2026-05-29 18:28:20,305 [INFO]   \u2705 Change: https://eprewaste.cpcb.gov.in/#/__DROPDOWN_ImportantLinks | html
-2026-05-29 18:28:20,816 [INFO]   Important Links done \u2713
-2026-05-29 18:28:20,816 [INFO] \u2550\u2550\u2550 STEP 7: Downloads dropdown \u2550\u2550\u2550
-2026-05-29 18:28:24,430 [INFO]   Clicked: 'Downloads'
-2026-05-29 18:28:24,954 [INFO]   scrollHeight=1376px viewport=900px
-2026-05-29 18:28:25,642 [INFO]   scrollY=0px piece=1
-2026-05-29 18:28:26,231 [INFO]   scrollY=668px piece=2
-2026-05-29 18:28:27,940 [INFO]   Stitched 1280x1376 from 2 pieces
-2026-05-29 18:28:28,486 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_Downloads\20260529_182828
-2026-05-29 18:28:28,489 [INFO] No current HAR found — skipping har diff
-2026-05-29 18:28:28,572 [INFO] HTML diff — changed=True diff_lines=20 summary=Page structure changed (no visible text differences found)
-2026-05-29 18:28:29,970 [INFO] Visual diff — changed_pixels=191963 ratio=0.1090 changed=True
-2026-05-29 18:28:30,044 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_Downloads — any_changed=True
-2026-05-29 18:28:30,055 [INFO] Baseline updated — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_Downloads
-2026-05-29 18:28:30,064 [INFO] Diff saved — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_Downloads type=visual
-2026-05-29 18:28:30,065 [INFO]   \u2705 Change: https://eprewaste.cpcb.gov.in/#/__DROPDOWN_Downloads | visual
-2026-05-29 18:28:30,076 [INFO] Diff saved — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_Downloads type=html
-2026-05-29 18:28:30,076 [INFO]   \u2705 Change: https://eprewaste.cpcb.gov.in/#/__DROPDOWN_Downloads | html
-2026-05-29 18:28:30,077 [INFO]   Downloads done \u2713
-2026-05-29 18:28:30,077 [INFO] \u2550\u2550\u2550 STEP 8: Dashboards page \u2550\u2550\u2550
-2026-05-29 18:28:33,877 [INFO]   Clicked: 'Dashboard'
-2026-05-29 18:28:36,421 [INFO]   scrollHeight=1570px viewport=900px
-2026-05-29 18:28:37,108 [INFO]   scrollY=0px piece=1
-2026-05-29 18:28:37,686 [INFO]   scrollY=900px piece=2
-2026-05-29 18:28:39,406 [INFO]   Stitched 1280x1570 from 2 pieces
-2026-05-29 18:28:39,943 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_PAGE_Dashboards\20260529_182839
-2026-05-29 18:28:39,946 [INFO] No current HAR found — skipping har diff
-2026-05-29 18:28:40,051 [INFO] HTML diff — changed=True diff_lines=142 summary=Added: "13626", "242", "923", "132", "25,334.604639 MT" | Removed: "13618", "241", "931", "127", "25,015.411639 MT"
-2026-05-29 18:28:41,558 [INFO] Visual diff — changed_pixels=84135 ratio=0.0419 changed=False
-2026-05-29 18:28:41,629 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__PAGE_Dashboards — any_changed=True
-2026-05-29 18:28:41,642 [INFO] Baseline updated — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__PAGE_Dashboards
-2026-05-29 18:28:41,649 [INFO] Diff saved — portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__PAGE_Dashboards type=html
-2026-05-29 18:28:41,649 [INFO]   \u2705 Change: https://eprewaste.cpcb.gov.in/#/__PAGE_Dashboards | html
-2026-05-29 18:28:41,649 [INFO]   Dashboards done \u2713
-2026-05-29 18:28:41,649 [INFO] \u2550\u2550\u2550 STEP 9: Lodge Complaint dropdown \u2550\u2550\u2550
-2026-05-29 18:28:43,702 [WARNING]   Could not find any of: ('Lodge Complaint',)
-2026-05-29 18:28:44,063 [INFO] Crawl log finished — id=30 pages=8 status=done
-2026-05-29 18:28:44,063 [INFO] \u2550\u2550\u2550 EPR E-WASTE ALL DONE: 8 pages \u2550\u2550\u2550
+2026-06-02 14:41:58,213 [INFO] Database initialised at changes.db
+2026-06-02 14:41:58,841 [WARNING] Unknown auth type 'none' — treating as public
+2026-06-02 14:41:58,841 [INFO] Public auth — navigating to https://eprelv.cpcb.gov.in/
+2026-06-02 14:42:04,537 [INFO] Page loaded successfully
+2026-06-02 14:42:04,538 [INFO] \u2550\u2550\u2550 STEP 1: Home page \u2550\u2550\u2550
+2026-06-02 14:42:07,788 [INFO]   scrollHeight=1474px viewport=900px
+2026-06-02 14:42:08,762 [INFO]   scrollY=0px piece=1
+2026-06-02 14:42:09,494 [INFO]   scrollY=574px piece=2
+2026-06-02 14:42:11,290 [INFO]   Stitched 1280x1474 from 2 pieces
+2026-06-02 14:42:11,821 [INFO] \u2713 Saved \u2192 archive\EPR ELV\eprelv.cpcb.gov.in\20260602_144211
+2026-06-02 14:42:11,953 [INFO] HTML diff — changed=True diff_lines=41 summary=Page structure changed (no visible text differences found)
+2026-06-02 14:42:17,224 [INFO] Diff image generated — changed_pixels=215996 (11.4%)
+2026-06-02 14:42:17,234 [INFO] Visual diff — changed_pixels=240875 ratio=0.1277 changed=True
+2026-06-02 14:42:17,337 [INFO] Diff complete for https://eprelv.cpcb.gov.in/ — any_changed=True
+2026-06-02 14:42:17,346 [INFO] Baseline updated — portal=EPR ELV url=https://eprelv.cpcb.gov.in/
+2026-06-02 14:42:17,353 [INFO] Diff saved — portal=EPR ELV url=https://eprelv.cpcb.gov.in/ type=visual
+2026-06-02 14:42:17,353 [INFO]   \u2705 Change: https://eprelv.cpcb.gov.in/ | visual
+2026-06-02 14:42:17,360 [INFO] Diff saved — portal=EPR ELV url=https://eprelv.cpcb.gov.in/ type=html
+2026-06-02 14:42:17,360 [INFO]   \u2705 Change: https://eprelv.cpcb.gov.in/ | html
+2026-06-02 14:42:17,360 [INFO] Home done \u2713
+2026-06-02 14:42:17,361 [INFO] \u2550\u2550\u2550 STEP 2: Important Communication \u2550\u2550\u2550
+2026-06-02 14:42:21,846 [INFO]   Clicked: 'Important Communication'
+2026-06-02 14:42:22,372 [INFO]   scrollHeight=1474px viewport=900px
+2026-06-02 14:42:23,227 [INFO]   scrollY=0px piece=1
+2026-06-02 14:42:23,913 [INFO]   scrollY=574px piece=2
+2026-06-02 14:42:25,594 [INFO]   Stitched 1280x1474 from 2 pieces
+2026-06-02 14:42:26,121 [INFO] \u2713 Saved \u2192 archive\EPR ELV\eprelv.cpcb.gov.in_DROPDOWN_ImportantCommunication\20260602_144226
+2026-06-02 14:42:26,147 [INFO] HTML diff — changed=True diff_lines=41 summary=Page structure changed (no visible text differences found)
+2026-06-02 14:42:28,574 [INFO] Diff image generated — changed_pixels=92360 (4.9%)
+2026-06-02 14:42:28,585 [INFO] Visual diff — changed_pixels=107700 ratio=0.0571 changed=True
+2026-06-02 14:42:28,681 [INFO] Diff complete for https://eprelv.cpcb.gov.in/__DROPDOWN_ImportantCommunication — any_changed=True
+2026-06-02 14:42:28,690 [INFO] Baseline updated — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__DROPDOWN_ImportantCommunication
+2026-06-02 14:42:28,697 [INFO] Diff saved — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__DROPDOWN_ImportantCommunication type=visual
+2026-06-02 14:42:28,698 [INFO]   \u2705 Change: https://eprelv.cpcb.gov.in/__DROPDOWN_ImportantCommunication | visual
+2026-06-02 14:42:28,706 [INFO] Diff saved — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__DROPDOWN_ImportantCommunication type=html
+2026-06-02 14:42:28,706 [INFO]   \u2705 Change: https://eprelv.cpcb.gov.in/__DROPDOWN_ImportantCommunication | html
+2026-06-02 14:42:28,706 [INFO]   Important Communication done \u2713
+2026-06-02 14:42:28,706 [INFO] \u2550\u2550\u2550 STEP 3: Rules \u2550\u2550\u2550
+2026-06-02 14:42:32,996 [INFO]   Clicked: 'Rules'
+2026-06-02 14:42:33,519 [INFO]   scrollHeight=1474px viewport=900px
+2026-06-02 14:42:34,436 [INFO]   scrollY=0px piece=1
+2026-06-02 14:42:35,155 [INFO]   scrollY=574px piece=2
+2026-06-02 14:42:36,961 [INFO]   Stitched 1280x1474 from 2 pieces
+2026-06-02 14:42:37,508 [INFO] \u2713 Saved \u2192 archive\EPR ELV\eprelv.cpcb.gov.in_DROPDOWN_Rules\20260602_144237
+2026-06-02 14:42:37,599 [INFO] HTML diff — changed=True diff_lines=41 summary=Page structure changed (no visible text differences found)
+2026-06-02 14:42:42,216 [INFO] Diff image generated — changed_pixels=140772 (7.5%)
+2026-06-02 14:42:42,221 [INFO] Visual diff — changed_pixels=160096 ratio=0.0849 changed=True
+2026-06-02 14:42:42,303 [INFO] Diff complete for https://eprelv.cpcb.gov.in/__DROPDOWN_Rules — any_changed=True
+2026-06-02 14:42:42,313 [INFO] Baseline updated — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__DROPDOWN_Rules
+2026-06-02 14:42:42,323 [INFO] Diff saved — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__DROPDOWN_Rules type=visual
+2026-06-02 14:42:42,323 [INFO]   \u2705 Change: https://eprelv.cpcb.gov.in/__DROPDOWN_Rules | visual
+2026-06-02 14:42:42,330 [INFO] Diff saved — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__DROPDOWN_Rules type=html
+2026-06-02 14:42:42,330 [INFO]   \u2705 Change: https://eprelv.cpcb.gov.in/__DROPDOWN_Rules | html
+2026-06-02 14:42:42,330 [INFO]   Rules done \u2713
+2026-06-02 14:42:42,330 [INFO] \u2550\u2550\u2550 STEP 4: National Dashboard \u2550\u2550\u2550
+2026-06-02 14:42:46,777 [INFO]   Clicked: 'National Dashboard'
+2026-06-02 14:42:50,310 [INFO]   scrollHeight=1057px viewport=900px
+2026-06-02 14:42:50,897 [INFO]   scrollY=0px piece=1
+2026-06-02 14:42:51,488 [INFO]   scrollY=157px piece=2
+2026-06-02 14:42:53,130 [INFO]   Stitched 1280x1057 from 2 pieces
+2026-06-02 14:42:53,667 [INFO] \u2713 Saved \u2192 archive\EPR ELV\eprelv.cpcb.gov.in_PAGE_NationalDashboard\20260602_144253
+2026-06-02 14:42:53,739 [INFO] HTML diff — changed=True diff_lines=16 summary=Page structure changed (no visible text differences found)
+2026-06-02 14:42:54,672 [INFO] Visual diff — changed_pixels=0 ratio=0.0000 changed=False
+2026-06-02 14:42:54,751 [INFO] Diff complete for https://eprelv.cpcb.gov.in/__PAGE_NationalDashboard — any_changed=True
+2026-06-02 14:42:54,760 [INFO] Baseline updated — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__PAGE_NationalDashboard
+2026-06-02 14:42:54,766 [INFO] Diff saved — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__PAGE_NationalDashboard type=html
+2026-06-02 14:42:54,766 [INFO]   \u2705 Change: https://eprelv.cpcb.gov.in/__PAGE_NationalDashboard | html
+2026-06-02 14:42:54,766 [INFO]   National Dashboard done \u2713
+2026-06-02 14:42:54,766 [INFO] \u2550\u2550\u2550 STEP 5: SOP \u2550\u2550\u2550
+2026-06-02 14:42:59,039 [INFO]   Clicked: 'SOP'
+2026-06-02 14:43:00,020 [INFO] \u2713 Saved \u2192 archive\EPR ELV\eprelv.cpcb.gov.in_DROPDOWN_SOP\20260602_144300
+2026-06-02 14:43:00,148 [INFO] HTML diff — changed=True diff_lines=41 summary=Page structure changed (no visible text differences found)
+2026-06-02 14:43:01,162 [INFO] Visual diff — changed_pixels=6301 ratio=0.0055 changed=False
+2026-06-02 14:43:01,212 [INFO] Diff complete for https://eprelv.cpcb.gov.in/__DROPDOWN_SOP — any_changed=True
+2026-06-02 14:43:01,221 [INFO] Baseline updated — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__DROPDOWN_SOP
+2026-06-02 14:43:01,228 [INFO] Diff saved — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__DROPDOWN_SOP type=html
+2026-06-02 14:43:01,228 [INFO]   \u2705 Change: https://eprelv.cpcb.gov.in/__DROPDOWN_SOP | html
+2026-06-02 14:43:01,756 [INFO]   SOP done \u2713
+2026-06-02 14:43:01,756 [INFO] \u2550\u2550\u2550 STEP 6: Guidance Manuals \u2550\u2550\u2550
+2026-06-02 14:43:04,678 [WARNING]   Not found: ('Guidance Manuals', 'Guidance Manual')
+2026-06-02 14:43:04,678 [INFO] \u2550\u2550\u2550 STEP 7: FAQs \u2550\u2550\u2550
+2026-06-02 14:43:09,049 [INFO]   Clicked: 'FAQs'
+2026-06-02 14:43:11,582 [INFO]   scrollHeight=1474px viewport=900px
+2026-06-02 14:43:12,486 [INFO]   scrollY=0px piece=1
+2026-06-02 14:43:13,229 [INFO]   scrollY=574px piece=2
+2026-06-02 14:43:15,032 [INFO]   Stitched 1280x1474 from 2 pieces
+2026-06-02 14:43:15,571 [INFO] \u2713 Saved \u2192 archive\EPR ELV\eprelv.cpcb.gov.in_PAGE_FAQs\20260602_144315
+2026-06-02 14:43:15,657 [INFO] HTML diff — changed=True diff_lines=41 summary=Page structure changed (no visible text differences found)
+2026-06-02 14:43:20,382 [INFO] Diff image generated — changed_pixels=99464 (5.3%)
+2026-06-02 14:43:20,387 [INFO] Visual diff — changed_pixels=114960 ratio=0.0609 changed=True
+2026-06-02 14:43:20,471 [INFO] Diff complete for https://eprelv.cpcb.gov.in/__PAGE_FAQs — any_changed=True
+2026-06-02 14:43:20,486 [INFO] Baseline updated — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__PAGE_FAQs
+2026-06-02 14:43:20,492 [INFO] Diff saved — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__PAGE_FAQs type=visual
+2026-06-02 14:43:20,492 [INFO]   \u2705 Change: https://eprelv.cpcb.gov.in/__PAGE_FAQs | visual
+2026-06-02 14:43:20,501 [INFO] Diff saved — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__PAGE_FAQs type=html
+2026-06-02 14:43:20,501 [INFO]   \u2705 Change: https://eprelv.cpcb.gov.in/__PAGE_FAQs | html
+2026-06-02 14:43:20,502 [INFO]   FAQs done \u2713
+2026-06-02 14:43:20,502 [INFO] \u2550\u2550\u2550 STEP 8: Lodge Complaint \u2550\u2550\u2550
+2026-06-02 14:43:24,807 [INFO]   Clicked: 'Lodge Complaint'
+2026-06-02 14:43:25,790 [INFO] \u2713 Saved \u2192 archive\EPR ELV\eprelv.cpcb.gov.in_DROPDOWN_LodgeComplaint\20260602_144325
+2026-06-02 14:43:25,853 [INFO] HTML diff — changed=True diff_lines=41 summary=Page structure changed (no visible text differences found)
+2026-06-02 14:43:26,800 [INFO] Visual diff — changed_pixels=6421 ratio=0.0056 changed=False
+2026-06-02 14:43:26,855 [INFO] Diff complete for https://eprelv.cpcb.gov.in/__DROPDOWN_LodgeComplaint — any_changed=True
+2026-06-02 14:43:26,864 [INFO] Baseline updated — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__DROPDOWN_LodgeComplaint
+2026-06-02 14:43:26,883 [INFO] Diff saved — portal=EPR ELV url=https://eprelv.cpcb.gov.in/__DROPDOWN_LodgeComplaint type=html
+2026-06-02 14:43:26,883 [INFO]   \u2705 Change: https://eprelv.cpcb.gov.in/__DROPDOWN_LodgeComplaint | html
+2026-06-02 14:43:27,400 [INFO]   Lodge Complaint done \u2713
+2026-06-02 14:43:27,400 [INFO] \u2550\u2550\u2550 STEP 9: Important Documents \u2550\u2550\u2550
+2026-06-02 14:43:30,192 [WARNING]   Not found: ('Important Documents', 'Important Links')
+2026-06-02 14:43:31,982 [INFO] Crawl log finished — id=75 pages=7 status=done
+2026-06-02 14:43:31,983 [INFO] \u2550\u2550\u2550 EPR ELV ALL DONE: 7 pages \u2550\u2550\u2550
