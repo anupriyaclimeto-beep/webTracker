@@ -430,16 +430,23 @@ def time_ago(ts):
 def friendly_page_name(url):
     try:
         if "__DROPDOWN_" in url:
-            return "↓ " + url.split("__DROPDOWN_")[-1].replace("_"," ").title()
+            return "↓ " + url.split("__DROPDOWN_")[-1].replace("_", " ").title()
         if "__PAGE_" in url:
-            return url.split("__PAGE_")[-1].replace("_"," ").title()
+            return url.split("__PAGE_")[-1].replace("_", " ").title()
         if "#/plastic/home/" in url.lower():
             name = url.lower().split("#/plastic/home/")[-1]
-            return name.replace("/"," › ").replace("-"," ").replace("_"," ").title()
+            return name.replace("/", " › ").replace("-", " ").replace("_", " ").title()
         if url.endswith("/plastic/home") or "/#/plastic/home" in url:
             return "Home Page"
+        low = url.lower()
+        if "cpcb.nic.in" in low:
+            if "index.php" in low or low.rstrip("/").endswith("cpcb.nic.in"):
+                return "Home Page"
+            path = low.split("cpcb.nic.in/", 1)[-1].split("?")[0].strip("/")
+            if path:
+                return path.replace("/", " › ").replace("-", " ").replace("_", " ").title()
         slug = url.rstrip("/").split("/")[-1].split("#")[-1]
-        return slug.replace("_"," ").replace("-"," ").title() or "Home Page"
+        return slug.replace("_", " ").replace("-", " ").title() or "Home Page"
     except Exception:
         return url
 
@@ -493,6 +500,8 @@ PORTAL_CRAWLER_MAP = {
     "EPR BATTERY":  "crawler_battery.py",
     "EPR TYRES":    "crawler_tyres.py",
     "EPR USEDOIL":  "crawler_usedoil.py",
+    "EPR ELV":      "crawler_elv.py",
+    "CPCB NIC":     "crawler_cpcb_nic.py",
 }
 
 
@@ -603,6 +612,65 @@ def get_crawl_history(portal=None, limit=50):
         return query_db("SELECT * FROM crawl_log WHERE portal=? ORDER BY started_at DESC LIMIT ?",
                         (portal, limit))
     return query_db("SELECT * FROM crawl_log ORDER BY started_at DESC LIMIT ?", (limit,))
+
+
+CPCB_FILE_SUFFIXES = (".php", ".html", ".htm", ".asp", ".aspx", ".jsp")
+
+
+def normalize_cpcb_url(url):
+    """cpcb.nic.in needs trailing slash on directory paths (not on index.php)."""
+    if not url or "cpcb.nic.in" not in url.lower():
+        return url
+    base = url.split("#")[0].split("?")[0]
+    if base != "/" and not base.endswith("/"):
+        if not any(base.lower().endswith(ext) for ext in CPCB_FILE_SUFFIXES):
+            return base + "/"
+    return base
+
+
+def get_baselines_for_page(portal, url, limit=2):
+    """Fetch baseline rows; for CPCB NIC also try slash-normalized URL."""
+    rows = query_db(
+        "SELECT * FROM baselines WHERE portal=? AND url=? ORDER BY updated_at DESC LIMIT ?",
+        (portal, url, limit),
+    )
+    if rows or portal != "CPCB NIC":
+        return rows
+    alt = normalize_cpcb_url(url)
+    if alt != url:
+        rows = query_db(
+            "SELECT * FROM baselines WHERE portal=? AND url=? ORDER BY updated_at DESC LIMIT ?",
+            (portal, alt, limit),
+        )
+    if not rows and url.endswith("/"):
+        rows = query_db(
+            "SELECT * FROM baselines WHERE portal=? AND url=? ORDER BY updated_at DESC LIMIT ?",
+            (portal, url.rstrip("/"), limit),
+        )
+    return rows
+
+
+def get_portal_tracked_pages(portal):
+    """Latest screenshot baseline per URL for a portal."""
+    return query_db(
+        """
+        SELECT b.portal, b.url, b.screenshot_path, b.updated_at
+        FROM baselines b
+        INNER JOIN (
+            SELECT url, MAX(id) AS max_id
+            FROM baselines
+            WHERE portal = ?
+              AND screenshot_path IS NOT NULL
+              AND screenshot_path != ''
+            GROUP BY url
+        ) t ON b.id = t.max_id
+        WHERE b.portal = ?
+        ORDER BY
+            CASE WHEN b.url LIKE '%index.php%' THEN 0 ELSE 1 END,
+            b.url
+        """,
+        (portal, portal),
+    )
 
 
 # ── RENDER HELPERS ────────────────────────────────────────────────────────────
@@ -940,39 +1008,177 @@ elif st.session_state.view == "changes":
 # ════════════════════════════════════════════════════════════════════════════════
 elif st.session_state.view == "screenshots":
     st.markdown(
-        "<div class='page-title'>📸 Changed Pages</div>"
-        "<div class='page-subtitle'>Before / after screenshots of changed pages</div>",
+        "<div class='page-title'>📸 Page Screenshots</div>"
+        "<div class='page-subtitle'>Before / after screenshots — select any tracked page</div>",
         unsafe_allow_html=True
     )
 
-    if not latest_changes:
-        st.success("✅ No changed pages in the latest crawl.")
+    changed_url_set = {c["url"] for c in latest_changes}
+    active_portal   = portal_filter or st.session_state.portal
+
+    if active_portal and active_portal != "All Portals":
+        tracked_pages = get_portal_tracked_pages(active_portal)
+        if not tracked_pages:
+            st.warning(
+                f"No screenshots for **{active_portal}** yet. Click **▶ Run** to start a crawl."
+            )
+        else:
+            f1, f2 = st.columns([2, 3])
+            with f1:
+                page_filter = st.radio(
+                    "Show",
+                    ["All tracked pages", "Changed only"],
+                    horizontal=True,
+                    key="ss_page_filter",
+                )
+            with f2:
+                search_q = st.text_input(
+                    "Search page",
+                    placeholder="e.g. Introduction, Standards, Home…",
+                    key="ss_search",
+                )
+
+            if page_filter == "Changed only":
+                tracked_pages = [p for p in tracked_pages if p["url"] in changed_url_set]
+
+            if search_q:
+                q = search_q.lower()
+                tracked_pages = [
+                    p for p in tracked_pages
+                    if q in friendly_page_name(p["url"]).lower() or q in p["url"].lower()
+                ]
+
+            if not tracked_pages:
+                st.info("No pages match this filter. Try **All tracked pages** or clear search.")
+            else:
+
+                def page_label(row):
+                    name = friendly_page_name(row["url"])
+                    if row["url"] in changed_url_set:
+                        return f"[{active_portal}] {name} 🔔"
+                    return f"[{active_portal}] {name}"
+
+                urls         = [p["url"] for p in tracked_pages]
+                labels       = [page_label(p) for p in tracked_pages]
+                sel_label    = st.selectbox(
+                    f"Select page ({len(urls)} tracked)",
+                    labels,
+                    key="ss_page_select",
+                )
+                selected_url = urls[labels.index(sel_label)]
+                display_url  = (
+                    normalize_cpcb_url(selected_url)
+                    if active_portal == "CPCB NIC"
+                    else selected_url
+                )
+
+                st.markdown(
+                    "<hr style='margin:8px 0 16px;border-color:#1a1f2e'>",
+                    unsafe_allow_html=True,
+                )
+
+                baseline = get_baselines_for_page(active_portal, selected_url, limit=2)
+                page_changes = query_db(
+                    "SELECT * FROM changes WHERE portal=? AND url IN (?, ?) "
+                    "ORDER BY timestamp DESC",
+                    (active_portal, selected_url, display_url),
+                )
+                latest_b = baseline[0] if len(baseline) > 0 else None
+                prev_b   = baseline[1] if len(baseline) > 1 else None
+
+                st.markdown(
+                    f"<div class='page-title' style='font-size:17px'>"
+                    f"{friendly_page_name(selected_url)}"
+                    f" <span style='font-size:12px;color:#a78bfa;font-weight:500'>"
+                    f"[{active_portal}]</span></div>",
+                    unsafe_allow_html=True,
+                )
+                st.caption(display_url)
+
+                sc1, sc2 = st.columns(2)
+                with sc1:
+                    st.markdown("**⬅️ Previous snapshot**")
+                    if prev_b:
+                        p = prev_b.get("screenshot_path")
+                        if p and os.path.exists(p):
+                            st.image(p, use_container_width=True)
+                        else:
+                            st.info("Not available")
+                    else:
+                        st.info("No previous snapshot (first crawl for this page)")
+                with sc2:
+                    st.markdown("**➡️ Latest snapshot**")
+                    if latest_b:
+                        p = latest_b.get("screenshot_path")
+                        if p and os.path.exists(p):
+                            st.image(p, use_container_width=True)
+                        else:
+                            st.info("Not available")
+                    else:
+                        st.info("No latest snapshot")
+
+                if page_changes:
+                    st.markdown("---")
+                    for change in page_changes[:3]:
+                        icon, label = DIFF_LABELS.get(change["diff_type"], ("❓", "?"))
+                        with st.expander(f"{icon} {label} change", expanded=True):
+                            try:
+                                detail = json.loads(change["diff_detail"])
+                                if change["diff_type"] == "html":
+                                    render_html_change(detail)
+                                elif change["diff_type"] == "visual":
+                                    st.info(
+                                        f"Appearance changed by "
+                                        f"{detail.get('change_ratio', 0) * 100:.1f}%"
+                                    )
+                            except Exception:
+                                st.info("Details unavailable.")
+
+    elif not latest_changes:
+        st.info(
+            "Select a portal from the top dropdown (e.g. **CPCB NIC**) "
+            "to browse all tracked page screenshots."
+        )
     else:
         changed_urls = list({c["url"] for c in latest_changes})
+
         def url_label(url):
-            chg = next((c for c in latest_changes if c["url"]==url),{})
-            p   = chg.get("portal","")
+            chg = next((c for c in latest_changes if c["url"] == url), {})
+            p   = chg.get("portal", "")
             return f"[{p}] {friendly_page_name(url)}" if p else friendly_page_name(url)
 
         labels       = [url_label(u) for u in changed_urls]
         sel_label    = st.selectbox(f"Select page ({len(changed_urls)} changed)", labels)
         selected_url = changed_urls[labels.index(sel_label)]
+        chg_portal   = next(
+            (c["portal"] for c in latest_changes if c["url"] == selected_url),
+            None,
+        )
 
         st.markdown("<hr style='margin:8px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 
-        baseline     = query_db("SELECT * FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2", (selected_url,))
-        page_changes = query_db("SELECT * FROM changes WHERE url=? ORDER BY timestamp DESC", (selected_url,))
-        latest_b     = baseline[0] if len(baseline)>0 else None
-        prev_b       = baseline[1] if len(baseline)>1 else None
-        chg_portal   = page_changes[0]["portal"] if page_changes else "—"
+        baseline = query_db(
+            "SELECT * FROM baselines WHERE portal=? AND url=? ORDER BY updated_at DESC LIMIT 2",
+            (chg_portal, selected_url),
+        ) if chg_portal else query_db(
+            "SELECT * FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2",
+            (selected_url,),
+        )
+        page_changes = query_db(
+            "SELECT * FROM changes WHERE url=? ORDER BY timestamp DESC",
+            (selected_url,),
+        )
+        latest_b = baseline[0] if len(baseline) > 0 else None
+        prev_b   = baseline[1] if len(baseline) > 1 else None
+        chg_portal = chg_portal or (page_changes[0]["portal"] if page_changes else "—")
 
         st.markdown(
             f"<div class='page-title' style='font-size:17px'>{friendly_page_name(selected_url)}"
             f" <span style='font-size:12px;color:#a78bfa;font-weight:500'>[{chg_portal}]</span></div>",
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
-        sc1,sc2 = st.columns(2)
+        sc1, sc2 = st.columns(2)
         with sc1:
             st.markdown("**⬅️ Previous snapshot**")
             if prev_b:
@@ -990,13 +1196,14 @@ elif st.session_state.view == "screenshots":
 
         st.markdown("---")
         for change in page_changes[:3]:
-            icon,label = DIFF_LABELS.get(change["diff_type"],("❓","?"))
+            icon, label = DIFF_LABELS.get(change["diff_type"], ("❓", "?"))
             with st.expander(f"{icon} {label} change", expanded=True):
                 try:
                     detail = json.loads(change["diff_detail"])
-                    if change["diff_type"]=="html": render_html_change(detail)
-                    elif change["diff_type"]=="visual":
-                        st.info(f"Appearance changed by {detail.get('change_ratio',0)*100:.1f}%")
+                    if change["diff_type"] == "html":
+                        render_html_change(detail)
+                    elif change["diff_type"] == "visual":
+                        st.info(f"Appearance changed by {detail.get('change_ratio', 0) * 100:.1f}%")
                 except Exception:
                     st.info("Details unavailable.")
 

@@ -590,6 +590,10 @@ async def run_all_portals(portal_name_filter=None):
         elif name == "EPR PLASTIC":
             await crawl_portal(portal)
 
+        elif name == "CPCB NIC":
+            from crawler_cpcb_nic import crawl_cpcb_nic_portal
+            await crawl_cpcb_nic_portal(portal)
+
         else:
             logger.warning("Unknown portal '%s' — using default plastic crawler", name)
             await crawl_portal(portal)
