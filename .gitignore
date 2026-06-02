@@ -1,0 +1,32 @@
+archive/
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+.env
+
+# Logs
+*.log
+.crawler.log
+.crawler_cpcb_nic.log
+
+# PID files
+*.pid
+*.pid.lock
+.crawler.pid
+
+# Database
+*.db
+*.sqlite3
+
+# VS Code
+.vscode/
+
+# Archive data
+archive/
+
+# Screenshots & snapshots
+*.png
+snapshot.html

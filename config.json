@@ -56,6 +56,18 @@
       "auth": "none",
       "crawl_interval_minutes": 60,
       "crawl": { "only_home": true, "capture_dropdowns": true }
+    },
+    {
+      "name": "CPCB NIC",
+      "url": "https://cpcb.nic.in/index.php",
+      "auth": "none",
+      "crawl_interval_minutes": 60,
+      "crawl": {
+        "only_home": false,
+        "full_page_stitch": true,
+        "capture_menu_dropdowns": true,
+        "menu_selector": ".sf-menu"
+      }
     }
   ],
   "schedule": {
