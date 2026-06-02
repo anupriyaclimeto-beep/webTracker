@@ -462,14 +462,12 @@ PORTAL_CRAWLER_MAP = {
 }
 
 def launch_crawl(portal=None):
-    if portal and portal in PORTAL_CRAWLER_MAP:
-        script = PORTAL_CRAWLER_MAP[portal]
-        cmd = [sys.executable, script, "--once", "--portal", portal] if script == "crawler.py" \
-              else [sys.executable, script, "--once"]
-    elif portal:
-        cmd = [sys.executable, "crawler.py", "--once", "--portal", portal]
-    else:
-        cmd = [sys.executable, "crawler.py", "--once"]
+    # Always use the main crawler.py which has proper argument parsing
+    # and orchestrates all portal crawlers
+    cmd = [sys.executable, "crawler.py", "--once"]
+    if portal:
+        cmd.extend(["--portal", portal])
+    
     # Propagate environment variables and Streamlit secrets to the subprocess
     env = os.environ.copy()
     if IS_CLOUD:
