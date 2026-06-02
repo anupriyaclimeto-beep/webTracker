@@ -81,14 +81,20 @@ async def save_snapshot(page, portal_name: str, key: str, screenshot_bytes: byte
         "screenshot_path":  str(screenshot_path),
     }
 
-
 async def diff_and_store(portal_name: str, url: str, snap: dict, har_path: str):
-    baseline    = get_baseline(portal_name, url)
+    baseline = get_baseline(portal_name, url)
+
+    # Save highlighted diff image alongside the snapshot
+    from pathlib import Path as _Path
+    _snap_dir      = _Path(snap["screenshot_path"]).parent
+    _diff_img_path = str(_snap_dir / "diff_highlight.png")
+
     diff_result = await run_all_diffs(
         portal_name=portal_name, url=url,
         current_screenshot=snap["screenshot_bytes"],
         current_html=snap["html"],
         baseline=baseline,
+        diff_image_save_path=_diff_img_path,   # ← NEW
     )
     update_baseline(
         portal=portal_name, url=url,
@@ -146,6 +152,7 @@ async def crawl_portal(portal_config: dict):
 
     crawl_id      = start_crawl_log(portal_name)
     pages_visited = 0
+    logger.info("Starting crawl for portal: %s (crawl_id=%s)", portal_name, crawl_id)
 
     async with async_playwright() as p:
         browser_cfg = config.get("browser", {})
@@ -192,7 +199,7 @@ async def crawl_portal(portal_config: dict):
                                    await scroll_and_stitch(page))
         await diff_and_store(portal_name, HOME_URL, snap, har_path)
         pages_visited += 1
-        logger.info("Home page done ✓")
+        logger.info("Home page done ✓ | pages_visited=%d", pages_visited)
 
         # ── STEP 2: Plastic Waste Management dropdown ─────────────────────────
         logger.info("═══ STEP 2: Plastic Waste Management dropdown ═══")
@@ -219,7 +226,7 @@ async def crawl_portal(portal_config: dict):
             pages_visited += 1
             await page.keyboard.press("Escape")
             await asyncio.sleep(0.5)
-            logger.info("  Plastic Waste Management dropdown done ✓")
+            logger.info("  Plastic Waste Management dropdown done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'Plastic Waste Management' link")
 
@@ -250,7 +257,7 @@ async def crawl_portal(portal_config: dict):
             pages_visited += 1
             await page.keyboard.press("Escape")
             await asyncio.sleep(0.5)
-            logger.info("  About EPR dropdown done ✓")
+            logger.info("  About EPR dropdown done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'About EPR' link")
 
@@ -278,7 +285,7 @@ async def crawl_portal(portal_config: dict):
                                             await scroll_and_stitch(page))
             await diff_and_store(portal_name, item_url, item_snap, har_path)
             pages_visited += 1
-            logger.info("  ✓ '%s' saved", label)
+            logger.info("  ✓ '%s' saved | pages_visited=%d", label, pages_visited)
 
         # ── STEP 5: Important Documents — click + scroll page ─────────────────
         logger.info("═══ STEP 5: Important Documents dropdown — click + scroll page ═══")
@@ -310,7 +317,7 @@ async def crawl_portal(portal_config: dict):
                                         await scroll_and_stitch(page))
             await diff_and_store(portal_name, imp_docs_key, snap5, har_path)
             pages_visited += 1
-            logger.info("  Important Documents full snapshot done ✓")
+            logger.info("  Important Documents full snapshot done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'Important Documents' link")
 
@@ -344,7 +351,7 @@ async def crawl_portal(portal_config: dict):
                                         await page.screenshot(full_page=False, type="png"))
             await diff_and_store(portal_name, bulk_upload_key, snap6, har_path)
             pages_visited += 1
-            logger.info("  Bulk Upload snapshot done ✓")
+            logger.info("  Bulk Upload snapshot done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'Bulk Upload' link")
 
@@ -378,7 +385,7 @@ async def crawl_portal(portal_config: dict):
                                         await page.screenshot(full_page=False, type="png"))
             await diff_and_store(portal_name, lodge_key, snap7, har_path)
             pages_visited += 1
-            logger.info("  Lodge Complaint snapshot done ✓")
+            logger.info("  Lodge Complaint snapshot done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'Lodge Complaint' link")
 
@@ -412,7 +419,7 @@ async def crawl_portal(portal_config: dict):
                                         await page.screenshot(full_page=False, type="png"))
             await diff_and_store(portal_name, sop_key, snap8, har_path)
             pages_visited += 1
-            logger.info("  SOP snapshot done ✓")
+            logger.info("  SOP snapshot done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'SOP' link")
 
@@ -421,6 +428,9 @@ async def crawl_portal(portal_config: dict):
 
     finish_crawl_log(crawl_id, pages_visited, status="done")
     logger.info("═══ EPR PLASTIC ALL DONE: %d pages crawled ═══", pages_visited)
+    # explicit finish markers for UI to detect in logs
+    logger.info("CRAWL_FINISHED: %d pages", pages_visited)
+    logger.info("ALL DONE — pages complete")
 
 
 # ── Multi-portal router ───────────────────────────────────────────────────────
