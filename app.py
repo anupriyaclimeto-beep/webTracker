@@ -973,7 +973,8 @@ try:
             except Exception:
                 pass
 
-            # show short success and refresh
+            # show short success and refresh — bust cache so History updates immediately
+            st.cache_data.clear()
             st.success("Crawl finished (detected in logs). Showing changes.")
             st.markdown("<script>setTimeout(()=>window.location.reload(),900)</script>", unsafe_allow_html=True)
 except Exception:
@@ -1024,6 +1025,7 @@ with nb_right:
                     stop_crawl()
                     st.session_state.pop("crawler_manual_running", None)
                     st.session_state.pop("crawler_manual_started_at", None)
+                    st.cache_data.clear()
                     time.sleep(1)
                     st.rerun()
             with cols[1]:
@@ -1054,10 +1056,13 @@ with nb_right:
                 st.session_state["crawler_manual_running"] = True
                 st.session_state["crawler_manual_started_at"] = datetime.now().isoformat()
                 launch_crawl(portal_filter)
+                st.cache_data.clear()
                 time.sleep(1)
                 st.rerun()
     with rc3:
-        if st.button("↺ Refresh", use_container_width=True): st.rerun()
+        if st.button("↺ Refresh", use_container_width=True):
+            st.cache_data.clear()
+            st.rerun()
 
 st.markdown("<hr style='margin:4px 0 20px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 st.markdown("<div style='padding:0 8px'>", unsafe_allow_html=True)
@@ -1468,6 +1473,7 @@ elif st.session_state.view == "console":
                 st.success("Stop signal sent to crawler.")
             else:
                 st.warning("Could not send stop (no PID file?).")
+            st.cache_data.clear()
             time.sleep(0.8)
             st.rerun()
     with cc2:
