@@ -34,6 +34,7 @@ from diff_engine import run_all_diffs
 from storage import (
     init_db, update_baseline, get_baseline,
     save_diff, start_crawl_log, finish_crawl_log,
+    upload_to_cloudinary,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -93,14 +94,20 @@ async def diff_and_store(url, snap, har_path):
         screenshot_path=snap["screenshot_path"],
         har_path=har_path,
     )
+    # Upload to Cloudinary
+    screenshot_url = upload_to_cloudinary(snap["screenshot_path"], resource_type="image")
+    html_url       = upload_to_cloudinary(snap["html_path"], resource_type="raw")
+    if screenshot_url:
+        logger.info("  Cloudinary screenshot: %s", screenshot_url)
     if diff_result and diff_result.get("any_changed"):
         for diff_type, diff_data in diff_result["results"].items():
             if diff_type == "har":
                 continue
             if diff_data.get("changed"):
                 save_diff(portal=PORTAL_NAME, url=url,
-                          diff_type=diff_type, diff_detail=diff_data)
-                logger.info("  ✅ Change: %s | %s", url, diff_type)
+                          diff_type=diff_type, diff_detail=diff_data,
+                          screenshot_url=screenshot_url, html_url=html_url)
+                logger.info("  Change: %s | %s", url, diff_type)
 
 
 async def scroll_and_stitch(page) -> bytes:

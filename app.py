@@ -663,7 +663,7 @@ def render_unified_html_diff(detail):
 
 
 
-def render_visual_diff(detail, baseline_path=None, current_path=None):
+def render_visual_diff(detail, change, baseline_path=None, current_path=None):
     """Show before/after screenshots + highlighted diff image."""
     ratio         = detail.get("change_ratio", 0)
     pixels        = detail.get("changed_pixels", 0)
@@ -684,7 +684,10 @@ def render_visual_diff(detail, baseline_path=None, current_path=None):
                 st.info("No baseline image")
         with c2:
             st.markdown("**➡️ After**")
-            if current_path and os.path.exists(current_path):
+            screenshot_url = change.get("screenshot_url")
+            if screenshot_url:
+                st.image(screenshot_url, use_container_width=True)
+            elif current_path and os.path.exists(current_path):
                 st.image(current_path, use_container_width=True)
             else:
                 st.info("No current image")
@@ -732,7 +735,7 @@ def render_change_expander(change):
             )
             baseline_path = baseline_rows[1]["screenshot_path"] if len(baseline_rows) > 1 else None
             current_path  = baseline_rows[0]["screenshot_path"] if len(baseline_rows) > 0 else None
-            render_visual_diff(detail, baseline_path, current_path)
+            render_visual_diff(detail, change, baseline_path, current_path)
 
         elif change["diff_type"] == "har":
             new_ep  = detail.get("new_endpoints", [])
@@ -1213,6 +1216,7 @@ elif st.session_state.view == "screenshots":
                     elif change["diff_type"] == "visual":
                         render_visual_diff(
                             detail,
+                            change,
                             prev_b.get("screenshot_path") if prev_b else None,
                             latest_b.get("screenshot_path") if latest_b else None,
                         )
