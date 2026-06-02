@@ -4,26 +4,113 @@ import shutil
 import json
 import logging
 from datetime import datetime
+from pathlib import Path
+from dotenv import load_dotenv
 
+# Cloudinary imports
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+# ----------------------------------------------------------------------
+# Load environment variables (both locally and on Vercel)
+# ----------------------------------------------------------------------
+BASE_DIR = Path(__file__).parent
+load_dotenv(dotenv_path=BASE_DIR / ".env", override=True)
+
+# Supabase connection details (optional – will be used if ALL are present)
+SUPABASE_HOST = os.getenv("SUPABASE_HOST")
+SUPABASE_PORT = os.getenv("SUPABASE_PORT")
+SUPABASE_DB   = os.getenv("SUPABASE_DB")
+SUPABASE_USER = os.getenv("SUPABASE_USER")
+SUPABASE_PWD  = os.getenv("SUPABASE_PASSWORD")
+SUPABASE_SERVICE_ROLE = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+# Cloudinary credentials (optional)
+CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
+CLOUDINARY_API_KEY    = os.getenv("CLOUDINARY_API_KEY")
+CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
+
+if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
+    cloudinary.config(
+        cloud_name=CLOUDINARY_CLOUD_NAME,
+        api_key=CLOUDINARY_API_KEY,
+        api_secret=CLOUDINARY_API_SECRET,
+        secure=True,
+    )
+else:
+    # If any credential missing we will skip Cloudinary uploads.
+    cloudinary.config()  # defaults, no effect
+
+# When all Supabase vars are present we will use the remote DB.
+USE_SUPABASE = all([
+    SUPABASE_HOST,
+    SUPABASE_PORT,
+    SUPABASE_DB,
+    SUPABASE_USER,
+    SUPABASE_PWD or SUPABASE_SERVICE_ROLE,
+])
+
+if USE_SUPABASE:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+
+    # Build DSN string for psycopg2 (SSL required by Supabase)
+    _DSN = (
+        f"host={SUPABASE_HOST} "
+        f"port={SUPABASE_PORT} "
+        f"dbname={SUPABASE_DB} "
+        f"user={SUPABASE_USER} "
+        f"password={SUPABASE_SERVICE_ROLE or SUPABASE_PWD} "
+        f"sslmode=require"
+    )
+
+    def get_conn():
+        """Return a fresh psycopg2 connection (Supabase)."""
+        return psycopg2.connect(_DSN, cursor_factory=RealDictCursor)
+else:
+    # Fallback to the original SQLite file‑based DB
+    def get_conn():
+        """Return a fresh sqlite3 connection (local)."""
+        return sqlite3.connect(DB_PATH)
+
+# ----------------------------------------------------------------------
+# Logging
+# ----------------------------------------------------------------------
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger(__name__)
 
+# ----------------------------------------------------------------------
+# Load configuration (unchanged)
+# ----------------------------------------------------------------------
 with open("config.json") as f:
     config = json.load(f)
 
+# SQLite‑only paths (used only when USE_SUPABASE is False)
 DB_PATH     = config["storage"]["db"]
 ARCHIVE_DIR = config["storage"]["archive_dir"]
 
 
 def init_db():
+    """
+    Initialise storage.
+    • If Supabase is detected, the tables already exist (created during migration),
+      so this function only logs a message.
+    • If SQLite is used (local dev) we run the original schema‑creation logic.
+    """
+    if USE_SUPABASE:
+        logger.info("Supabase detected – no local DB initialisation required.")
+        return
+
+    # ----- SQLite initialisation (unchanged) -----
     os.makedirs(ARCHIVE_DIR, exist_ok=True)
     conn   = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute("""\
         CREATE TABLE IF NOT EXISTS changes (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
             portal       TEXT NOT NULL,
@@ -42,7 +129,7 @@ def init_db():
         cursor.execute("ALTER TABLE changes ADD COLUMN ai_summary TEXT")
         logger.info("Migrated changes table — added ai_summary column")
 
-    cursor.execute("""
+    cursor.execute("""\
         CREATE TABLE IF NOT EXISTS baselines (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
             portal          TEXT NOT NULL,
@@ -54,7 +141,7 @@ def init_db():
         )
     """)
 
-    cursor.execute("""
+    cursor.execute("""\
         CREATE INDEX IF NOT EXISTS idx_baselines_portal_url
         ON baselines (portal, url)
     """)
@@ -66,7 +153,7 @@ def init_db():
     row = cursor.fetchone()
     if row and "UNIQUE" in (row[0] or "").upper():
         logger.info("Migrating baselines table — removing stale UNIQUE constraint …")
-        conn.executescript("""
+        conn.executescript("""\
             ALTER TABLE baselines RENAME TO baselines_old;
             CREATE TABLE baselines (
                 id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -85,7 +172,7 @@ def init_db():
         conn.commit()
         logger.info("Baselines migration complete.")
 
-    cursor.execute("""
+    cursor.execute("""\
         CREATE TABLE IF NOT EXISTS crawl_log (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             portal        TEXT NOT NULL,
@@ -101,39 +188,76 @@ def init_db():
     logger.info("Database initialised at %s", DB_PATH)
 
 
-def save_diff(portal, url, diff_type, diff_detail, ai_summary=None):
-    conn   = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+def save_diff(portal, url, diff_type, diff_detail, ai_summary=None, screenshot_url=None, html_url=None):
+    """Persist a diff record, now also storing Cloudinary URLs if provided.
+    Works with both SQLite and Supabase.
+    """
     timestamp = datetime.now().isoformat()
-    cursor.execute(
-        """INSERT INTO changes
-               (portal, url, diff_type, diff_detail, ai_summary, timestamp)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (portal, url, diff_type, json.dumps(diff_detail), ai_summary, timestamp)
-    )
-    conn.commit()
-    conn.close()
+    if USE_SUPABASE:
+        conn = get_conn()
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO public.changes
+                    (portal, url, diff_type, diff_detail, ai_summary, screenshot_url, html_url, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                    portal=%s, url=%s, diff_type=%s, diff_detail=%s,
+                    ai_summary=%s, screenshot_url=%s, html_url=%s, timestamp=%s
+                """,
+                (
+                    portal, url, diff_type, json.dumps(diff_detail), ai_summary, screenshot_url, html_url, timestamp,
+                    portal, url, diff_type, json.dumps(diff_detail), ai_summary, screenshot_url, html_url, timestamp,
+                ),
+            )
+            conn.commit()
+        conn.close()
+    else:
+        conn   = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute(
+            """INSERT INTO changes
+               (portal, url, diff_type, diff_detail, ai_summary, screenshot_url, html_url, timestamp)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (portal, url, diff_type, json.dumps(diff_detail), ai_summary, screenshot_url, html_url, timestamp),
+        )
+        conn.commit()
+        conn.close()
     logger.info("Diff saved — portal=%s url=%s type=%s", portal, url, diff_type)
 
 
 def get_baseline(portal, url):
-    conn   = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute(
-        """SELECT html_path, screenshot_path, har_path
-           FROM baselines
-           WHERE portal=? AND url=?
-           ORDER BY updated_at DESC
-           LIMIT 1""",
-        (portal, url)
-    )
-    row = cursor.fetchone()
+    conn = get_conn()
+    if USE_SUPABASE:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT html_path, screenshot_path, har_path
+                FROM public.baselines
+                WHERE portal=%s AND url=%s
+                ORDER BY updated_at DESC
+                LIMIT 1
+                """,
+                (portal, url),
+            )
+            row = cur.fetchone()
+    else:
+        cursor = conn.cursor()
+        cursor.execute(
+            """SELECT html_path, screenshot_path, har_path
+               FROM baselines
+               WHERE portal=? AND url=?
+               ORDER BY updated_at DESC
+               LIMIT 1""",
+            (portal, url),
+        )
+        row = cursor.fetchone()
     conn.close()
     if row:
         return {
-            "html_path":       row[0],
-            "screenshot_path": row[1],
-            "har_path":        row[2],
+            "html_path":       row["html_path"] if USE_SUPABASE else row[0],
+            "screenshot_path": row["screenshot_path"] if USE_SUPABASE else row[1],
+            "har_path":        row["har_path"] if USE_SUPABASE else row[2],
         }
     return None
 
@@ -141,18 +265,29 @@ def get_baseline(portal, url):
 def update_baseline(portal, url, html_path, screenshot_path, har_path):
     """
     Always insert a new baseline row to keep full history.
-    get_baseline() retrieves the most recent row via ORDER BY updated_at DESC.
     """
-    conn   = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
     updated_at = datetime.now().isoformat()
-    cursor.execute(
-        """INSERT INTO baselines
+    conn = get_conn()
+    if USE_SUPABASE:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO public.baselines
+                    (portal, url, html_path, screenshot_path, har_path, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                (portal, url, html_path, screenshot_path, har_path, updated_at),
+            )
+            conn.commit()
+    else:
+        cursor = conn.cursor()
+        cursor.execute(
+            """INSERT INTO baselines
                (portal, url, html_path, screenshot_path, har_path, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (portal, url, html_path, screenshot_path, har_path, updated_at)
-    )
-    conn.commit()
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (portal, url, html_path, screenshot_path, har_path, updated_at),
+        )
+        conn.commit()
     conn.close()
     logger.info("Baseline updated — portal=%s url=%s", portal, url)
 
@@ -174,11 +309,27 @@ def cleanup_old_snapshots(url_folder, keep=2):
         logger.error("Error during snapshot cleanup — %s", e)
 
 
+def upload_to_cloudinary(local_path, resource_type="image"):
+    """Upload a local file to Cloudinary and return the secure URL.
+    Returns None if Cloudinary is not configured or upload fails.
+    """
+    if not (CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET):
+        return None
+    try:
+        result = cloudinary.uploader.upload(local_path, resource_type=resource_type, folder="webtracker")
+        return result.get("secure_url")
+    except Exception as e:
+        logger.error(f"Cloudinary upload failed for {local_path}: {e}")
+        return None
+
+
 def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
     timestamp  = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_url   = (
-        url.replace("https://", "").replace("http://", "")
-           .replace("/", "_").replace(":", "_")
+        url.replace("https://", "")
+           .replace("http://", "")
+           .replace("/", "_")
+           .replace(":", "_")
     )
     url_folder = os.path.join(ARCHIVE_DIR, portal, safe_url)
     folder     = os.path.join(url_folder, timestamp)
@@ -198,13 +349,17 @@ def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
         with open(har_path, "w", encoding="utf-8") as f:
             json.dump(har_data, f, indent=2)
 
+    # Upload to Cloudinary (image for screenshot, raw for html)
+    screenshot_url = upload_to_cloudinary(screenshot_path, resource_type="image")
+    html_url       = upload_to_cloudinary(html_path, resource_type="raw")
+
     logger.info("Artefacts archived to %s", folder)
     cleanup_old_snapshots(url_folder, keep=2)
-    return screenshot_path, html_path, har_path
+    return screenshot_path, html_path, har_path, screenshot_url, html_url
 
 
 def start_crawl_log(portal):
-    conn   = sqlite3.connect(DB_PATH)
+    conn   = sqlite3.connect(DB_PATH)   # crawl logs stay local (no need for Supabase)
     cursor = conn.cursor()
     started_at = datetime.now().isoformat()
     cursor.execute(
@@ -234,32 +389,53 @@ def finish_crawl_log(crawl_id, pages_visited, status="done"):
 
 
 def get_all_changes():
-    conn   = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM changes ORDER BY timestamp DESC")
-    rows = cursor.fetchall()
+    """Return all change records ordered by newest first (includes Cloudinary URLs)."""
+    conn = get_conn()
+    if USE_SUPABASE:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM public.changes ORDER BY timestamp DESC")
+            rows = cur.fetchall()
+    else:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM changes ORDER BY timestamp DESC")
+        rows = cursor.fetchall()
     conn.close()
     return rows
 
-
 def clear_baselines_for_portal(portal):
-    conn   = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM baselines WHERE portal=?", (portal,))
-    deleted = cursor.rowcount
-    conn.commit()
+    conn = get_conn()
+    if USE_SUPABASE:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM public.baselines WHERE portal=%s", (portal,))
+            deleted = cur.rowcount
+            conn.commit()
+    else:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM baselines WHERE portal=?", (portal,))
+        deleted = cursor.rowcount
+        conn.commit()
     conn.close()
     logger.info("Cleared %s old baselines for portal: %s", deleted, portal)
 
 
 def purge_old_records(keep_days):
+    """
+    Delete records older than *keep_days* days.
+    Works for both back‑ends.
+    """
     from datetime import timedelta
     cutoff = (datetime.now() - timedelta(days=keep_days)).isoformat()
-    conn   = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM changes WHERE timestamp < ?", (cutoff,))
-    deleted = cursor.rowcount
-    conn.commit()
+    conn = get_conn()
+    if USE_SUPABASE:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM public.changes WHERE timestamp < %s", (cutoff,))
+            deleted = cur.rowcount
+            conn.commit()
+    else:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM changes WHERE timestamp < ?", (cutoff,))
+        deleted = cursor.rowcount
+        conn.commit()
     conn.close()
     logger.info("Purged %s records older than %s days", deleted, keep_days)
 
