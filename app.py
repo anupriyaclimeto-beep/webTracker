@@ -565,6 +565,7 @@ def stop_crawl():
 
 
 # ── DATA ──────────────────────────────────────────────────────────────────────
+@st.cache_data(ttl=30)
 def get_all_portals():
     # Load all portal names from config.json
     configured = [p["name"] for p in config.get("portals", [])]
@@ -581,6 +582,7 @@ def get_all_portals():
             all_p.append(p)
     return all_p
 
+@st.cache_data(ttl=30)
 def get_portal_stats(portal=None):
     and_clause = "AND cl.portal = ?" if portal else ""
     args = (portal,) if portal else ()
@@ -624,6 +626,7 @@ def get_portal_stats(portal=None):
             
     return merged_stats
 
+@st.cache_data(ttl=30)
 def get_latest_crawl_changes(portal=None):
     if portal:
         row = query_db("SELECT started_at,finished_at FROM crawl_log "
@@ -636,10 +639,11 @@ def get_latest_crawl_changes(portal=None):
     f = row[0]["finished_at"] or datetime.now().isoformat()
     if portal:
         return query_db("SELECT * FROM changes WHERE portal=? AND timestamp>=? AND timestamp<=? "
-                        "ORDER BY timestamp DESC", (portal, s, f))
+                        "ORDER BY timestamp DESC LIMIT 200", (portal, s, f))
     return query_db("SELECT * FROM changes WHERE timestamp>=? AND timestamp<=? "
-                    "ORDER BY timestamp DESC", (s, f))
+                    "ORDER BY timestamp DESC LIMIT 200", (s, f))
 
+@st.cache_data(ttl=30)
 def get_crawl_history(portal=None, limit=50):
     if portal:
         return query_db("SELECT * FROM crawl_log WHERE portal=? ORDER BY started_at DESC LIMIT ?",
@@ -906,7 +910,10 @@ def render_change_expander(change):
 
 
 # ── STARTUP CLEANUP ───────────────────────────────────────────────────────────
-fix_stale_crawls()
+# Run stale-crawl cleanup only once per session (not on every tab switch re-run)
+if not st.session_state.get("_stale_cleaned"):
+    fix_stale_crawls()
+    st.session_state["_stale_cleaned"] = True
 
 # ── SESSION STATE ─────────────────────────────────────────────────────────────
 if "view"   not in st.session_state: st.session_state.view   = "overview"
@@ -916,8 +923,12 @@ all_portals    = get_all_portals()
 portal_options = ["All Portals"] + all_portals
 running_crawl  = is_crawl_running()
 
-total_crawls     = (query_db("SELECT COUNT(*) as c FROM crawl_log") or [{"c":0}])[0]["c"]
-all_time_changes = (query_db("SELECT COUNT(*) as c FROM changes")   or [{"c":0}])[0]["c"]
+@st.cache_data(ttl=60)
+def _get_global_counts():
+    tc = (query_db("SELECT COUNT(*) as c FROM crawl_log") or [{"c":0}])[0]["c"]
+    ac = (query_db("SELECT COUNT(*) as c FROM changes")   or [{"c":0}])[0]["c"]
+    return tc, ac
+total_crawls, all_time_changes = _get_global_counts()
 
 portal_filter  = None if st.session_state.portal == "All Portals" else st.session_state.portal
 latest_changes = get_latest_crawl_changes(portal_filter)
@@ -1315,12 +1326,18 @@ elif st.session_state.view == "screenshots":
 
         st.markdown("<hr style='margin:8px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 
-        baseline_rows = query_db(
-            "SELECT * FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2", (selected_url,)
-        )
-        page_changes = query_db(
-            "SELECT * FROM changes WHERE url=? ORDER BY timestamp DESC", (selected_url,)
-        )
+        @st.cache_data(ttl=60)
+        def _get_baseline_rows(url):
+            return query_db(
+                "SELECT * FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2", (url,)
+            )
+        @st.cache_data(ttl=60)
+        def _get_page_changes(url):
+            return query_db(
+                "SELECT * FROM changes WHERE url=? ORDER BY timestamp DESC LIMIT 100", (url,)
+            )
+        baseline_rows = _get_baseline_rows(selected_url)
+        page_changes  = _get_page_changes(selected_url)
         latest_b   = baseline_rows[0] if len(baseline_rows) > 0 else None
         prev_b     = baseline_rows[1] if len(baseline_rows) > 1 else None
         chg_portal = page_changes[0]["portal"] if page_changes else "—"
