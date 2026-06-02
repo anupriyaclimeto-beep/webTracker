@@ -470,9 +470,19 @@ def launch_crawl(portal=None):
         cmd = [sys.executable, "crawler.py", "--once", "--portal", portal]
     else:
         cmd = [sys.executable, "crawler.py", "--once"]
+    # Propagate environment variables and Streamlit secrets to the subprocess
+    env = os.environ.copy()
+    if IS_CLOUD:
+        for k in st.secrets.keys():
+            try:
+                env[k] = str(st.secrets[k])
+            except Exception:
+                pass
+
     log_fh = open(LOG_FILE, "w", encoding="utf-8", buffering=1)
     proc = subprocess.Popen(cmd, stdout=log_fh, stderr=log_fh,
-                            cwd=os.path.dirname(os.path.abspath(__file__)) or ".")
+                            cwd=os.path.dirname(os.path.abspath(__file__)) or ".",
+                            env=env)
     try:
         with open(PID_FILE, "w") as f: f.write(str(proc.pid))
     except Exception: pass
