@@ -290,8 +290,12 @@ def init_db():
 init_db()
 
 def _pg_query_to_sqlite(query):
-    """Convert SQLite ? placeholders to PostgreSQL %s placeholders."""
-    return query.replace("?", "%s").replace("datetime('now')", "NOW()")
+    """Convert SQLite ? placeholders and datetime functions to PostgreSQL."""
+    q = query.replace("?", "%s")
+    q = q.replace("datetime('now','-15 minutes')", "NOW() - INTERVAL '15 minutes'")
+    q = q.replace("datetime('now', '-15 minutes')", "NOW() - INTERVAL '15 minutes'")
+    q = q.replace("datetime('now')", "NOW()")
+    return q
 
 def query_db(query, args=()):
     try:
