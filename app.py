@@ -292,8 +292,12 @@ init_db()
 def _pg_query_to_sqlite(query):
     """Convert SQLite ? placeholders and datetime functions to PostgreSQL."""
     q = query.replace("?", "%s")
-    q = q.replace("datetime('now','-15 minutes')", "NOW() - INTERVAL '15 minutes'")
-    q = q.replace("datetime('now', '-15 minutes')", "NOW() - INTERVAL '15 minutes'")
+    # Cast started_at from text to timestamp when doing comparisons on PostgreSQL
+    q = q.replace("started_at >= datetime('now','-15 minutes')", "CAST(started_at AS timestamp) >= NOW() - INTERVAL '15 minutes'")
+    q = q.replace("started_at >= datetime('now', '-15 minutes')", "CAST(started_at AS timestamp) >= NOW() - INTERVAL '15 minutes'")
+    q = q.replace("started_at < datetime('now','-15 minutes')", "CAST(started_at AS timestamp) < NOW() - INTERVAL '15 minutes'")
+    q = q.replace("started_at < datetime('now', '-15 minutes')", "CAST(started_at AS timestamp) < NOW() - INTERVAL '15 minutes'")
+    # Generic replacements
     q = q.replace("datetime('now')", "NOW()")
     return q
 
