@@ -225,10 +225,25 @@ def init_db():
         CREATE TABLE IF NOT EXISTS baselines (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             portal TEXT NOT NULL, url TEXT NOT NULL,
-            html_path TEXT, screenshot_path TEXT, har_path TEXT, updated_at TEXT NOT NULL,
-            UNIQUE(portal, url)
+            html_path TEXT, screenshot_path TEXT, har_path TEXT, updated_at TEXT NOT NULL
         );
     """)
+    # Migrations for changes
+    cur.execute("PRAGMA table_info(changes)")
+    changes_cols = {row[1] for row in cur.fetchall()}
+    if "screenshot_url" not in changes_cols:
+        cur.execute("ALTER TABLE changes ADD COLUMN screenshot_url TEXT")
+    if "html_url" not in changes_cols:
+        cur.execute("ALTER TABLE changes ADD COLUMN html_url TEXT")
+
+    # Migrations for baselines
+    cur.execute("PRAGMA table_info(baselines)")
+    baselines_cols = {row[1] for row in cur.fetchall()}
+    if "screenshot_url" not in baselines_cols:
+        cur.execute("ALTER TABLE baselines ADD COLUMN screenshot_url TEXT")
+    if "html_url" not in baselines_cols:
+        cur.execute("ALTER TABLE baselines ADD COLUMN html_url TEXT")
+
     conn.commit(); conn.close()
 
 init_db()
@@ -678,7 +693,7 @@ def render_visual_diff(detail, change, baseline_path=None, current_path=None):
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("**⬅️ Before**")
-            if baseline_path and os.path.exists(baseline_path):
+            if baseline_path and (baseline_path.startswith("http://") or baseline_path.startswith("https://") or os.path.exists(baseline_path)):
                 st.image(baseline_path, use_container_width=True)
             else:
                 st.info("No baseline image")
@@ -687,7 +702,7 @@ def render_visual_diff(detail, change, baseline_path=None, current_path=None):
             screenshot_url = change.get("screenshot_url")
             if screenshot_url:
                 st.image(screenshot_url, use_container_width=True)
-            elif current_path and os.path.exists(current_path):
+            elif current_path and (current_path.startswith("http://") or current_path.startswith("https://") or os.path.exists(current_path)):
                 st.image(current_path, use_container_width=True)
             else:
                 st.info("No current image")
@@ -730,11 +745,11 @@ def render_change_expander(change):
 
         elif change["diff_type"] == "visual":
             baseline_rows = query_db(
-                "SELECT screenshot_path FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2",
+                "SELECT screenshot_path, screenshot_url FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2",
                 (change["url"],)
             )
-            baseline_path = baseline_rows[1]["screenshot_path"] if len(baseline_rows) > 1 else None
-            current_path  = baseline_rows[0]["screenshot_path"] if len(baseline_rows) > 0 else None
+            baseline_path = (baseline_rows[1].get("screenshot_url") or baseline_rows[1].get("screenshot_path")) if len(baseline_rows) > 1 else None
+            current_path  = (baseline_rows[0].get("screenshot_url") or baseline_rows[0].get("screenshot_path")) if len(baseline_rows) > 0 else None
             render_visual_diff(detail, change, baseline_path, current_path)
 
         elif change["diff_type"] == "har":
@@ -1193,15 +1208,21 @@ elif st.session_state.view == "screenshots":
         with sc1:
             st.markdown("**⬅️ Previous snapshot**")
             if prev_b:
-                p = prev_b.get("screenshot_path")
-                st.image(p, use_container_width=True) if p and os.path.exists(p) else st.info("Not available")
+                p = prev_b.get("screenshot_url") or prev_b.get("screenshot_path")
+                if p and (p.startswith("http://") or p.startswith("https://") or os.path.exists(p)):
+                    st.image(p, use_container_width=True)
+                else:
+                    st.info("Not available")
             else:
                 st.info("No previous snapshot")
         with sc2:
             st.markdown("**➡️ Latest snapshot**")
             if latest_b:
-                p = latest_b.get("screenshot_path")
-                st.image(p, use_container_width=True) if p and os.path.exists(p) else st.info("Not available")
+                p = latest_b.get("screenshot_url") or latest_b.get("screenshot_path")
+                if p and (p.startswith("http://") or p.startswith("https://") or os.path.exists(p)):
+                    st.image(p, use_container_width=True)
+                else:
+                    st.info("Not available")
             else:
                 st.info("No latest snapshot")
 
@@ -1217,8 +1238,8 @@ elif st.session_state.view == "screenshots":
                         render_visual_diff(
                             detail,
                             change,
-                            prev_b.get("screenshot_path") if prev_b else None,
-                            latest_b.get("screenshot_path") if latest_b else None,
+                            prev_b.get("screenshot_url") or prev_b.get("screenshot_path") if prev_b else None,
+                            latest_b.get("screenshot_url") or latest_b.get("screenshot_path") if latest_b else None,
                         )
                 except Exception:
                     st.info("Details unavailable.")

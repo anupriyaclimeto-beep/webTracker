@@ -38,6 +38,7 @@ from storage import (
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
+import shutil
 
 with open("config.json") as f:
     config = json.load(f)
@@ -87,17 +88,23 @@ async def diff_and_store(url, snap, har_path):
         current_html=snap["html"],
         baseline=baseline,
     )
-    update_baseline(
-        portal=PORTAL_NAME, url=url,
-        html_path=snap["html_path"],
-        screenshot_path=snap["screenshot_path"],
-        har_path=har_path,
-    )
     # Upload to Cloudinary
     screenshot_url = upload_to_cloudinary(snap["screenshot_path"], resource_type="image")
     html_url       = upload_to_cloudinary(snap["html_path"], resource_type="raw")
     if screenshot_url:
         logger.info("  Cloudinary screenshot: %s", screenshot_url)
+    if html_url:
+        logger.info("  Cloudinary HTML: %s", html_url)
+
+    update_baseline(
+        portal=PORTAL_NAME, url=url,
+        html_path=snap["html_path"],
+        screenshot_path=snap["screenshot_path"],
+        har_path=har_path,
+        screenshot_url=screenshot_url,
+        html_url=html_url,
+    )
+
     if diff_result and diff_result.get("any_changed"):
         for diff_type, diff_data in diff_result["results"].items():
             if diff_type == "har":
@@ -107,6 +114,14 @@ async def diff_and_store(url, snap, har_path):
                           diff_type=diff_type, diff_detail=diff_data,
                           screenshot_url=screenshot_url, html_url=html_url)
                 logger.info("  Change: %s | %s", url, diff_type)
+
+    # Cleanup local archive folder
+    try:
+        _snap_dir = Path(snap["screenshot_path"]).parent
+        shutil.rmtree(_snap_dir)
+        logger.info("✓ Cleaned up local archive %s", _snap_dir)
+    except Exception as e:
+        logger.warning("Cleanup failed for %s: %s", snap.get("screenshot_path", ""), e)
 
 
 async def scroll_and_stitch(page) -> bytes:

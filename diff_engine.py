@@ -9,6 +9,7 @@ import io
 from deepdiff import DeepDiff
 from bs4 import BeautifulSoup, Comment
 import html as _html
+import requests
 
 logging.basicConfig(
     level=logging.INFO,
@@ -20,6 +21,27 @@ with open("config.json") as f:
     config = json.load(f)
 
 PIXEL_THRESHOLD = config["diff"].get("pixel_threshold", 0.05)
+
+
+def fetch_url_or_read_file(path_or_url: str, as_bytes: bool = False):
+    """Fetch content from an HTTP URL or read from local disk."""
+    if not path_or_url:
+        return None
+    try:
+        if path_or_url.startswith("http://") or path_or_url.startswith("https://"):
+            resp = requests.get(path_or_url, timeout=15)
+            resp.raise_for_status()
+            return resp.content if as_bytes else resp.text
+        else:
+            if not os.path.exists(path_or_url):
+                return None
+            mode = "rb" if as_bytes else "r"
+            encoding = None if as_bytes else "utf-8"
+            with open(path_or_url, mode, encoding=encoding) as f:
+                return f.read()
+    except Exception as e:
+        logger.error(f"Failed to load {path_or_url}: {e}")
+        return None
 
 
 def clean_html(html: str) -> str:
@@ -186,7 +208,10 @@ def word_level_diff(old_line: str, new_line: str) -> tuple:
 
 def generate_diff_image(baseline_path: str, current_bytes: bytes):
     try:
-        baseline_img = Image.open(baseline_path).convert("RGB")
+        baseline_bytes = fetch_url_or_read_file(baseline_path, as_bytes=True)
+        if not baseline_bytes:
+            return None
+        baseline_img = Image.open(io.BytesIO(baseline_bytes)).convert("RGB")
         current_img  = Image.open(io.BytesIO(current_bytes)).convert("RGB")
 
         if baseline_img.size != current_img.size:
@@ -263,11 +288,16 @@ def generate_diff_image(baseline_path: str, current_bytes: bytes):
 
 def visual_diff(baseline_path, current_bytes, diff_image_save_path=None):
     try:
-        if not baseline_path or not os.path.exists(baseline_path):
+        if not baseline_path:
             logger.info("No baseline screenshot found — skipping visual diff")
             return {"changed": False, "reason": "no baseline"}
+            
+        baseline_bytes = fetch_url_or_read_file(baseline_path, as_bytes=True)
+        if not baseline_bytes:
+            logger.info("Failed to load baseline screenshot — skipping visual diff")
+            return {"changed": False, "reason": "failed to load baseline"}
 
-        baseline_img = Image.open(baseline_path).convert("RGB")
+        baseline_img = Image.open(io.BytesIO(baseline_bytes)).convert("RGB")
         current_img  = Image.open(io.BytesIO(current_bytes)).convert("RGB")
 
         if baseline_img.size != current_img.size:
@@ -310,11 +340,12 @@ def visual_diff(baseline_path, current_bytes, diff_image_save_path=None):
 
 def html_diff(baseline_path, current_html):
     try:
-        if not baseline_path or not os.path.exists(baseline_path):
+        if not baseline_path:
             return {"changed": False, "reason": "no baseline"}
 
-        with open(baseline_path, "r", encoding="utf-8") as f:
-            baseline_html = f.read()
+        baseline_html = fetch_url_or_read_file(baseline_path, as_bytes=False)
+        if not baseline_html:
+            return {"changed": False, "reason": "failed to load baseline html"}
 
         baseline_clean = clean_html(baseline_html)
         current_clean  = clean_html(current_html)
@@ -485,7 +516,7 @@ async def run_all_diffs(portal_name, url, current_screenshot, current_html, base
     if diff_config.get("visual", True):
         tasks["visual"] = asyncio.to_thread(
             visual_diff,
-            baseline.get("screenshot_path"),
+            baseline.get("screenshot_url") or baseline.get("screenshot_path"),
             current_screenshot,
             diff_image_save_path,
         )
@@ -493,7 +524,7 @@ async def run_all_diffs(portal_name, url, current_screenshot, current_html, base
     if diff_config.get("html", True):
         tasks["html"] = asyncio.to_thread(
             html_diff,
-            baseline.get("html_path"),
+            baseline.get("html_url") or baseline.get("html_path"),
             current_html,
         )
 

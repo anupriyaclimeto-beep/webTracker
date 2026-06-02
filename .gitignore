@@ -1,0 +1,23 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python cache and byte-compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Databases
+*.db
+*.sqlite
+
+# Cloudinary / local environment keys
+.env
+
+# Crawler logs and PID files
+.crawler.log
+.crawler.pid
+
+# Local crawler snapshots and HAR file archives
+archive/

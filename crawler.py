@@ -97,13 +97,6 @@ async def diff_and_store(portal_name: str, url: str, snap: dict, har_path: str):
         baseline=baseline,
         diff_image_save_path=_diff_img_path,   # ← NEW
     )
-    update_baseline(
-        portal=portal_name, url=url,
-        html_path=snap["html_path"],
-        screenshot_path=snap["screenshot_path"],
-        har_path=har_path,
-    )
-
     # Upload screenshot and HTML snapshot to Cloudinary
     screenshot_url = upload_to_cloudinary(snap["screenshot_path"], resource_type="image")
     html_url       = upload_to_cloudinary(snap["html_path"], resource_type="raw")
@@ -111,6 +104,15 @@ async def diff_and_store(portal_name: str, url: str, snap: dict, har_path: str):
         logger.info("  Cloudinary screenshot: %s", screenshot_url)
     if html_url:
         logger.info("  Cloudinary HTML:       %s", html_url)
+
+    update_baseline(
+        portal=portal_name, url=url,
+        html_path=snap["html_path"],
+        screenshot_path=snap["screenshot_path"],
+        har_path=har_path,
+        screenshot_url=screenshot_url,
+        html_url=html_url,
+    )
 
     if diff_result and diff_result.get("any_changed"):
         for diff_type, diff_data in diff_result["results"].items():
@@ -121,6 +123,12 @@ async def diff_and_store(portal_name: str, url: str, snap: dict, har_path: str):
                           diff_type=diff_type, diff_detail=diff_data,
                           screenshot_url=screenshot_url, html_url=html_url)
                 logger.info("  Change detected: %s | %s", url, diff_type)
+    # Cleanup local archive folder
+    try:
+        shutil.rmtree(_snap_dir)
+        logger.info("✓ Cleaned up local archive %s", _snap_dir)
+    except Exception as e:
+        logger.warning("Cleanup failed for %s: %s", snap.get("screenshot_path", ""), e)
 
 
 async def scroll_and_stitch(page) -> bytes:

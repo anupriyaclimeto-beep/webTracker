@@ -161,6 +161,8 @@ def init_db():
             html_path       TEXT,
             screenshot_path TEXT,
             har_path        TEXT,
+            screenshot_url  TEXT,
+            html_url        TEXT,
             updated_at      TEXT NOT NULL
         )
     """)
@@ -169,6 +171,15 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_baselines_portal_url
         ON baselines (portal, url)
     """)
+
+    cursor.execute("PRAGMA table_info(baselines)")
+    existing_b_cols = {row[1] for row in cursor.fetchall()}
+    if "screenshot_url" not in existing_b_cols:
+        cursor.execute("ALTER TABLE baselines ADD COLUMN screenshot_url TEXT")
+        logger.info("Migrated baselines table - added screenshot_url column")
+    if "html_url" not in existing_b_cols:
+        cursor.execute("ALTER TABLE baselines ADD COLUMN html_url TEXT")
+        logger.info("Migrated baselines table - added html_url column")
 
     cursor.execute(
         "SELECT sql FROM sqlite_master WHERE type='table' AND name='baselines'"
@@ -185,11 +196,14 @@ def init_db():
                 html_path       TEXT,
                 screenshot_path TEXT,
                 har_path        TEXT,
+                screenshot_url  TEXT,
+                html_url        TEXT,
                 updated_at      TEXT NOT NULL
             );
             CREATE INDEX IF NOT EXISTS idx_baselines_portal_url
                 ON baselines (portal, url);
-            INSERT INTO baselines SELECT * FROM baselines_old;
+            INSERT INTO baselines (id, portal, url, html_path, screenshot_path, har_path, updated_at)
+                SELECT id, portal, url, html_path, screenshot_path, har_path, updated_at FROM baselines_old;
             DROP TABLE baselines_old;
         """)
         conn.commit()
@@ -256,7 +270,7 @@ def get_baseline(portal, url):
     if USE_SUPABASE:
         with conn.cursor() as cur:
             cur.execute(
-                """SELECT html_path, screenshot_path, har_path
+                """SELECT html_path, screenshot_path, har_path, screenshot_url, html_url
                    FROM public.baselines
                    WHERE portal=%s AND url=%s
                    ORDER BY updated_at DESC LIMIT 1""",
@@ -266,7 +280,7 @@ def get_baseline(portal, url):
     else:
         cursor = conn.cursor()
         cursor.execute(
-            """SELECT html_path, screenshot_path, har_path
+            """SELECT html_path, screenshot_path, har_path, screenshot_url, html_url
                FROM baselines
                WHERE portal=? AND url=?
                ORDER BY updated_at DESC LIMIT 1""",
@@ -279,11 +293,13 @@ def get_baseline(portal, url):
             "html_path":       row["html_path"] if USE_SUPABASE else row[0],
             "screenshot_path": row["screenshot_path"] if USE_SUPABASE else row[1],
             "har_path":        row["har_path"] if USE_SUPABASE else row[2],
+            "screenshot_url":  row["screenshot_url"] if USE_SUPABASE else row[3],
+            "html_url":        row["html_url"] if USE_SUPABASE else row[4],
         }
     return None
 
 
-def update_baseline(portal, url, html_path, screenshot_path, har_path):
+def update_baseline(portal, url, html_path, screenshot_path, har_path, screenshot_url=None, html_url=None):
     """Always insert a new baseline row to keep full history."""
     updated_at = datetime.now().isoformat()
     conn = get_conn()
@@ -291,18 +307,18 @@ def update_baseline(portal, url, html_path, screenshot_path, har_path):
         with conn.cursor() as cur:
             cur.execute(
                 """INSERT INTO public.baselines
-                       (portal, url, html_path, screenshot_path, har_path, updated_at)
-                   VALUES (%s, %s, %s, %s, %s, %s)""",
-                (portal, url, html_path, screenshot_path, har_path, updated_at),
+                       (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url),
             )
             conn.commit()
     else:
         cursor = conn.cursor()
         cursor.execute(
             """INSERT INTO baselines
-                   (portal, url, html_path, screenshot_path, har_path, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (portal, url, html_path, screenshot_path, har_path, updated_at),
+                   (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url),
         )
         conn.commit()
     conn.close()
