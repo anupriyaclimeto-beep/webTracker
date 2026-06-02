@@ -21,7 +21,7 @@ def fix_schema():
         "SELECT column_name FROM information_schema.columns "
         "WHERE table_name='changes' AND table_schema='public' ORDER BY ordinal_position"
     )
-    cols = [r[0] for r in cur.fetchall()]
+    cols = [r["column_name"] for r in cur.fetchall()]
     print(f"\nAll columns in public.changes: {cols}")
     cur.close()
     conn.close()

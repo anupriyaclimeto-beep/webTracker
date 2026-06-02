@@ -31,7 +31,6 @@ from storage import (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 import shutil
-import shutil
 
 with open("config.json") as f:
     config = json.load(f)

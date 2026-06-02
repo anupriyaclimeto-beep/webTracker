@@ -7,6 +7,8 @@ import subprocess
 import sys
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
+from dotenv import load_dotenv
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 with open("config.json") as f:
@@ -14,6 +16,43 @@ with open("config.json") as f:
 
 DB_PATH     = config["storage"]["db"]
 ARCHIVE_DIR = config["storage"]["archive_dir"]
+
+# ── ENVIRONMENT / CLOUD DETECTION ─────────────────────────────────────────────
+load_dotenv(dotenv_path=Path(__file__).parent / ".env", override=True)
+
+# Detect if we are running on Streamlit Cloud
+IS_CLOUD = os.getenv("STREAMLIT_SHARING_MODE") is not None or os.path.exists("/mount/src")
+
+# Helper: read a secret from st.secrets (cloud) or os.getenv (local)
+def _secret(key, default=None):
+    try:
+        return st.secrets[key]
+    except Exception:
+        return os.getenv(key, default)
+
+SUPABASE_HOST = _secret("SUPABASE_HOST")
+SUPABASE_PORT = _secret("SUPABASE_PORT")
+SUPABASE_DB   = _secret("SUPABASE_DB")
+SUPABASE_USER = _secret("SUPABASE_USER")
+SUPABASE_PWD  = _secret("SUPABASE_PASSWORD")
+SUPABASE_SERVICE_ROLE = _secret("SUPABASE_SERVICE_ROLE_KEY")
+
+USE_SUPABASE = all([
+    SUPABASE_HOST, SUPABASE_PORT, SUPABASE_DB, SUPABASE_USER,
+    SUPABASE_PWD or SUPABASE_SERVICE_ROLE,
+])
+
+if USE_SUPABASE:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+    _DSN = (
+        f"host={SUPABASE_HOST} "
+        f"port={SUPABASE_PORT} "
+        f"dbname={SUPABASE_DB} "
+        f"user={SUPABASE_USER} "
+        f"password={SUPABASE_SERVICE_ROLE or SUPABASE_PWD} "
+        f"sslmode=require"
+    )
 
 
 def get_portal_config(portal_name):
@@ -209,6 +248,8 @@ del.word {
 
 # ── DB ────────────────────────────────────────────────────────────────────────
 def init_db():
+    if USE_SUPABASE:
+        return  # tables managed externally on Supabase
     conn = sqlite3.connect(DB_PATH)
     cur  = conn.cursor()
     cur.executescript("""
@@ -248,17 +289,44 @@ def init_db():
 
 init_db()
 
+def _pg_query_to_sqlite(query):
+    """Convert SQLite ? placeholders to PostgreSQL %s placeholders."""
+    return query.replace("?", "%s").replace("datetime('now')", "NOW()")
+
 def query_db(query, args=()):
     try:
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        cur  = conn.cursor()
-        cur.execute(query, args)
-        rows = cur.fetchall()
-        conn.close()
-        return [dict(r) for r in rows]
+        if USE_SUPABASE:
+            conn = psycopg2.connect(_DSN, cursor_factory=RealDictCursor)
+            cur = conn.cursor()
+            cur.execute(_pg_query_to_sqlite(query), args)
+            rows = cur.fetchall()
+            conn.close()
+            return [dict(r) for r in rows]
+        else:
+            conn = sqlite3.connect(DB_PATH)
+            conn.row_factory = sqlite3.Row
+            cur  = conn.cursor()
+            cur.execute(query, args)
+            rows = cur.fetchall()
+            conn.close()
+            return [dict(r) for r in rows]
     except Exception as e:
         st.error(f"DB error: {e}"); return []
+
+def exec_db(query, args=()):
+    """Execute a write query (INSERT/UPDATE/DELETE)."""
+    try:
+        if USE_SUPABASE:
+            conn = psycopg2.connect(_DSN, cursor_factory=RealDictCursor)
+            cur = conn.cursor()
+            cur.execute(_pg_query_to_sqlite(query), args)
+            conn.commit(); conn.close()
+        else:
+            conn = sqlite3.connect(DB_PATH)
+            conn.execute(query, args)
+            conn.commit(); conn.close()
+    except Exception:
+        pass
 
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -337,18 +405,14 @@ def is_crawl_running():
             except Exception:
                 pass
             try:
-                conn = sqlite3.connect(DB_PATH)
-                conn.execute("UPDATE crawl_log SET status='stopped', finished_at=datetime('now') WHERE id=?", (row["id"],))
-                conn.commit(); conn.close()
+                exec_db("UPDATE crawl_log SET status='stopped', finished_at=datetime('now') WHERE id=?", (row["id"],))
             except Exception:
                 pass
             return None
         else:
             # No PID file — assume process not running; mark stopped to clear UI.
             try:
-                conn = sqlite3.connect(DB_PATH)
-                conn.execute("UPDATE crawl_log SET status='stopped', finished_at=datetime('now') WHERE id=?", (row["id"],))
-                conn.commit(); conn.close()
+                exec_db("UPDATE crawl_log SET status='stopped', finished_at=datetime('now') WHERE id=?", (row["id"],))
             except Exception:
                 pass
             return None
@@ -357,10 +421,8 @@ def is_crawl_running():
 
 def fix_stale_crawls():
     try:
-        conn = sqlite3.connect(DB_PATH)
-        conn.execute("""UPDATE crawl_log SET status='done'
-                        WHERE status='running' AND started_at < datetime('now','-15 minutes')""")
-        conn.commit(); conn.close()
+        exec_db("""UPDATE crawl_log SET status='done'
+                   WHERE status='running' AND started_at < datetime('now','-15 minutes')""")
     except Exception: pass
 
 PID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)) or ".", ".crawler.pid")
@@ -415,9 +477,7 @@ def stop_crawl():
             os.remove(PID_FILE); killed = True
     except Exception: pass
     try:
-        conn = sqlite3.connect(DB_PATH)
-        conn.execute("UPDATE crawl_log SET status='stopped', finished_at=datetime('now') WHERE status='running'")
-        conn.commit(); conn.close()
+        exec_db("UPDATE crawl_log SET status='stopped', finished_at=datetime('now') WHERE status='running'")
     except Exception: pass
     return killed
 
@@ -809,9 +869,7 @@ try:
                 row = query_db("SELECT id FROM crawl_log WHERE status='running' ORDER BY started_at DESC LIMIT 1")
                 if row:
                     rid = row[0]["id"]
-                    conn = sqlite3.connect(DB_PATH)
-                    conn.execute("UPDATE crawl_log SET status='done', finished_at=datetime('now') WHERE id=?", (rid,))
-                    conn.commit(); conn.close()
+                    exec_db("UPDATE crawl_log SET status='done', finished_at=datetime('now') WHERE id=?", (rid,))
             except Exception:
                 pass
 
@@ -889,8 +947,11 @@ with nb_right:
                     unsafe_allow_html=True,
                 )
         else:
-            # Idle state: show Run button
-            if st.button("▶ Run", use_container_width=True, type="primary", key="run_btn"):
+            # Idle state: show Run button (only on local, not on cloud)
+            if IS_CLOUD:
+                st.markdown("<span style='font-size:11px;color:#3d4f6b'>☁️ View-only on Cloud</span>",
+                            unsafe_allow_html=True)
+            elif st.button("▶ Run", use_container_width=True, type="primary", key="run_btn"):
                 # require a specific portal selection — do not run on "All Portals"
                 if portal_filter is None:
                     st.warning("Please select a portal first (do not leave 'All Portals').")
@@ -1305,14 +1366,18 @@ elif st.session_state.view == "console":
     cc1, cc2, _ = st.columns([1,1,5])
     with cc1:
         if st.button("↺ Refresh log", use_container_width=True): st.rerun()
-        if st.button("⏹ Stop crawler", use_container_width=True, key="console_stop"):
-            stopped = stop_crawl()
-            if stopped:
-                st.success("Stop signal sent to crawler.")
-            else:
-                st.warning("Could not send stop (no PID file?).")
-            time.sleep(0.8)
-            st.rerun()
+        if not IS_CLOUD:
+            if st.button("⏹ Stop crawler", use_container_width=True, key="console_stop"):
+                stopped = stop_crawl()
+                if stopped:
+                    st.success("Stop signal sent to crawler.")
+                else:
+                    st.warning("Could not send stop (no PID file?).")
+                time.sleep(0.8)
+                st.rerun()
+        else:
+            st.markdown("<span style='font-size:11px;color:#3d4f6b'>☁️ Crawlers run locally only</span>",
+                        unsafe_allow_html=True)
     with cc2:
         tail_lines = st.selectbox("Lines", [30,60,100,200], index=1,
                                   label_visibility="collapsed", key="tail_lines")
