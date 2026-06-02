@@ -72,6 +72,22 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+# ── PLAYWRIGHT CLOUD INITIALISATION ───────────────────────────────────────────
+if IS_CLOUD:
+    import subprocess
+    import sys
+    @st.cache_resource
+    def install_playwright_on_cloud():
+        try:
+            print("☁️ Streamlit Cloud: Installing Playwright Chromium browser binary...", flush=True)
+            subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
+            print("☁️ Streamlit Cloud: Playwright Chromium browser installed successfully!", flush=True)
+            return True
+        except Exception as e:
+            print(f"☁️ Playwright installation failed: {e}", flush=True)
+            return False
+    install_playwright_on_cloud()
+
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
@@ -955,11 +971,8 @@ with nb_right:
                     unsafe_allow_html=True,
                 )
         else:
-            # Idle state: show Run button (only on local, not on cloud)
-            if IS_CLOUD:
-                st.markdown("<span style='font-size:11px;color:#3d4f6b'>☁️ View-only on Cloud</span>",
-                            unsafe_allow_html=True)
-            elif st.button("▶ Run", use_container_width=True, type="primary", key="run_btn"):
+            # Idle state: show Run button
+            if st.button("▶ Run", use_container_width=True, type="primary", key="run_btn"):
                 # require a specific portal selection — do not run on "All Portals"
                 if portal_filter is None:
                     st.warning("Please select a portal first (do not leave 'All Portals').")
@@ -1374,18 +1387,14 @@ elif st.session_state.view == "console":
     cc1, cc2, _ = st.columns([1,1,5])
     with cc1:
         if st.button("↺ Refresh log", use_container_width=True): st.rerun()
-        if not IS_CLOUD:
-            if st.button("⏹ Stop crawler", use_container_width=True, key="console_stop"):
-                stopped = stop_crawl()
-                if stopped:
-                    st.success("Stop signal sent to crawler.")
-                else:
-                    st.warning("Could not send stop (no PID file?).")
-                time.sleep(0.8)
-                st.rerun()
-        else:
-            st.markdown("<span style='font-size:11px;color:#3d4f6b'>☁️ Crawlers run locally only</span>",
-                        unsafe_allow_html=True)
+        if st.button("⏹ Stop crawler", use_container_width=True, key="console_stop"):
+            stopped = stop_crawl()
+            if stopped:
+                st.success("Stop signal sent to crawler.")
+            else:
+                st.warning("Could not send stop (no PID file?).")
+            time.sleep(0.8)
+            st.rerun()
     with cc2:
         tail_lines = st.selectbox("Lines", [30,60,100,200], index=1,
                                   label_visibility="collapsed", key="tail_lines")
