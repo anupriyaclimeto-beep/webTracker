@@ -44,7 +44,7 @@ import shutil
 with open("config.json") as f:
     config = json.load(f)
 
-ARCHIVE_DIR   = config["storage"]["archive_dir"]
+from storage import ARCHIVE_DIR
 PORTAL_NAME   = "EPR BATTERY"
 HOME_URL      = "https://eprbattery.cpcb.gov.in/"
 DASHBOARD_URL = "https://eprbattery.cpcb.gov.in/user/nationaldashboard"

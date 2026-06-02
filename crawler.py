@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 with open("config.json") as f:
     config = json.load(f)
 
-ARCHIVE_DIR = config["storage"]["archive_dir"]
+from storage import ARCHIVE_DIR
 HOME_URL    = "https://eprplastic.cpcb.gov.in/#/plastic/home"
 BASE_URL    = "https://eprplastic.cpcb.gov.in/"
 

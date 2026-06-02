@@ -80,6 +80,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Detect if we are running on Streamlit Cloud
+IS_CLOUD = os.getenv("STREAMLIT_SHARING_MODE") is not None or os.path.exists("/mount/src")
+
 # ----------------------------------------------------------------------
 # Load configuration
 # ----------------------------------------------------------------------
@@ -87,7 +90,11 @@ with open("config.json") as f:
     config = json.load(f)
 
 DB_PATH     = config["storage"]["db"]
-ARCHIVE_DIR = config["storage"]["archive_dir"]
+if IS_CLOUD:
+    ARCHIVE_DIR = "/tmp/webtracker_archive"
+else:
+    ARCHIVE_DIR = config["storage"]["archive_dir"]
+
 
 
 # ======================================================================
@@ -376,28 +383,46 @@ def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
 
 
 def start_crawl_log(portal):
-    conn   = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
     started_at = datetime.now().isoformat()
-    cursor.execute(
-        "INSERT INTO crawl_log (portal, started_at, status) VALUES (?, ?, 'running')",
-        (portal, started_at)
-    )
-    crawl_id = cursor.lastrowid
-    conn.commit()
+    conn = get_conn()
+    if USE_SUPABASE:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO public.crawl_log (portal, started_at, status) VALUES (%s, %s, 'running') RETURNING id",
+                (portal, started_at)
+            )
+            row = cur.fetchone()
+            crawl_id = row['id'] if isinstance(row, dict) else row[0]
+            conn.commit()
+    else:
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO crawl_log (portal, started_at, status) VALUES (?, ?, 'running')",
+            (portal, started_at)
+        )
+        crawl_id = cursor.lastrowid
+        conn.commit()
     conn.close()
     return crawl_id
 
 
 def finish_crawl_log(crawl_id, pages_visited, status="done"):
-    conn   = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
     finished_at = datetime.now().isoformat()
-    cursor.execute(
-        "UPDATE crawl_log SET finished_at=?, pages_visited=?, status=? WHERE id=?",
-        (finished_at, pages_visited, status, crawl_id)
-    )
-    conn.commit()
+    conn = get_conn()
+    if USE_SUPABASE:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE public.crawl_log SET finished_at=%s, pages_visited=%s, status=%s WHERE id=%s",
+                (finished_at, pages_visited, status, crawl_id)
+            )
+            conn.commit()
+    else:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE crawl_log SET finished_at=?, pages_visited=?, status=? WHERE id=?",
+            (finished_at, pages_visited, status, crawl_id)
+        )
+        conn.commit()
     conn.close()
     logger.info(
         "Crawl log finished - id=%s pages=%s status=%s",

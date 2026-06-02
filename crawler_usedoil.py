@@ -48,7 +48,7 @@ import shutil
 with open("config.json") as f:
     config = json.load(f)
 
-ARCHIVE_DIR  = config["storage"]["archive_dir"]
+from storage import ARCHIVE_DIR
 PORTAL_NAME  = "EPR USEDOIL"
 
 HOME_URL      = "https://eprusedoil.cpcb.gov.in/"

@@ -449,8 +449,12 @@ def fix_stale_crawls():
                    WHERE status='running' AND started_at < datetime('now','-15 minutes')""")
     except Exception: pass
 
-PID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)) or ".", ".crawler.pid")
-LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)) or ".", ".crawler.log")
+if IS_CLOUD:
+    PID_FILE = "/tmp/.crawler.pid"
+    LOG_FILE = "/tmp/.crawler.log"
+else:
+    PID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)) or ".", ".crawler.pid")
+    LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)) or ".", ".crawler.log")
 
 PORTAL_CRAWLER_MAP = {
     "EPR PLASTIC":  "crawler.py",
