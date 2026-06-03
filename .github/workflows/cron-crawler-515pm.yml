@@ -30,7 +30,7 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           echo "🚀 Starting crawl at $(date) [5:15 PM IST]"
-          python scripts/run_crawler_daemon.py
+          python scripts/run_crawler_daemon.py 2>&1 | tee crawler.log
           echo "✅ Crawl complete at $(date)"
       
       - name: Upload logs on failure
@@ -38,5 +38,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: crawler-logs-515pm
-          path: .crawler.log
+          path: crawler.log
           retention-days: 7
