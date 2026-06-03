@@ -1496,7 +1496,7 @@ elif st.session_state.view == "console":
         "<div class='page-subtitle'>Live output from the crawler process</div>",
         unsafe_allow_html=True
     )
-    cc1, cc2, _ = st.columns([2,2,5])
+    cc1, _ = st.columns([2, 7])
     with cc1:
         if st.button("⏹ Stop crawler", use_container_width=True, key="console_stop"):
             stopped = stop_crawl()
@@ -1507,9 +1507,7 @@ elif st.session_state.view == "console":
             st.cache_data.clear()
             time.sleep(0.8)
             st.rerun()
-    with cc2:
-        tail_lines = st.selectbox("Lines", [30,60,100,200], index=1,
-                                  label_visibility="collapsed", key="tail_lines")
+    tail_lines = 60
     log_lines = read_log(tail=tail_lines)
     if running_crawl:
         st.markdown("<div class='running-banner'>🔄 Active crawl log stream...</div>",
