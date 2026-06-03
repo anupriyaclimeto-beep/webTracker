@@ -466,34 +466,38 @@ async def run_all_portals(portal_name_filter: str | None = None):
         logger.info("Starting portal: %s", name)
         logger.info("══════════════════════════════════════════")
 
-        if name == "EPR PLASTIC":
-            await crawl_portal(portal)
-
-        elif name == "EPR EWASTE":
-            from crawler_ewaste import crawl_ewaste_portal
-            await crawl_ewaste_portal(portal)
-
-        elif name == "EPR BATTERY":
-            from crawler_battery import crawl_battery_portal
-            await crawl_battery_portal(portal)
-
-        elif name == "EPR TYRES":
-            from crawler_tyres import crawl_tyres_portal
-            await crawl_tyres_portal(portal)
-
-        elif name == "EPR ELV":
-            from crawler_elv import crawl_elv_portal
-            await crawl_elv_portal(portal)
-
-        elif name == "EPR USEDOIL":
-            from crawler_usedoil import crawl_usedoil_portal
-            await crawl_usedoil_portal(portal)
-
-        else:
-            logger.warning("Unknown portal '%s' — skipping", name)
+        try:
+            if name == "EPR PLASTIC":
+                await crawl_portal(portal)
+            elif name == "EPR EWASTE":
+                from crawler_ewaste import crawl_ewaste_portal
+                await crawl_ewaste_portal(portal)
+            elif name == "EPR BATTERY":
+                from crawler_battery import crawl_battery_portal
+                await crawl_battery_portal(portal)
+            elif name == "EPR TYRES":
+                from crawler_tyres import crawl_tyres_portal
+                await crawl_tyres_portal(portal)
+            elif name == "EPR ELV":
+                from crawler_elv import crawl_elv_portal
+                await crawl_elv_portal(portal)
+            elif name == "EPR USEDOIL":
+                from crawler_usedoil import crawl_usedoil_portal
+                await crawl_usedoil_portal(portal)
+            else:
+                logger.warning("Unknown portal '%s' — skipping", name)
+                continue
+                
+            logger.info("Portal %s finished ✓", name)
+        except Exception as e:
+            logger.error("Portal %s failed with error: %s", name, e, exc_info=True)
+            # Finish crawl log as failed if it was created and didn't close
+            try:
+                from storage import query_db, exec_db
+                exec_db("UPDATE crawl_log SET status='failed', finished_at=datetime('now') WHERE portal=? AND status='running'", (name,))
+            except Exception:
+                pass
             continue
-
-        logger.info("Portal %s finished ✓", name)
 
 
 async def scheduler(portal_name_filter: str | None = None):
