@@ -13,12 +13,20 @@ import cloudinary.uploader
 import cloudinary.api
 
 # ----------------------------------------------------------------------
+<<<<<<< HEAD
 # Load environment variables
+=======
+# Load environment variables (both locally and on Vercel)
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
 # ----------------------------------------------------------------------
 BASE_DIR = Path(__file__).parent
 load_dotenv(dotenv_path=BASE_DIR / ".env", override=True)
 
+<<<<<<< HEAD
 # Supabase connection details (optional)
+=======
+# Supabase connection details (optional – will be used if ALL are present)
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
 SUPABASE_HOST = os.getenv("SUPABASE_HOST")
 SUPABASE_PORT = os.getenv("SUPABASE_PORT")
 SUPABASE_DB   = os.getenv("SUPABASE_DB")
@@ -31,17 +39,29 @@ CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
 CLOUDINARY_API_KEY    = os.getenv("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 
+<<<<<<< HEAD
 USE_CLOUDINARY = all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET])
 
 if USE_CLOUDINARY:
+=======
+if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
     cloudinary.config(
         cloud_name=CLOUDINARY_CLOUD_NAME,
         api_key=CLOUDINARY_API_KEY,
         api_secret=CLOUDINARY_API_SECRET,
         secure=True,
     )
+<<<<<<< HEAD
 
 # When all Supabase vars are present we use the remote DB.
+=======
+else:
+    # If any credential missing we will skip Cloudinary uploads.
+    cloudinary.config()  # defaults, no effect
+
+# When all Supabase vars are present we will use the remote DB.
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
 USE_SUPABASE = all([
     SUPABASE_HOST,
     SUPABASE_PORT,
@@ -54,6 +74,10 @@ if USE_SUPABASE:
     import psycopg2
     from psycopg2.extras import RealDictCursor
 
+<<<<<<< HEAD
+=======
+    # Build DSN string for psycopg2 (SSL required by Supabase)
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
     _DSN = (
         f"host={SUPABASE_HOST} "
         f"port={SUPABASE_PORT} "
@@ -67,6 +91,10 @@ if USE_SUPABASE:
         """Return a fresh psycopg2 connection (Supabase)."""
         return psycopg2.connect(_DSN, cursor_factory=RealDictCursor)
 else:
+<<<<<<< HEAD
+=======
+    # Fallback to the original SQLite file‑based DB
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
     def get_conn():
         """Return a fresh sqlite3 connection (local)."""
         return sqlite3.connect(DB_PATH)
@@ -80,15 +108,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+<<<<<<< HEAD
 # Detect if we are running on Streamlit Cloud
 IS_CLOUD = os.getenv("STREAMLIT_SHARING_MODE") is not None or os.path.exists("/mount/src")
 
 # ----------------------------------------------------------------------
 # Load configuration
+=======
+# ----------------------------------------------------------------------
+# Load configuration (unchanged)
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
 # ----------------------------------------------------------------------
 with open("config.json") as f:
     config = json.load(f)
 
+# SQLite‑only paths (used only when USE_SUPABASE is False)
 DB_PATH     = config["storage"]["db"]
 if IS_CLOUD:
     ARCHIVE_DIR = "/tmp/webtracker_archive"
@@ -126,15 +160,29 @@ def upload_to_cloudinary(local_path, resource_type="image"):
 # ======================================================================
 
 def init_db():
+<<<<<<< HEAD
     if USE_SUPABASE:
         logger.info("Supabase detected - no local DB initialisation required.")
         return
 
+=======
+    """
+    Initialise storage.
+    • If Supabase is detected, the tables already exist (created during migration),
+      so this function only logs a message.
+    • If SQLite is used (local dev) we run the original schema‑creation logic.
+    """
+    if USE_SUPABASE:
+        logger.info("Supabase detected – no local DB initialisation required.")
+        return
+
+    # ----- SQLite initialisation (unchanged) -----
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
     os.makedirs(ARCHIVE_DIR, exist_ok=True)
     conn   = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    cursor.execute("""
+    cursor.execute("""\
         CREATE TABLE IF NOT EXISTS changes (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
             portal       TEXT NOT NULL,
@@ -160,7 +208,7 @@ def init_db():
         cursor.execute("ALTER TABLE changes ADD COLUMN html_url TEXT")
         logger.info("Migrated changes table - added html_url column")
 
-    cursor.execute("""
+    cursor.execute("""\
         CREATE TABLE IF NOT EXISTS baselines (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
             portal          TEXT NOT NULL,
@@ -174,7 +222,7 @@ def init_db():
         )
     """)
 
-    cursor.execute("""
+    cursor.execute("""\
         CREATE INDEX IF NOT EXISTS idx_baselines_portal_url
         ON baselines (portal, url)
     """)
@@ -193,8 +241,13 @@ def init_db():
     )
     row = cursor.fetchone()
     if row and "UNIQUE" in (row[0] or "").upper():
+<<<<<<< HEAD
         logger.info("Migrating baselines table - removing stale UNIQUE constraint")
         conn.executescript("""
+=======
+        logger.info("Migrating baselines table — removing stale UNIQUE constraint …")
+        conn.executescript("""\
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
             ALTER TABLE baselines RENAME TO baselines_old;
             CREATE TABLE baselines (
                 id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -216,7 +269,7 @@ def init_db():
         conn.commit()
         logger.info("Baselines migration complete.")
 
-    cursor.execute("""
+    cursor.execute("""\
         CREATE TABLE IF NOT EXISTS crawl_log (
             id            INTEGER PRIMARY KEY AUTOINCREMENT,
             portal        TEXT NOT NULL,
@@ -232,6 +285,7 @@ def init_db():
     logger.info("Database initialised at %s", DB_PATH)
 
 
+<<<<<<< HEAD
 # ======================================================================
 # Data access functions
 # ======================================================================
@@ -239,6 +293,12 @@ def init_db():
 def save_diff(portal, url, diff_type, diff_detail, ai_summary=None,
               screenshot_url=None, html_url=None):
     """Persist a diff record with optional Cloudinary URLs."""
+=======
+def save_diff(portal, url, diff_type, diff_detail, ai_summary=None, screenshot_url=None, html_url=None):
+    """Persist a diff record, now also storing Cloudinary URLs if provided.
+    Works with both SQLite and Supabase.
+    """
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
     timestamp = datetime.now().isoformat()
     if USE_SUPABASE:
         conn = get_conn()
@@ -246,12 +306,25 @@ def save_diff(portal, url, diff_type, diff_detail, ai_summary=None,
             cur.execute(
                 """
                 INSERT INTO public.changes
+<<<<<<< HEAD
                     (portal, url, diff_type, diff_detail, ai_summary,
                      screenshot_url, html_url, timestamp)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (portal, url, diff_type, json.dumps(diff_detail),
                  ai_summary, screenshot_url, html_url, timestamp),
+=======
+                    (portal, url, diff_type, diff_detail, ai_summary, screenshot_url, html_url, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                    portal=%s, url=%s, diff_type=%s, diff_detail=%s,
+                    ai_summary=%s, screenshot_url=%s, html_url=%s, timestamp=%s
+                """,
+                (
+                    portal, url, diff_type, json.dumps(diff_detail), ai_summary, screenshot_url, html_url, timestamp,
+                    portal, url, diff_type, json.dumps(diff_detail), ai_summary, screenshot_url, html_url, timestamp,
+                ),
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
             )
             conn.commit()
         conn.close()
@@ -260,6 +333,7 @@ def save_diff(portal, url, diff_type, diff_detail, ai_summary=None,
         cursor = conn.cursor()
         cursor.execute(
             """INSERT INTO changes
+<<<<<<< HEAD
                (portal, url, diff_type, diff_detail, ai_summary,
                 screenshot_url, html_url, timestamp)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
@@ -270,6 +344,15 @@ def save_diff(portal, url, diff_type, diff_detail, ai_summary=None,
         conn.close()
     logger.info("Diff saved - portal=%s url=%s type=%s screenshot=%s",
                 portal, url, diff_type, screenshot_url)
+=======
+               (portal, url, diff_type, diff_detail, ai_summary, screenshot_url, html_url, timestamp)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (portal, url, diff_type, json.dumps(diff_detail), ai_summary, screenshot_url, html_url, timestamp),
+        )
+        conn.commit()
+        conn.close()
+    logger.info("Diff saved — portal=%s url=%s type=%s", portal, url, diff_type)
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
 
 
 def get_baseline(portal, url):
@@ -277,20 +360,38 @@ def get_baseline(portal, url):
     if USE_SUPABASE:
         with conn.cursor() as cur:
             cur.execute(
+<<<<<<< HEAD
                 """SELECT html_path, screenshot_path, har_path, screenshot_url, html_url
                    FROM public.baselines
                    WHERE portal=%s AND url=%s
                    ORDER BY updated_at DESC LIMIT 1""",
+=======
+                """
+                SELECT html_path, screenshot_path, har_path
+                FROM public.baselines
+                WHERE portal=%s AND url=%s
+                ORDER BY updated_at DESC
+                LIMIT 1
+                """,
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
                 (portal, url),
             )
             row = cur.fetchone()
     else:
         cursor = conn.cursor()
         cursor.execute(
+<<<<<<< HEAD
             """SELECT html_path, screenshot_path, har_path, screenshot_url, html_url
                FROM baselines
                WHERE portal=? AND url=?
                ORDER BY updated_at DESC LIMIT 1""",
+=======
+            """SELECT html_path, screenshot_path, har_path
+               FROM baselines
+               WHERE portal=? AND url=?
+               ORDER BY updated_at DESC
+               LIMIT 1""",
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
             (portal, url),
         )
         row = cursor.fetchone()
@@ -300,32 +401,57 @@ def get_baseline(portal, url):
             "html_path":       row["html_path"] if USE_SUPABASE else row[0],
             "screenshot_path": row["screenshot_path"] if USE_SUPABASE else row[1],
             "har_path":        row["har_path"] if USE_SUPABASE else row[2],
+<<<<<<< HEAD
             "screenshot_url":  row["screenshot_url"] if USE_SUPABASE else row[3],
             "html_url":        row["html_url"] if USE_SUPABASE else row[4],
+=======
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
         }
     return None
 
 
+<<<<<<< HEAD
 def update_baseline(portal, url, html_path, screenshot_path, har_path, screenshot_url=None, html_url=None):
     """Always insert a new baseline row to keep full history."""
+=======
+def update_baseline(portal, url, html_path, screenshot_path, har_path):
+    """
+    Always insert a new baseline row to keep full history.
+    """
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
     updated_at = datetime.now().isoformat()
     conn = get_conn()
     if USE_SUPABASE:
         with conn.cursor() as cur:
             cur.execute(
+<<<<<<< HEAD
                 """INSERT INTO public.baselines
                        (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url)
                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
                 (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url),
+=======
+                """
+                INSERT INTO public.baselines
+                    (portal, url, html_path, screenshot_path, har_path, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                (portal, url, html_path, screenshot_path, har_path, updated_at),
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
             )
             conn.commit()
     else:
         cursor = conn.cursor()
         cursor.execute(
             """INSERT INTO baselines
+<<<<<<< HEAD
                    (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url),
+=======
+               (portal, url, html_path, screenshot_path, har_path, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (portal, url, html_path, screenshot_path, har_path, updated_at),
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
         )
         conn.commit()
     conn.close()
@@ -349,11 +475,27 @@ def cleanup_old_snapshots(url_folder, keep=2):
         logger.error("Error during snapshot cleanup - %s", e)
 
 
+def upload_to_cloudinary(local_path, resource_type="image"):
+    """Upload a local file to Cloudinary and return the secure URL.
+    Returns None if Cloudinary is not configured or upload fails.
+    """
+    if not (CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET):
+        return None
+    try:
+        result = cloudinary.uploader.upload(local_path, resource_type=resource_type, folder="webtracker")
+        return result.get("secure_url")
+    except Exception as e:
+        logger.error(f"Cloudinary upload failed for {local_path}: {e}")
+        return None
+
+
 def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
     timestamp  = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_url   = (
-        url.replace("https://", "").replace("http://", "")
-           .replace("/", "_").replace(":", "_")
+        url.replace("https://", "")
+           .replace("http://", "")
+           .replace("/", "_")
+           .replace(":", "_")
     )
     url_folder = os.path.join(ARCHIVE_DIR, portal, safe_url)
     folder     = os.path.join(url_folder, timestamp)
@@ -373,7 +515,11 @@ def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
         with open(har_path, "w", encoding="utf-8") as f:
             json.dump(har_data, f, indent=2)
 
+<<<<<<< HEAD
     # Upload to Cloudinary
+=======
+    # Upload to Cloudinary (image for screenshot, raw for html)
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
     screenshot_url = upload_to_cloudinary(screenshot_path, resource_type="image")
     html_url       = upload_to_cloudinary(html_path, resource_type="raw")
 
@@ -383,6 +529,11 @@ def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
 
 
 def start_crawl_log(portal):
+<<<<<<< HEAD
+=======
+    conn   = sqlite3.connect(DB_PATH)   # crawl logs stay local (no need for Supabase)
+    cursor = conn.cursor()
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
     started_at = datetime.now().isoformat()
     conn = get_conn()
     if USE_SUPABASE:
@@ -431,7 +582,11 @@ def finish_crawl_log(crawl_id, pages_visited, status="done"):
 
 
 def get_all_changes():
+<<<<<<< HEAD
     """Return all change records ordered by newest first."""
+=======
+    """Return all change records ordered by newest first (includes Cloudinary URLs)."""
+>>>>>>> 711d200495db318182c29ab8f9e4d3cf232f8564
     conn = get_conn()
     if USE_SUPABASE:
         with conn.cursor() as cur:
@@ -443,7 +598,6 @@ def get_all_changes():
         rows = cursor.fetchall()
     conn.close()
     return rows
-
 
 def clear_baselines_for_portal(portal):
     conn = get_conn()
@@ -462,6 +616,10 @@ def clear_baselines_for_portal(portal):
 
 
 def purge_old_records(keep_days):
+    """
+    Delete records older than *keep_days* days.
+    Works for both back‑ends.
+    """
     from datetime import timedelta
     cutoff = (datetime.now() - timedelta(days=keep_days)).isoformat()
     conn = get_conn()
