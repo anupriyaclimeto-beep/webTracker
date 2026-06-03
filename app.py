@@ -1047,9 +1047,9 @@ with st.container(border=True):
         st.warning("⚠️ Please select a specific portal first (do not leave 'All Portals').")
         st.session_state["run_warning"] = False  # Reset warning flag
     
-    # 3 columns for selectbox, run actions, and refresh
-    cc1, cc2, cc3 = st.columns([4, 2, 2])
-    
+    # 2 columns: portal selector | crawler actions + refresh
+    cc1, cc2 = st.columns([4, 3])
+
     with cc1:
         st.markdown("<div style='font-size:10.5px; font-family:\"IBM Plex Mono\",monospace; color:#526d95; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.04em'>🎯 Target Portal</div>", unsafe_allow_html=True)
         curr_portal = st.session_state.portal
@@ -1060,36 +1060,37 @@ with st.container(border=True):
                      label_visibility="collapsed",
                      key="top_portal_select",
                      on_change=on_portal_change)
-                     
+
     with cc2:
         st.markdown("<div style='font-size:10.5px; font-family:\"IBM Plex Mono\",monospace; color:#526d95; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.04em'>🤖 Crawler Actions</div>", unsafe_allow_html=True)
         manual_running = st.session_state.get("crawler_manual_running", False)
-        if running_crawl or manual_running:
-            if st.button("⏹ Stop", use_container_width=True, type="primary", key="stop_btn"):
-                stop_crawl()
-                st.session_state.pop("crawler_manual_running", None)
-                st.session_state.pop("crawler_manual_started_at", None)
-                st.cache_data.clear()
-                time.sleep(1)
-                st.rerun()
-        else:
-            if st.button("▶ Run", use_container_width=True, type="primary", key="run_btn"):
-                if portal_filter is None:
-                    st.session_state["run_warning"] = True
-                    time.sleep(0.1)
+        # Stop/Run and Refresh sit side-by-side in their own sub-columns
+        act_col, ref_col = st.columns([1, 1])
+        with act_col:
+            if running_crawl or manual_running:
+                if st.button("⏹ Stop", use_container_width=True, type="primary", key="stop_btn"):
+                    stop_crawl()
+                    st.session_state.pop("crawler_manual_running", None)
+                    st.session_state.pop("crawler_manual_started_at", None)
+                    st.cache_data.clear()
+                    time.sleep(1)
                     st.rerun()
-                st.session_state["crawler_manual_running"] = True
-                st.session_state["crawler_manual_started_at"] = datetime.now().isoformat()
-                launch_crawl(portal_filter)
+            else:
+                if st.button("▶ Run", use_container_width=True, type="primary", key="run_btn"):
+                    if portal_filter is None:
+                        st.session_state["run_warning"] = True
+                        time.sleep(0.1)
+                        st.rerun()
+                    st.session_state["crawler_manual_running"] = True
+                    st.session_state["crawler_manual_started_at"] = datetime.now().isoformat()
+                    launch_crawl(portal_filter)
+                    st.cache_data.clear()
+                    time.sleep(1)
+                    st.rerun()
+        with ref_col:
+            if st.button("↺ Refresh", use_container_width=True, key="top_refresh_btn"):
                 st.cache_data.clear()
-                time.sleep(1)
                 st.rerun()
-                
-    with cc3:
-        st.markdown("<div style='font-size:10.5px; font-family:\"IBM Plex Mono\",monospace; color:#526d95; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.04em'>🔄 Data Refresh</div>", unsafe_allow_html=True)
-        if st.button("↺ Refresh", use_container_width=True, key="top_refresh_btn"):
-            st.cache_data.clear()
-            st.rerun()
 
 st.markdown("<hr style='margin:4px 0 20px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 st.markdown("<div style='padding:0 8px'>", unsafe_allow_html=True)
