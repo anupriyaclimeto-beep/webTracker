@@ -17,11 +17,14 @@ def start_crawl():
         venv_python = ROOT / "venv" / "Scripts" / "python.exe"
         python_exe = str(venv_python) if venv_python.exists() else sys.executable
         
+        # Ensure playwright browsers are installed (Crucial for Streamlit Cloud!)
+        subprocess.run([python_exe, "-m", "playwright", "install", "chromium"], check=False)
+        
         cmd = [python_exe, "crawler.py", "--once"]
         
         env = os.environ.copy()
         
-        log_fh = open(ROOT / "crawler.log", "w", encoding="utf-8", buffering=1)
+        log_fh = open(ROOT / ".crawler.log", "w", encoding="utf-8", buffering=1)
         proc = subprocess.Popen(
             cmd, stdout=log_fh, stderr=log_fh, cwd=str(ROOT), env=env
         )

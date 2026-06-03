@@ -19,8 +19,8 @@ from dotenv import load_dotenv
 def start_background_scheduler():
     def run_schedule():
         last_run = {}
-        # Target times in 24-hour format: 7 AM, 3 PM, 3:10 PM, 10 PM
-        target_times = ["07:00", "15:00", "15:10", "22:00"]
+        # Target times in 24-hour format: 7 AM, 3 PM, 3:10 PM, 3:20 PM, 10 PM
+        target_times = ["07:00", "15:00", "15:10", "15:20", "22:00"]
         
         import datetime as dt
         # Set timezone to IST (UTC +5:30)
@@ -866,6 +866,9 @@ def launch_crawl(portal=None):
                 env[k] = str(st.secrets[k])
             except Exception:
                 pass
+                
+    # Ensure playwright browsers are installed (Crucial for Streamlit Cloud!)
+    subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=False)
 
     log_fh = open(LOG_FILE, "w", encoding="utf-8", buffering=1)
     proc = subprocess.Popen(cmd, stdout=log_fh, stderr=log_fh,
