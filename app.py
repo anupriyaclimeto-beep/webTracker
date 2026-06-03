@@ -275,6 +275,15 @@ del.word {
     }
 }
 
+/* Premium styled control container card */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    background: #0c0f16 !important;
+    border: 1px solid #1a1f2e !important;
+    border-radius: 12px !important;
+    padding: 18px 20px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -1006,18 +1015,43 @@ def on_portal_change():
         st.session_state.portal = st.session_state.top_portal_select
 
 # Row 1: Header (Branding left, Actions right)
-hdr_left, hdr_right = st.columns([1, 1])
+# SaaS-Style Header: Branding (left 1/3) and Tabs (right 2/3)
+hdr_left, hdr_right = st.columns([1, 2])
 
 with hdr_left:
     st.markdown(
         "<div style='padding:8px 0 6px;font-family:\"IBM Plex Mono\",monospace;"
-        "font-size:14px;font-weight:600;color:#e2e8f0;letter-spacing:0.02em'>"
+        "font-size:15px;font-weight:600;color:#e2e8f0;letter-spacing:0.02em'>"
         "🔍 Change Monitor</div>", unsafe_allow_html=True
     )
 
 with hdr_right:
-    rc1, rc2, rc3 = st.columns([3, 2, 2])
-    with rc1:
+    tab_cols = st.columns(len(nav_views))
+    for col, (view_id, icon, label) in zip(tab_cols, nav_views):
+        with col:
+            is_active = st.session_state.view == view_id
+            if st.button(f"{icon} {label}", key=f"nav_{view_id}",
+                         use_container_width=True,
+                         type="primary" if is_active else "secondary"):
+                st.session_state.view = view_id; st.rerun()
+
+st.markdown("<hr style='margin:4px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
+
+# Styled Control Panel Card Container
+if "run_warning" not in st.session_state:
+    st.session_state["run_warning"] = False
+
+with st.container(border=True):
+    # Render warning message spanning full width of the card if triggered
+    if st.session_state["run_warning"]:
+        st.warning("⚠️ Please select a specific portal first (do not leave 'All Portals').")
+        st.session_state["run_warning"] = False  # Reset warning flag
+    
+    # 3 columns for selectbox, run actions, and refresh
+    cc1, cc2, cc3 = st.columns([4, 2, 2])
+    
+    with cc1:
+        st.markdown("<div style='font-size:10.5px; font-family:\"IBM Plex Mono\",monospace; color:#526d95; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.04em'>🎯 Target Portal</div>", unsafe_allow_html=True)
         curr_portal = st.session_state.portal
         if curr_portal not in portal_options:
             curr_portal = "All Portals"
@@ -1026,66 +1060,36 @@ with hdr_right:
                      label_visibility="collapsed",
                      key="top_portal_select",
                      on_change=on_portal_change)
-    with rc2:
+                     
+    with cc2:
+        st.markdown("<div style='font-size:10.5px; font-family:\"IBM Plex Mono\",monospace; color:#526d95; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.04em'>🤖 Crawler Actions</div>", unsafe_allow_html=True)
         manual_running = st.session_state.get("crawler_manual_running", False)
-        # If crawl is active (DB) or just started manually, show Stop + live info
         if running_crawl or manual_running:
-            cols = st.columns([3,1])
-            with cols[0]:
-                # show a prominent Stop button
-                if st.button("⏹ Stop", use_container_width=True, type="primary", key="stop_btn"):
-                    stop_crawl()
-                    st.session_state.pop("crawler_manual_running", None)
-                    st.session_state.pop("crawler_manual_started_at", None)
-                    st.cache_data.clear()
-                    time.sleep(1)
-                    st.rerun()
-            with cols[1]:
-                # show inline spinner + pages visited
-                try:
-                    pages = running_crawl.get("pages_visited") if running_crawl else None
-                except Exception:
-                    pages = None
-                visited = f"{pages} pages" if pages is not None else ""
-                st.markdown(
-                    f"<div style='display:flex;align-items:center;gap:8px'>"
-                    f"<div class='loader-spinner' style='width:22px;height:22px'></div>"
-                    f"<div style='font-size:12px;color:#cfe8ff'>{visited}</div></div>",
-                    unsafe_allow_html=True,
-                )
+            if st.button("⏹ Stop", use_container_width=True, type="primary", key="stop_btn"):
+                stop_crawl()
+                st.session_state.pop("crawler_manual_running", None)
+                st.session_state.pop("crawler_manual_started_at", None)
+                st.cache_data.clear()
+                time.sleep(1)
+                st.rerun()
         else:
-            # Idle state: show Run button
             if st.button("▶ Run", use_container_width=True, type="primary", key="run_btn"):
-                # require a specific portal selection — do not run on "All Portals"
                 if portal_filter is None:
-                    st.warning("Please select a portal first (do not leave 'All Portals').")
-                    # ensure no stale manual-running flag remains
-                    st.session_state.pop("crawler_manual_running", None)
-                    st.session_state.pop("crawler_manual_started_at", None)
-                    time.sleep(0.6)
+                    st.session_state["run_warning"] = True
+                    time.sleep(0.1)
                     st.rerun()
-                # set a short-lived session flag so UI immediately shows a running banner
                 st.session_state["crawler_manual_running"] = True
                 st.session_state["crawler_manual_started_at"] = datetime.now().isoformat()
                 launch_crawl(portal_filter)
                 st.cache_data.clear()
                 time.sleep(1)
                 st.rerun()
-    with rc3:
-        if st.button("↺ Refresh", use_container_width=True):
+                
+    with cc3:
+        st.markdown("<div style='font-size:10.5px; font-family:\"IBM Plex Mono\",monospace; color:#526d95; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.04em'>🔄 Data Refresh</div>", unsafe_allow_html=True)
+        if st.button("↺ Refresh", use_container_width=True, key="top_refresh_btn"):
             st.cache_data.clear()
             st.rerun()
-
-# Row 2: Navigation Tabs (takes full width)
-st.markdown("<div style='margin-bottom: 8px;'></div>", unsafe_allow_html=True)
-tab_cols = st.columns(len(nav_views))
-for col, (view_id, icon, label) in zip(tab_cols, nav_views):
-    with col:
-        is_active = st.session_state.view == view_id
-        if st.button(f"{icon} {label}", key=f"nav_{view_id}",
-                     use_container_width=True,
-                     type="primary" if is_active else "secondary"):
-            st.session_state.view = view_id; st.rerun()
 
 st.markdown("<hr style='margin:4px 0 20px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 st.markdown("<div style='padding:0 8px'>", unsafe_allow_html=True)
