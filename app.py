@@ -558,13 +558,19 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
 }
 
-/* Logout button wrapper — flush right */
+/* Logout button wrapper — flush right, vertically centered */
 .logout-wrapper {
     display: flex;
     justify-content: flex-end;
     align-items: center;
     height: 100%;
-    padding-top: 3px;
+    padding-top: 0;
+    margin-top: -4px;
+}
+.logout-wrapper button {
+    white-space: nowrap;
+    padding: 6px 18px !important;
+    font-size: 13px !important;
 }
 
 </style>
@@ -1239,7 +1245,7 @@ def on_portal_change():
         st.session_state.portal = st.session_state.top_portal_select
 
 # ── Header row: Branding | Nav tabs | Logout ──────────────────────────────────
-hdr_left, hdr_mid, hdr_logout = st.columns([1.1, 2.6, 0.5])
+hdr_left, hdr_mid, hdr_spacer, hdr_logout = st.columns([1.2, 2.2, 0.3, 0.6])
 
 with hdr_left:
     st.markdown(
@@ -1258,12 +1264,10 @@ with hdr_mid:
                          type="primary" if is_active else "secondary"):
                 st.session_state.view = view_id; st.rerun()
 
+# hdr_spacer is intentionally empty to push logout to the far right
+
 with hdr_logout:
-    # Wrap in a right-aligned div so the button hugs the right edge
-    st.markdown(
-        "<div class='logout-wrapper'>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div class='logout-wrapper'>", unsafe_allow_html=True)
     if st.button("⎋ Logout", key="logout_btn", use_container_width=True):
         logout()
     st.markdown("</div>", unsafe_allow_html=True)
