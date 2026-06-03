@@ -6,9 +6,44 @@ import os
 import subprocess
 import sys
 import time
+from contextlib import contextmanager
+import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
+
+# ── BUILT-IN SCHEDULER ─────────────────────────────────────────────────────────
+# This ensures that when pushed to a live server, the crawlers run automatically 
+# at the specified times without needing OS-level cron configurations.
+@st.cache_resource
+def start_background_scheduler():
+    def run_schedule():
+        last_run = {}
+        # Target times in 24-hour format: 7 AM, 3 PM, 10 PM
+        target_times = ["07:00", "15:00", "22:00"]
+        
+        while True:
+            now = datetime.now()
+            current_time = now.strftime("%H:%M")
+            
+            if current_time in target_times and last_run.get(current_time) != now.date():
+                last_run[current_time] = now.date()
+                print(f"[{datetime.now()}] In-app scheduler triggered for {current_time}!")
+                try:
+                    root = Path(__file__).parent
+                    cmd = [sys.executable, str(root / "cron_tasks.py"), "start_crawl"]
+                    subprocess.Popen(cmd, cwd=str(root))
+                except Exception as e:
+                    print(f"[{datetime.now()}] In-app scheduler failed: {e}")
+                    
+            time.sleep(30)
+
+    t = threading.Thread(target=run_schedule, daemon=True)
+    t.start()
+    return t
+
+# Start the scheduler (runs exactly once per server boot)
+start_background_scheduler()
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 with open("config.json") as f:
@@ -558,18 +593,19 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
 }
 
-/* Logout button wrapper — flush right, vertically centered */
-.logout-wrapper {
+/* Header row — force all columns to vertically align center */
+[data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"]) {
+    align-items: center !important;
+}
+
+/* Logout button — position it flush right inside its column */
+.logout-col [data-testid="stButton"] {
     display: flex;
     justify-content: flex-end;
-    align-items: center;
-    height: 100%;
-    padding-top: 0;
-    margin-top: -4px;
 }
-.logout-wrapper button {
+.logout-col [data-testid="stButton"] button {
     white-space: nowrap;
-    padding: 6px 18px !important;
+    padding: 6px 20px !important;
     font-size: 13px !important;
 }
 
@@ -1245,7 +1281,7 @@ def on_portal_change():
         st.session_state.portal = st.session_state.top_portal_select
 
 # ── Header row: Branding | Nav tabs | Logout ──────────────────────────────────
-hdr_left, hdr_mid, hdr_spacer, hdr_logout = st.columns([1.2, 2.2, 0.3, 0.6])
+hdr_left, hdr_mid, hdr_logout = st.columns([1.2, 2.4, 0.7])
 
 with hdr_left:
     st.markdown(
@@ -1264,11 +1300,9 @@ with hdr_mid:
                          type="primary" if is_active else "secondary"):
                 st.session_state.view = view_id; st.rerun()
 
-# hdr_spacer is intentionally empty to push logout to the far right
-
 with hdr_logout:
-    st.markdown("<div class='logout-wrapper'>", unsafe_allow_html=True)
-    if st.button("⎋ Logout", key="logout_btn", use_container_width=True):
+    st.markdown("<div class='logout-col'>", unsafe_allow_html=True)
+    if st.button("⎋ Logout", key="logout_btn"):
         logout()
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1299,31 +1333,25 @@ with st.container(border=True):
     with cc2:
         st.markdown("<div style='font-size:10.5px; font-family:\"IBM Plex Mono\",monospace; color:#526d95; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.04em'>🤖 Crawler Actions</div>", unsafe_allow_html=True)
         manual_running = st.session_state.get("crawler_manual_running", False)
-        act_col, ref_col = st.columns([1, 1])
-        with act_col:
-            if running_crawl or manual_running:
-                if st.button("⏹ Stop", use_container_width=True, type="primary", key="stop_btn"):
-                    stop_crawl()
-                    st.session_state.pop("crawler_manual_running", None)
-                    st.session_state.pop("crawler_manual_started_at", None)
-                    st.cache_data.clear()
-                    time.sleep(1)
-                    st.rerun()
-            else:
-                if st.button("▶ Run", use_container_width=True, type="primary", key="run_btn"):
-                    if portal_filter is None:
-                        st.session_state["run_warning"] = True
-                        time.sleep(0.1)
-                        st.rerun()
-                    st.session_state["crawler_manual_running"] = True
-                    st.session_state["crawler_manual_started_at"] = datetime.now().isoformat()
-                    launch_crawl(portal_filter)
-                    st.cache_data.clear()
-                    time.sleep(1)
-                    st.rerun()
-        with ref_col:
-            if st.button("↺ Refresh", use_container_width=True, key="top_refresh_btn"):
+        if running_crawl or manual_running:
+            if st.button("⏹ Stop", use_container_width=True, type="primary", key="stop_btn"):
+                stop_crawl()
+                st.session_state.pop("crawler_manual_running", None)
+                st.session_state.pop("crawler_manual_started_at", None)
                 st.cache_data.clear()
+                time.sleep(1)
+                st.rerun()
+        else:
+            if st.button("▶ Run", use_container_width=True, type="primary", key="run_btn"):
+                if portal_filter is None:
+                    st.session_state["run_warning"] = True
+                    time.sleep(0.1)
+                    st.rerun()
+                st.session_state["crawler_manual_running"] = True
+                st.session_state["crawler_manual_started_at"] = datetime.now().isoformat()
+                launch_crawl(portal_filter)
+                st.cache_data.clear()
+                time.sleep(1)
                 st.rerun()
 
 st.markdown("<hr style='margin:4px 0 20px;border-color:#1a1f2e'>", unsafe_allow_html=True)
@@ -1718,7 +1746,7 @@ elif st.session_state.view == "console":
         "<div class='page-subtitle'>Live output from the crawler process</div>",
         unsafe_allow_html=True
     )
-    cc1, _ = st.columns([2, 7])
+    cc1, cc2, _ = st.columns([2, 2, 5])
     with cc1:
         if st.button("⏹ Stop crawler", use_container_width=True, key="console_stop"):
             stopped = stop_crawl()
@@ -1729,6 +1757,10 @@ elif st.session_state.view == "console":
             st.cache_data.clear()
             time.sleep(0.8)
             st.rerun()
+    with cc2:
+        if st.button("↺ Refresh", use_container_width=True, key="console_refresh_btn"):
+            st.cache_data.clear()
+            st.rerun()
     tail_lines = 60
     log_lines = read_log(tail=tail_lines)
     if running_crawl:
@@ -1737,7 +1769,7 @@ elif st.session_state.view == "console":
             "  <div class='spinner-ring'></div>"
             "  <div class='banner-text'>"
             "    <span class='banner-title'>Active crawl log stream</span>"
-            "    <span class='banner-sub'>Output updates every second</span>"
+            "    <span class='banner-sub'>Auto-refreshing every 3 seconds</span>"
             "  </div>"
             "</div>",
             unsafe_allow_html=True
@@ -1784,6 +1816,19 @@ elif st.session_state.view == "console":
             st.markdown(js, unsafe_allow_html=True)
     except Exception:
         pass
+        
+    # Inject auto-refresh and auto-scroll if the crawler is actively running
+    if running_crawl:
+        st.markdown(
+            """
+            <script>
+                const logBox = document.querySelector('[style*="max-height:520px"]');
+                if (logBox) logBox.scrollTop = logBox.scrollHeight;
+                setTimeout(() => window.parent.location.reload(), 3000);
+            </script>
+            """,
+            unsafe_allow_html=True
+        )
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "rb") as f:
             st.download_button("⬇ Download full log", f, file_name="crawler.log",
