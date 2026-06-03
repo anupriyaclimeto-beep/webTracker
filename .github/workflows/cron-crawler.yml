@@ -1,8 +1,8 @@
-name: Scheduled Crawler Test (5:00 PM UTC)
+name: Scheduled Crawler (4:30 PM UTC)
 
 on:
   schedule:
-    - cron: '30 11 * * *'  # 5:00 PM IST daily (11:30 AM UTC = 5:00 PM IST)
+    - cron: '30 16 * * *'  # 4:30 PM UTC daily
   workflow_dispatch:  # allow manual trigger from GitHub
 
 jobs:
@@ -24,19 +24,19 @@ jobs:
           pip install -r requirements.txt
           playwright install
       
-      - name: Run crawler for all portals (TEST RUN)
+      - name: Run crawler for all portals
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
-          echo "🧪 Starting TEST crawl at $(date) [5:00 PM IST]"
+          echo "Starting crawl at $(date)"
           python scripts/run_crawler_daemon.py
-          echo "✅ TEST crawl complete at $(date)"
+          echo "Crawl complete at $(date)"
       
       - name: Upload logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: crawler-test-logs
+          name: crawler-logs
           path: .crawler.log
           retention-days: 7
