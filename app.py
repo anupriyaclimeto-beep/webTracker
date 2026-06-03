@@ -1188,7 +1188,9 @@ def render_change_expander(change):
             st.markdown(f"**Severity:** {sev_label}")
             st.markdown(f"**Type:** {label_str}")
         with c3:
-            st.markdown(f"**Detected:** {str(change['timestamp'])[:16]}")
+            ts = change.get('timestamp')
+            ts_str = str(ts)[:16] if ts else "N/A"
+            st.markdown(f"**Detected:** {ts_str}")
 
         st.markdown("---")
 
