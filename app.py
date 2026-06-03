@@ -264,6 +264,17 @@ del.word {
     gap:8px; margin-bottom:16px; font-family:'IBM Plex Mono',monospace;
 }
 
+/* Responsive columns wrapping */
+[data-testid="stHorizontalBlock"] {
+    flex-wrap: wrap !important;
+}
+@media (max-width: 768px) {
+    [data-testid="column"] {
+        min-width: 180px !important;
+        flex: 1 1 auto !important;
+    }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -990,33 +1001,31 @@ nav_views = [
     ("screenshots","📸","Screenshots"),("history","📅","History"),("console","🖥️","Console"),
 ]
 
-nb_brand, nb_tabs_cols, nb_right = st.columns([2, 6, 4])
+def on_portal_change():
+    if "top_portal_select" in st.session_state:
+        st.session_state.portal = st.session_state.top_portal_select
 
-with nb_brand:
+# Row 1: Header (Branding left, Actions right)
+hdr_left, hdr_right = st.columns([1, 1])
+
+with hdr_left:
     st.markdown(
         "<div style='padding:8px 0 6px;font-family:\"IBM Plex Mono\",monospace;"
-        "font-size:13px;font-weight:600;color:#e2e8f0;letter-spacing:0.02em'>"
+        "font-size:14px;font-weight:600;color:#e2e8f0;letter-spacing:0.02em'>"
         "🔍 Change Monitor</div>", unsafe_allow_html=True
     )
 
-tab_cols = nb_tabs_cols.columns(len(nav_views))
-for col, (view_id, icon, label) in zip(tab_cols, nav_views):
-    with col:
-        is_active = st.session_state.view == view_id
-        if st.button(f"{icon} {label}", key=f"nav_{view_id}",
-                     use_container_width=True,
-                     type="primary" if is_active else "secondary"):
-            st.session_state.view = view_id; st.rerun()
-
-with nb_right:
+with hdr_right:
     rc1, rc2, rc3 = st.columns([3, 2, 2])
     with rc1:
-        sel = st.selectbox("portal_sel", portal_options,
-                           index=portal_options.index(st.session_state.portal)
-                                 if st.session_state.portal in portal_options else 0,
-                           label_visibility="collapsed", key="top_portal_select")
-        if sel != st.session_state.portal:
-            st.session_state.portal = sel; st.rerun()
+        curr_portal = st.session_state.portal
+        if curr_portal not in portal_options:
+            curr_portal = "All Portals"
+        st.selectbox("portal_sel", portal_options,
+                     index=portal_options.index(curr_portal),
+                     label_visibility="collapsed",
+                     key="top_portal_select",
+                     on_change=on_portal_change)
     with rc2:
         manual_running = st.session_state.get("crawler_manual_running", False)
         # If crawl is active (DB) or just started manually, show Stop + live info
@@ -1066,6 +1075,17 @@ with nb_right:
         if st.button("↺ Refresh", use_container_width=True):
             st.cache_data.clear()
             st.rerun()
+
+# Row 2: Navigation Tabs (takes full width)
+st.markdown("<div style='margin-bottom: 8px;'></div>", unsafe_allow_html=True)
+tab_cols = st.columns(len(nav_views))
+for col, (view_id, icon, label) in zip(tab_cols, nav_views):
+    with col:
+        is_active = st.session_state.view == view_id
+        if st.button(f"{icon} {label}", key=f"nav_{view_id}",
+                     use_container_width=True,
+                     type="primary" if is_active else "secondary"):
+            st.session_state.view = view_id; st.rerun()
 
 st.markdown("<hr style='margin:4px 0 20px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 st.markdown("<div style='padding:0 8px'>", unsafe_allow_html=True)
