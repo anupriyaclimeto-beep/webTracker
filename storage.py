@@ -281,7 +281,7 @@ def get_baseline(portal, url):
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT html_path, screenshot_path, har_path
+                SELECT html_path, screenshot_path, har_path, screenshot_url, html_url
                 FROM public.baselines
                 WHERE portal=%s AND url=%s
                 ORDER BY updated_at DESC
@@ -293,7 +293,7 @@ def get_baseline(portal, url):
     else:
         cursor = conn.cursor()
         cursor.execute(
-            """SELECT html_path, screenshot_path, har_path
+            """SELECT html_path, screenshot_path, har_path, screenshot_url, html_url
                FROM baselines
                WHERE portal=? AND url=?
                ORDER BY updated_at DESC
@@ -307,13 +307,16 @@ def get_baseline(portal, url):
             "html_path":       row["html_path"] if USE_SUPABASE else row[0],
             "screenshot_path": row["screenshot_path"] if USE_SUPABASE else row[1],
             "har_path":        row["har_path"] if USE_SUPABASE else row[2],
+            "screenshot_url":  row["screenshot_url"] if USE_SUPABASE else row[3],
+            "html_url":        row["html_url"] if USE_SUPABASE else row[4],
         }
     return None
 
 
-def update_baseline(portal, url, html_path, screenshot_path, har_path):
+def update_baseline(portal, url, html_path, screenshot_path, har_path, screenshot_url=None, html_url=None):
     """
     Always insert a new baseline row to keep full history.
+    Includes Cloudinary URLs if available.
     """
     updated_at = datetime.now().isoformat()
     conn = get_conn()
@@ -322,19 +325,19 @@ def update_baseline(portal, url, html_path, screenshot_path, har_path):
             cur.execute(
                 """
                 INSERT INTO public.baselines
-                    (portal, url, html_path, screenshot_path, har_path, updated_at)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                    (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """,
-                (portal, url, html_path, screenshot_path, har_path, updated_at),
+                (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url),
             )
             conn.commit()
     else:
         cursor = conn.cursor()
         cursor.execute(
             """INSERT INTO baselines
-               (portal, url, html_path, screenshot_path, har_path, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (portal, url, html_path, screenshot_path, har_path, updated_at),
+               (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url),
         )
         conn.commit()
     conn.close()
