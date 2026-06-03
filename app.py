@@ -78,6 +78,124 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+# ── LOGIN GATE ────────────────────────────────────────────────────────────────
+def _check_credentials(username: str, password: str) -> bool:
+    """Validate against st.secrets (cloud) or env vars (local)."""
+    valid_user = _secret("LOGIN_USER", os.getenv("LOGIN_USER", "admin"))
+    valid_pass = _secret("LOGIN_PASS", os.getenv("LOGIN_PASS", "cpcb@2025"))
+    return username.strip() == valid_user and password == valid_pass
+
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+
+if not st.session_state["authenticated"]:
+    st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+html, body, [data-testid="stAppViewContainer"] {
+    background: #080b10 !important;
+    font-family: 'IBM Plex Sans', sans-serif !important;
+}
+[data-testid="stToolbar"], [data-testid="stHeader"], #MainMenu, header,
+[data-testid="stDecoration"], [data-testid="stSidebar"],
+[data-testid="stSidebarCollapsedControl"] { display:none!important; }
+.main .block-container { padding: 0 !important; max-width: 100% !important; }
+
+.login-wrap {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: #080b10;
+}
+.login-card {
+    background: linear-gradient(145deg, #0d1117 0%, #111827 100%);
+    border: 1px solid #1e2d45;
+    border-radius: 20px;
+    padding: 52px 48px 44px;
+    width: 420px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,179,237,0.05);
+}
+.login-logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
+    color: #3b82f6; text-transform: uppercase; margin-bottom: 8px;
+}
+.login-title {
+    font-size: 26px; font-weight: 700; color: #e2e8f0;
+    margin-bottom: 4px; line-height: 1.2;
+}
+.login-sub {
+    font-size: 13px; color: #4a6080; margin-bottom: 36px;
+}
+.login-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #526d95; margin-bottom: 6px;
+}
+[data-testid="stTextInput"] input {
+    background: #0a0f1a !important; border: 1px solid #1e2d45 !important;
+    border-radius: 10px !important; color: #e2e8f0 !important;
+    font-family: 'IBM Plex Sans', sans-serif !important;
+    font-size: 14px !important; padding: 12px 16px !important;
+    transition: border-color 0.2s;
+}
+[data-testid="stTextInput"] input:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important;
+}
+[data-testid="stButton"] button {
+    background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%) !important;
+    color: #fff !important; border: none !important;
+    border-radius: 10px !important; font-weight: 600 !important;
+    font-size: 14px !important; letter-spacing: 0.03em !important;
+    padding: 12px 0 !important; width: 100% !important;
+    margin-top: 8px !important; cursor: pointer !important;
+    transition: opacity 0.2s, transform 0.15s !important;
+    font-family: 'IBM Plex Sans', sans-serif !important;
+}
+[data-testid="stButton"] button:hover { opacity: 0.88 !important; transform: translateY(-1px) !important; }
+.login-footer {
+    font-size: 11px; color: #2d3f55; text-align: center;
+    margin-top: 28px; letter-spacing: 0.04em;
+}
+</style>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">🔍 CPCB EPR</div>
+    <div class="login-title">Web Tracker</div>
+    <div class="login-sub">Sign in to access the monitoring dashboard</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+    # Centre the form over the card
+    _, mid, _ = st.columns([1, 1.2, 1])
+    with mid:
+        st.markdown("<div style='margin-top:-420px'>", unsafe_allow_html=True)
+        st.markdown("<div class='login-label'>Username</div>", unsafe_allow_html=True)
+        username = st.text_input("username", placeholder="Enter username",
+                                 label_visibility="collapsed", key="login_user")
+        st.markdown("<div class='login-label' style='margin-top:14px'>Password</div>",
+                    unsafe_allow_html=True)
+        password = st.text_input("password", placeholder="Enter password",
+                                 type="password", label_visibility="collapsed",
+                                 key="login_pass")
+        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+        if st.button("Sign In →", key="login_submit", use_container_width=True):
+            if _check_credentials(username, password):
+                st.session_state["authenticated"] = True
+                st.rerun()
+            else:
+                st.error("⚠️ Incorrect username or password.")
+        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("<div class='login-footer'>CPCB Portal Change Monitor · Internal Use Only</div>",
+                unsafe_allow_html=True)
+    st.stop()
+
+# ── LOGOUT helper (called from header) ───────────────────────────────────────
+def logout():
+    st.session_state["authenticated"] = False
+    st.rerun()
+
+
+
 # ── PLAYWRIGHT CLOUD INITIALISATION ───────────────────────────────────────────
 if IS_CLOUD:
     import subprocess
@@ -1014,9 +1132,8 @@ def on_portal_change():
     if "top_portal_select" in st.session_state:
         st.session_state.portal = st.session_state.top_portal_select
 
-# Row 1: Header (Branding left, Actions right)
-# SaaS-Style Header: Branding (left 1/3) and Tabs (right 2/3)
-hdr_left, hdr_right = st.columns([1, 2])
+# Row 1: Header (Branding left, Nav tabs centre, Logout right)
+hdr_left, hdr_mid, hdr_logout = st.columns([1, 2, 0.38])
 
 with hdr_left:
     st.markdown(
@@ -1025,7 +1142,7 @@ with hdr_left:
         "🔍 Change Monitor</div>", unsafe_allow_html=True
     )
 
-with hdr_right:
+with hdr_mid:
     tab_cols = st.columns(len(nav_views))
     for col, (view_id, icon, label) in zip(tab_cols, nav_views):
         with col:
@@ -1034,6 +1151,12 @@ with hdr_right:
                          use_container_width=True,
                          type="primary" if is_active else "secondary"):
                 st.session_state.view = view_id; st.rerun()
+
+with hdr_logout:
+    st.markdown("<div style='padding-top:2px'>", unsafe_allow_html=True)
+    if st.button("⎋ Logout", key="logout_btn", use_container_width=True):
+        logout()
+    st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<hr style='margin:4px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 
