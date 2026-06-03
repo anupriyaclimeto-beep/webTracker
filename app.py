@@ -1153,7 +1153,7 @@ if prev_running and not current_running:
 
 if current_running:
     # show running banner + loader UI (with progress if possible)
-    st.markdown("<div class='running-banner'>🔄 Crawler is running — refreshing every 5s</div>", unsafe_allow_html=True)
+    st.markdown("<div class='running-banner'>🔄 Crawler is running — refreshing every 1s</div>", unsafe_allow_html=True)
     # attempt to display progress (pages_visited / max_pages) by reading the portal config
     try:
         pages = running_crawl.get("pages_visited") if running_crawl else None
@@ -1181,7 +1181,7 @@ if current_running:
     except Exception:
         pass
 
-    st.markdown("<script>setTimeout(()=>window.location.reload(),5000)</script>", unsafe_allow_html=True)
+    st.markdown("<script>setTimeout(()=>window.location.reload(),1000)</script>", unsafe_allow_html=True)
 
 # persist current state for next run
 st.session_state["crawler_prev_running"] = current_running
@@ -1491,9 +1491,8 @@ elif st.session_state.view == "console":
         "<div class='page-subtitle'>Live output from the crawler process</div>",
         unsafe_allow_html=True
     )
-    cc1, cc2, _ = st.columns([1,1,5])
+    cc1, cc2, _ = st.columns([2,2,5])
     with cc1:
-        if st.button("↺ Refresh log", use_container_width=True): st.rerun()
         if st.button("⏹ Stop crawler", use_container_width=True, key="console_stop"):
             stopped = stop_crawl()
             if stopped:
@@ -1508,9 +1507,7 @@ elif st.session_state.view == "console":
                                   label_visibility="collapsed", key="tail_lines")
     log_lines = read_log(tail=tail_lines)
     if running_crawl:
-        st.markdown("<div class='running-banner'>🔄 Crawler is running — refreshing every 5s</div>",
-                    unsafe_allow_html=True)
-        st.markdown("<script>setTimeout(()=>window.location.reload(),5000)</script>",
+        st.markdown("<div class='running-banner'>🔄 Active crawl log stream...</div>",
                     unsafe_allow_html=True)
     else:
         st.markdown("<div class='idle-banner'>⏸ Crawler idle — click ▶ Run in the top bar to start</div>",
