@@ -19,22 +19,26 @@ from dotenv import load_dotenv
 def start_background_scheduler():
     def run_schedule():
         last_run = {}
-        # Target times in 24-hour format: 7 AM, 3 PM, 10 PM
-        target_times = ["07:00", "15:00", "22:00"]
+        # Target times in 24-hour format: 7 AM, 3 PM, 3:10 PM, 10 PM
+        target_times = ["07:00", "15:00", "15:10", "22:00"]
+        
+        import datetime as dt
+        # Set timezone to IST (UTC +5:30)
+        ist = dt.timezone(dt.timedelta(hours=5, minutes=30))
         
         while True:
-            now = datetime.now()
+            now = dt.datetime.now(ist)
             current_time = now.strftime("%H:%M")
             
             if current_time in target_times and last_run.get(current_time) != now.date():
                 last_run[current_time] = now.date()
-                print(f"[{datetime.now()}] In-app scheduler triggered for {current_time}!")
+                print(f"[{now}] In-app scheduler triggered for {current_time}!")
                 try:
                     root = Path(__file__).parent
                     cmd = [sys.executable, str(root / "cron_tasks.py"), "start_crawl"]
                     subprocess.Popen(cmd, cwd=str(root))
                 except Exception as e:
-                    print(f"[{datetime.now()}] In-app scheduler failed: {e}")
+                    print(f"[{now}] In-app scheduler failed: {e}")
                     
             time.sleep(30)
 
