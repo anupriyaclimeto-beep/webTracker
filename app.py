@@ -81,8 +81,8 @@ st.set_page_config(
 # ── LOGIN GATE ────────────────────────────────────────────────────────────────
 def _check_credentials(username: str, password: str) -> bool:
     """Validate against st.secrets (cloud) or env vars (local)."""
-    valid_user = _secret("LOGIN_USER", os.getenv("LOGIN_USER", "admin"))
-    valid_pass = _secret("LOGIN_PASS", os.getenv("LOGIN_PASS", "cpcb@2025"))
+    valid_user = _secret("LOGIN_USER", os.getenv("LOGIN_USER", "webtracker@test.com"))
+    valid_pass = _secret("LOGIN_PASS", os.getenv("LOGIN_PASS", "12345"))
     return username.strip() == valid_user and password == valid_pass
 
 if "authenticated" not in st.session_state:
@@ -91,109 +91,244 @@ if "authenticated" not in st.session_state:
 if not st.session_state["authenticated"]:
     st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
-html, body, [data-testid="stAppViewContainer"] {
-    background: #080b10 !important;
-    font-family: 'IBM Plex Sans', sans-serif !important;
-}
-[data-testid="stToolbar"], [data-testid="stHeader"], #MainMenu, header,
-[data-testid="stDecoration"], [data-testid="stSidebar"],
-[data-testid="stSidebarCollapsedControl"] { display:none!important; }
-.main .block-container { padding: 0 !important; max-width: 100% !important; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
-.login-wrap {
-    display: flex; align-items: center; justify-content: center;
-    min-height: 100vh; background: #080b10;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body,
+[data-testid="stAppViewContainer"],
+[data-testid="stApp"] {
+    background: #05070f !important;
+    font-family: 'Inter', sans-serif !important;
+    min-height: 100vh !important;
 }
+
+/* Hide ALL Streamlit chrome */
+[data-testid="stToolbar"], [data-testid="stHeader"],
+[data-testid="stDecoration"], [data-testid="stSidebar"],
+[data-testid="stSidebarCollapsedControl"],
+#MainMenu, header, footer { display: none !important; }
+
+.main .block-container {
+    padding: 0 !important;
+    max-width: 100% !important;
+    min-height: 100vh;
+}
+
+/* ── Animated grid background ── */
+[data-testid="stAppViewContainer"]::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+        linear-gradient(rgba(30,58,138,0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30,58,138,0.08) 1px, transparent 1px);
+    background-size: 48px 48px;
+    animation: gridMove 20s linear infinite;
+}
+@keyframes gridMove {
+    0%   { background-position: 0 0; }
+    100% { background-position: 48px 48px; }
+}
+
+/* ── Glow orbs ── */
+[data-testid="stAppViewContainer"]::after {
+    content: '';
+    position: fixed;
+    top: -20%; left: -10%;
+    width: 60vw; height: 60vw;
+    background: radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%);
+    z-index: 0; pointer-events: none;
+    animation: orbFloat 8s ease-in-out infinite alternate;
+}
+@keyframes orbFloat {
+    from { transform: translate(0, 0) scale(1); }
+    to   { transform: translate(60px, 40px) scale(1.1); }
+}
+
+/* ── Centering wrapper ── */
+.login-outer {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 100vh;
+    padding: 40px 16px;
+}
+
+/* ── Card ── */
 .login-card {
-    background: linear-gradient(145deg, #0d1117 0%, #111827 100%);
-    border: 1px solid #1e2d45;
-    border-radius: 20px;
-    padding: 52px 48px 44px;
-    width: 420px;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,179,237,0.05);
+    width: 100%; max-width: 440px;
+    background: linear-gradient(160deg, rgba(13,18,30,0.95) 0%, rgba(10,14,25,0.98) 100%);
+    border: 1px solid rgba(59,130,246,0.18);
+    border-radius: 24px;
+    padding: 52px 44px 44px;
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.03),
+        0 32px 80px rgba(0,0,0,0.7),
+        0 0 80px rgba(37,99,235,0.08);
+    backdrop-filter: blur(24px);
+    animation: cardIn 0.5s cubic-bezier(.16,1,.3,1) both;
 }
-.login-logo {
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Badge ── */
+.login-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: rgba(37,99,235,0.12);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 100px;
+    padding: 5px 14px 5px 10px;
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
-    color: #3b82f6; text-transform: uppercase; margin-bottom: 8px;
+    font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em;
+    color: #60a5fa; text-transform: uppercase;
+    margin-bottom: 28px;
 }
+.login-badge .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #3b82f6;
+    box-shadow: 0 0 6px #3b82f6;
+    animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ── Title ── */
 .login-title {
-    font-size: 26px; font-weight: 700; color: #e2e8f0;
-    margin-bottom: 4px; line-height: 1.2;
+    font-size: 30px; font-weight: 800;
+    color: #f1f5f9; letter-spacing: -0.02em;
+    line-height: 1.15; margin-bottom: 8px;
 }
+.login-title span { color: #3b82f6; }
 .login-sub {
-    font-size: 13px; color: #4a6080; margin-bottom: 36px;
+    font-size: 13.5px; color: #475569;
+    line-height: 1.5; margin-bottom: 40px;
 }
-.login-label {
-    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
-    text-transform: uppercase; color: #526d95; margin-bottom: 6px;
+
+/* ── Divider ── */
+.login-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(59,130,246,0.2), transparent);
+    margin-bottom: 32px;
+}
+
+/* ── Field labels ── */
+.field-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.09em;
+    text-transform: uppercase; color: #64748b;
+    margin-bottom: 7px; margin-top: 20px;
+    display: block;
+}
+.field-label:first-of-type { margin-top: 0; }
+
+/* ── Input fields ── */
+[data-testid="stTextInput"] > div > div {
+    background: rgba(8,13,26,0.8) !important;
+    border: 1px solid rgba(51,65,85,0.8) !important;
+    border-radius: 12px !important;
+    transition: border-color 0.25s, box-shadow 0.25s !important;
+}
+[data-testid="stTextInput"] > div > div:focus-within {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.16) !important;
 }
 [data-testid="stTextInput"] input {
-    background: #0a0f1a !important; border: 1px solid #1e2d45 !important;
-    border-radius: 10px !important; color: #e2e8f0 !important;
-    font-family: 'IBM Plex Sans', sans-serif !important;
-    font-size: 14px !important; padding: 12px 16px !important;
-    transition: border-color 0.2s;
+    background: transparent !important;
+    color: #e2e8f0 !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 14.5px !important;
+    padding: 13px 16px !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
-[data-testid="stTextInput"] input:focus {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important;
-}
-[data-testid="stButton"] button {
-    background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%) !important;
+[data-testid="stTextInput"] input::placeholder { color: #334155 !important; }
+
+/* ── Sign In button ── */
+div[data-testid="stButton"] > button {
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%) !important;
     color: #fff !important; border: none !important;
-    border-radius: 10px !important; font-weight: 600 !important;
-    font-size: 14px !important; letter-spacing: 0.03em !important;
-    padding: 12px 0 !important; width: 100% !important;
-    margin-top: 8px !important; cursor: pointer !important;
-    transition: opacity 0.2s, transform 0.15s !important;
-    font-family: 'IBM Plex Sans', sans-serif !important;
+    border-radius: 12px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 15px !important; font-weight: 600 !important;
+    letter-spacing: 0.01em !important;
+    padding: 14px 0 !important;
+    width: 100% !important; margin-top: 24px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 20px rgba(37,99,235,0.35) !important;
 }
-[data-testid="stButton"] button:hover { opacity: 0.88 !important; transform: translateY(-1px) !important; }
+div[data-testid="stButton"] > button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 30px rgba(37,99,235,0.5) !important;
+    filter: brightness(1.08) !important;
+}
+div[data-testid="stButton"] > button:active {
+    transform: translateY(0) !important;
+}
+
+/* ── Error alert ── */
+[data-testid="stAlert"] {
+    background: rgba(239,68,68,0.08) !important;
+    border: 1px solid rgba(239,68,68,0.25) !important;
+    border-radius: 10px !important; margin-top: 14px !important;
+    color: #f87171 !important;
+}
+
+/* ── Footer ── */
 .login-footer {
-    font-size: 11px; color: #2d3f55; text-align: center;
-    margin-top: 28px; letter-spacing: 0.04em;
+    font-size: 11px; color: #1e293b; text-align: center;
+    margin-top: 32px; letter-spacing: 0.05em;
+    font-family: 'IBM Plex Mono', monospace;
 }
 </style>
-<div class="login-wrap">
+
+<div class="login-outer">
   <div class="login-card">
-    <div class="login-logo">🔍 CPCB EPR</div>
-    <div class="login-title">Web Tracker</div>
-    <div class="login-sub">Sign in to access the monitoring dashboard</div>
+    <div class="login-badge">
+      <span class="dot"></span>
+      CPCB EPR · Web Tracker
+    </div>
+    <div class="login-title">Welcome <span>Back</span></div>
+    <div class="login-sub">Sign in to access the portal change monitoring dashboard.</div>
+    <div class="login-divider"></div>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
-    # Centre the form over the card
-    _, mid, _ = st.columns([1, 1.2, 1])
+    # Properly centered single column for inputs
+    _, mid, _ = st.columns([1, 1.05, 1])
     with mid:
-        st.markdown("<div style='margin-top:-420px'>", unsafe_allow_html=True)
-        st.markdown("<div class='login-label'>Username</div>", unsafe_allow_html=True)
-        username = st.text_input("username", placeholder="Enter username",
+        st.markdown("<div style='margin-top:-245px; padding-bottom:52px'>", unsafe_allow_html=True)
+        st.markdown("<span class='field-label'>Username</span>", unsafe_allow_html=True)
+        username = st.text_input("u", placeholder="e.g. admin",
                                  label_visibility="collapsed", key="login_user")
-        st.markdown("<div class='login-label' style='margin-top:14px'>Password</div>",
+        st.markdown("<span class='field-label' style='display:block;margin-top:16px'>Password</span>",
                     unsafe_allow_html=True)
-        password = st.text_input("password", placeholder="Enter password",
+        password = st.text_input("p", placeholder="••••••••",
                                  type="password", label_visibility="collapsed",
                                  key="login_pass")
-        st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
         if st.button("Sign In →", key="login_submit", use_container_width=True):
             if _check_credentials(username, password):
                 st.session_state["authenticated"] = True
                 st.rerun()
             else:
-                st.error("⚠️ Incorrect username or password.")
+                st.error("Incorrect username or password. Please try again.")
         st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("<div class='login-footer'>CPCB Portal Change Monitor · Internal Use Only</div>",
-                unsafe_allow_html=True)
+
+    st.markdown(
+        "<div class='login-footer'>CPCB Portal Change Monitor &nbsp;·&nbsp; Internal Use Only</div>",
+        unsafe_allow_html=True
+    )
     st.stop()
 
 # ── LOGOUT helper (called from header) ───────────────────────────────────────
 def logout():
     st.session_state["authenticated"] = False
     st.rerun()
-
 
 
 # ── PLAYWRIGHT CLOUD INITIALISATION ───────────────────────────────────────────
