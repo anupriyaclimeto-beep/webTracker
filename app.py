@@ -402,13 +402,16 @@ def exec_db(query, args=()):
 # ── HELPERS ───────────────────────────────────────────────────────────────────
 def time_ago(ts):
     try:
-        diff = datetime.now() - datetime.fromisoformat(ts)
+        if isinstance(ts, datetime):
+            diff = datetime.now() - ts
+        else:
+            diff = datetime.now() - datetime.fromisoformat(str(ts))
         s = int(diff.total_seconds())
         if s < 60:    return "just now"
         if s < 3600:  return f"{s//60}m ago"
         if s < 86400: return f"{s//3600}h ago"
         return f"{diff.days}d ago"
-    except Exception: return ts
+    except Exception: return str(ts)
 
 def friendly_page_name(url):
     try:
@@ -881,7 +884,7 @@ def render_change_expander(change):
             st.markdown(f"**Severity:** {sev_label}")
             st.markdown(f"**Type:** {label_str}")
         with c3:
-            st.markdown(f"**Detected:** {change['timestamp'][:16]}")
+            st.markdown(f"**Detected:** {str(change['timestamp'])[:16]}")
 
         st.markdown("---")
 
@@ -1225,7 +1228,11 @@ if st.session_state.view == "overview":
             if last_status=="running" and p["last_crawl_at"]:
                 try:
                     from datetime import timedelta
-                    stale = datetime.now()-datetime.fromisoformat(p["last_crawl_at"]) > timedelta(minutes=30)
+                    lca = p["last_crawl_at"]
+                    if isinstance(lca, datetime):
+                        stale = datetime.now() - lca > timedelta(minutes=30)
+                    else:
+                        stale = datetime.now() - datetime.fromisoformat(str(lca)) > timedelta(minutes=30)
                 except Exception: pass
             display_status = (
                 "❌ crashed"  if stale else
@@ -1432,8 +1439,8 @@ elif st.session_state.view == "history":
             count = count_row[0]["c"] if count_row else 0
             if hist_filter=="✅ With Changes" and count==0: continue
             if hist_filter=="🟢 No Changes"  and count>0:  continue
-            started  = log["started_at"][:16]
-            finished = log["finished_at"][:16] if log["finished_at"] else "—"
+            started  = str(log["started_at"])[:16]
+            finished = str(log["finished_at"])[:16] if log["finished_at"] else "—"
             done     = log["status"]=="done"
             with st.expander(
                 f"{'✅' if done else '🔄' if log['status']=='running' else '❌'} "
