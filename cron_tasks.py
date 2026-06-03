@@ -22,13 +22,22 @@ def start_crawl():
         
         cmd = [python_exe, "crawler.py", "--once"]
         
+        # Check if we are running in Streamlit Cloud environment
+        IS_CLOUD = os.getenv("STREAMLIT_SERVER_PORT") is not None
+        if IS_CLOUD:
+            pid_file = pathlib.Path("/tmp/.crawler.pid")
+            log_file = pathlib.Path("/tmp/.crawler.log")
+        else:
+            pid_file = ROOT / ".crawler.pid"
+            log_file = ROOT / ".crawler.log"
+
         env = os.environ.copy()
         
-        log_fh = open(ROOT / ".crawler.log", "w", encoding="utf-8", buffering=1)
+        log_fh = open(log_file, "w", encoding="utf-8", buffering=1)
         proc = subprocess.Popen(
             cmd, stdout=log_fh, stderr=log_fh, cwd=str(ROOT), env=env
         )
-        with open(ROOT / "crawler.pid", "w") as f:
+        with open(pid_file, "w") as f:
             f.write(str(proc.pid))
             
         print(f"[{datetime.now()}] Crawl process {proc.pid} launched successfully using {python_exe}.")
