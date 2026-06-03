@@ -143,9 +143,24 @@ async def scroll_and_stitch(page) -> bytes:
 
 
 async def goto_home(page):
-    await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
+    # Retry loop for government portal stability
+    for attempt in range(3):
+        try:
+            logger.info("  Navigating to home page (attempt %d/3)...", attempt + 1)
+            await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=45000)
+            break
+        except Exception as e:
+            if attempt == 2:
+                logger.warning("  Timeout on domcontentloaded. Trying fallback to commit wait state...")
+                try:
+                    await page.goto(HOME_URL, wait_until="commit", timeout=25000)
+                except Exception as final_err:
+                    logger.error("  Failed all navigation attempts, continuing anyway: %s", final_err)
+            else:
+                logger.warning("  Navigation attempt %d failed: %s. Retrying in 3 seconds...", attempt + 1, e)
+                await asyncio.sleep(3)
     try:
-        await page.wait_for_load_state("networkidle", timeout=12000)
+        await page.wait_for_load_state("networkidle", timeout=8000)
     except Exception:
         pass
     await asyncio.sleep(2)

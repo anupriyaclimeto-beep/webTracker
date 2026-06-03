@@ -54,6 +54,31 @@ BASE_URL    = "https://eprplastic.cpcb.gov.in/"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+async def safe_goto(page, url: str, *, label: str = ""):
+    """Navigate with up to 3 retries — resilient against govt-portal timeouts."""
+    tag = f" [{label}]" if label else ""
+    for attempt in range(3):
+        try:
+            logger.info("  Navigating to%s (attempt %d/3) ...", tag, attempt + 1)
+            await page.goto(url, wait_until="domcontentloaded", timeout=45000)
+            break
+        except Exception as e:
+            if attempt == 2:
+                logger.warning("  domcontentloaded timed out%s. Trying commit wait ...", tag)
+                try:
+                    await page.goto(url, wait_until="commit", timeout=25000)
+                except Exception as final_err:
+                    logger.error("  All navigation attempts failed%s: %s", tag, final_err)
+            else:
+                logger.warning("  Attempt %d failed%s: %s. Retrying in 3s ...", attempt + 1, tag, e)
+                await asyncio.sleep(3)
+    try:
+        await page.wait_for_load_state("networkidle", timeout=8000)
+    except Exception:
+        pass
+    await asyncio.sleep(2)
+
+
 def make_archive_path(portal_name: str, key: str) -> Path:
     safe = re.sub(r"[^a-zA-Z0-9.\-]", "_", re.sub(r"https?://", "", key))
     safe = re.sub(r"_+", "_", safe).strip("_")[:180]
@@ -208,12 +233,7 @@ async def crawl_portal(portal_config: dict):
 
         # ── STEP 1: Home page ─────────────────────────────────────────────────
         logger.info("═══ STEP 1: Home page — scroll & stitch ═══")
-        await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
-        try:
-            await page.wait_for_load_state("networkidle", timeout=12000)
-        except Exception:
-            pass
-        await asyncio.sleep(2)
+        await safe_goto(page, HOME_URL, label="Home")
         snap = await save_snapshot(page, portal_name, HOME_URL,
                                    await scroll_and_stitch(page))
         await diff_and_store(portal_name, HOME_URL, snap, har_path)
@@ -290,15 +310,9 @@ async def crawl_portal(portal_config: dict):
         for idx, (label, item_hash) in enumerate(about_epr_subpages, start=1):
             logger.info("═══ STEP 4.%d: %s ═══", idx, label)
             item_url = BASE_URL + item_hash
-            await page.goto(BASE_URL, wait_until="domcontentloaded", timeout=30000)
-            await asyncio.sleep(1)
+            await safe_goto(page, BASE_URL, label=label)
             await page.evaluate(f"window.location.hash = '{item_hash}'")
             await asyncio.sleep(1)
-            try:
-                await page.wait_for_load_state("networkidle", timeout=12000)
-            except Exception:
-                pass
-            await asyncio.sleep(2)
             logger.info("  Navigated to: %s", page.url)
             item_snap = await save_snapshot(page, portal_name, item_url,
                                             await scroll_and_stitch(page))
@@ -309,12 +323,7 @@ async def crawl_portal(portal_config: dict):
         # ── STEP 5: Important Documents — click + scroll page ─────────────────
         logger.info("═══ STEP 5: Important Documents dropdown — click + scroll page ═══")
         imp_docs_key = HOME_URL + "__DROPDOWN_ImportantDocuments"
-        await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
-        try:
-            await page.wait_for_load_state("networkidle", timeout=12000)
-        except Exception:
-            pass
-        await asyncio.sleep(2)
+        await safe_goto(page, HOME_URL, label="Important Documents")
         imp_opened = False
         for sel in [
             "a:has-text('Important Documents')",
@@ -343,12 +352,7 @@ async def crawl_portal(portal_config: dict):
         # ── STEP 6: Bulk Upload — click + viewport screenshot ─────────────────
         logger.info("═══ STEP 6: Bulk Upload dropdown — click + screenshot ═══")
         bulk_upload_key = HOME_URL + "__DROPDOWN_BulkUpload"
-        await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
-        try:
-            await page.wait_for_load_state("networkidle", timeout=12000)
-        except Exception:
-            pass
-        await asyncio.sleep(2)
+        await safe_goto(page, HOME_URL, label="Bulk Upload")
         bulk_opened = False
         for sel in [
             "a:has-text('Bulk Upload')",
@@ -377,12 +381,7 @@ async def crawl_portal(portal_config: dict):
         # ── STEP 7: Lodge Complaint — click + viewport screenshot ─────────────
         logger.info("═══ STEP 7: Lodge Complaint dropdown — click + screenshot ═══")
         lodge_key = HOME_URL + "__DROPDOWN_LodgeComplaint"
-        await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
-        try:
-            await page.wait_for_load_state("networkidle", timeout=12000)
-        except Exception:
-            pass
-        await asyncio.sleep(2)
+        await safe_goto(page, HOME_URL, label="Lodge Complaint")
         lodge_opened = False
         for sel in [
             "a:has-text('Lodge Complaint')",
@@ -411,12 +410,7 @@ async def crawl_portal(portal_config: dict):
         # ── STEP 8: SOP — click + viewport screenshot ─────────────────────────
         logger.info("═══ STEP 8: SOP dropdown — click + screenshot ═══")
         sop_key = HOME_URL + "__DROPDOWN_SOP"
-        await page.goto(HOME_URL, wait_until="domcontentloaded", timeout=30000)
-        try:
-            await page.wait_for_load_state("networkidle", timeout=12000)
-        except Exception:
-            pass
-        await asyncio.sleep(2)
+        await safe_goto(page, HOME_URL, label="SOP")
         sop_opened = False
         for sel in [
             "a:has-text('SOP')",
