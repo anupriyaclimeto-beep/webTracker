@@ -1,4 +1,119 @@
-Traceback (most recent call last):
-  File "C:\web_projects\webtracker\crawler.py", line 34, in <module>
-    from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
-ModuleNotFoundError: No module named 'playwright'
+2026-06-08 12:42:01,527 [INFO] Database initialised at changes.db
+2026-06-08 12:42:01,528 [INFO] Skipping portal: EPR PLASTIC (filter=EPR EWASTE)
+2026-06-08 12:42:01,528 [INFO] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+2026-06-08 12:42:01,529 [INFO] Starting portal: EPR EWASTE
+2026-06-08 12:42:01,529 [INFO] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+2026-06-08 12:42:01,538 [INFO] ============================================================
+2026-06-08 12:42:01,538 [INFO] PHASE 1 - Headless public crawl
+2026-06-08 12:42:01,539 [INFO] ============================================================
+2026-06-08 12:42:13,545 [INFO] === STEP 1: Home page ===
+2026-06-08 12:42:28,653 [INFO]   scrollHeight=1376px viewport=900px
+2026-06-08 12:42:29,608 [INFO]   scrollY=0px piece=1
+2026-06-08 12:42:30,322 [INFO]   scrollY=668px piece=2
+2026-06-08 12:42:32,262 [INFO]   Stitched 1280x1376 from 2 pieces
+2026-06-08 12:42:32,817 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in\20260608_124232
+2026-06-08 12:42:32,828 [INFO] Failed to load baseline screenshot — skipping visual diff
+2026-06-08 12:42:32,830 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/ — any_changed=False
+2026-06-08 12:42:32,849 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/
+2026-06-08 12:42:32,855 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in\20260608_124232
+2026-06-08 12:42:32,856 [INFO] Home done | pages_visited=1
+2026-06-08 12:42:32,856 [INFO] === STEP 2: EPR dropdown ===
+2026-06-08 12:43:06,743 [INFO]   Clicked: 'EPR'
+2026-06-08 12:43:07,683 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_EPR\20260608_124307
+2026-06-08 12:43:07,691 [INFO] Failed to load baseline screenshot — skipping visual diff
+2026-06-08 12:43:07,693 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EPR — any_changed=False
+2026-06-08 12:43:07,739 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EPR
+2026-06-08 12:43:07,744 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_EPR\20260608_124307
+2026-06-08 12:43:08,285 [INFO]   EPR done \u2713
+2026-06-08 12:43:08,285 [INFO] === STEP 3: E-Waste Rules dropdown ===
+2026-06-08 12:43:11,946 [INFO]   Clicked: 'E-Waste Rules'
+2026-06-08 12:43:12,478 [INFO]   scrollHeight=1376px viewport=900px
+2026-06-08 12:43:13,288 [INFO]   scrollY=0px piece=1
+2026-06-08 12:43:13,999 [INFO]   scrollY=668px piece=2
+2026-06-08 12:43:15,865 [INFO]   Stitched 1280x1376 from 2 pieces
+2026-06-08 12:43:16,444 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_EWasteRules\20260608_124316
+2026-06-08 12:43:16,451 [INFO] Failed to load baseline screenshot — skipping visual diff
+2026-06-08 12:43:16,452 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EWasteRules — any_changed=False
+2026-06-08 12:43:16,471 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EWasteRules
+2026-06-08 12:43:16,477 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_EWasteRules\20260608_124316
+2026-06-08 12:43:16,477 [INFO]   E-Waste Rules done | pages_visited=3
+2026-06-08 12:43:16,477 [INFO] === STEP 4: FAQ dropdown ===
+2026-06-08 12:43:20,099 [INFO]   Clicked: 'FAQ'
+2026-06-08 12:43:21,079 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_FAQ\20260608_124321
+2026-06-08 12:43:21,083 [INFO] Failed to load baseline screenshot — skipping visual diff
+2026-06-08 12:43:21,085 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_FAQ — any_changed=False
+2026-06-08 12:43:21,134 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_FAQ
+2026-06-08 12:43:21,139 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_FAQ\20260608_124321
+2026-06-08 12:43:21,663 [INFO]   FAQ done \u2713
+2026-06-08 12:43:21,663 [INFO] === STEP 5: SOP dropdown ===
+2026-06-08 12:43:25,306 [INFO]   Clicked: 'SOP'
+2026-06-08 12:43:26,246 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_SOP\20260608_124326
+2026-06-08 12:43:26,251 [INFO] Failed to load baseline screenshot — skipping visual diff
+2026-06-08 12:43:26,253 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_SOP — any_changed=False
+2026-06-08 12:43:26,298 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_SOP
+2026-06-08 12:43:26,304 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_SOP\20260608_124326
+2026-06-08 12:43:26,826 [INFO]   SOP done \u2713
+2026-06-08 12:43:26,827 [INFO] === STEP 6: Important Links dropdown ===
+2026-06-08 12:43:30,469 [INFO]   Clicked: 'Important Links'
+2026-06-08 12:43:31,460 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_ImportantLinks\20260608_124331
+2026-06-08 12:43:31,465 [INFO] Failed to load baseline screenshot — skipping visual diff
+2026-06-08 12:43:31,466 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_ImportantLinks — any_changed=False
+2026-06-08 12:43:31,487 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_ImportantLinks
+2026-06-08 12:43:31,492 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_ImportantLinks\20260608_124331
+2026-06-08 12:43:32,010 [INFO]   Important Links done \u2713
+2026-06-08 12:43:32,010 [INFO] === STEP 7: Downloads dropdown ===
+2026-06-08 12:43:35,617 [INFO]   Clicked: 'Downloads'
+2026-06-08 12:43:36,143 [INFO]   scrollHeight=1376px viewport=900px
+2026-06-08 12:43:37,011 [INFO]   scrollY=0px piece=1
+2026-06-08 12:43:37,679 [INFO]   scrollY=668px piece=2
+2026-06-08 12:43:39,542 [INFO]   Stitched 1280x1376 from 2 pieces
+2026-06-08 12:43:40,101 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_Downloads\20260608_124340
+2026-06-08 12:43:40,106 [INFO] Failed to load baseline screenshot — skipping visual diff
+2026-06-08 12:43:40,108 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_Downloads — any_changed=False
+2026-06-08 12:43:40,150 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_Downloads
+2026-06-08 12:43:40,158 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_Downloads\20260608_124340
+2026-06-08 12:43:40,159 [INFO]   Downloads done | pages_visited=7
+2026-06-08 12:43:40,159 [INFO] === STEP 8: Dashboards page ===
+2026-06-08 12:43:44,185 [INFO]   Clicked: 'Dashboard'
+2026-06-08 12:43:46,728 [INFO]   scrollHeight=1570px viewport=900px
+2026-06-08 12:43:47,629 [INFO]   scrollY=0px piece=1
+2026-06-08 12:43:48,291 [INFO]   scrollY=900px piece=2
+2026-06-08 12:43:50,198 [INFO]   Stitched 1280x1570 from 2 pieces
+2026-06-08 12:43:50,752 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_PAGE_Dashboards\20260608_124350
+2026-06-08 12:43:50,758 [INFO] Failed to load baseline screenshot — skipping visual diff
+2026-06-08 12:43:50,760 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__PAGE_Dashboards — any_changed=False
+2026-06-08 12:43:50,776 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__PAGE_Dashboards
+2026-06-08 12:43:50,781 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_PAGE_Dashboards\20260608_124350
+2026-06-08 12:43:50,781 [INFO]   Dashboards done | pages_visited=8
+2026-06-08 12:43:50,781 [INFO] === STEP 9: Lodge Complaint dropdown ===
+2026-06-08 12:43:52,895 [WARNING]   Could not find any of: ('Lodge Complaint',)
+2026-06-08 12:43:53,485 [INFO] PHASE 1 complete | pages_visited=8
+2026-06-08 12:43:53,486 [INFO] ============================================================
+2026-06-08 12:43:53,486 [INFO] PHASE 2 - Persistent context post-login crawl
+2026-06-08 12:43:53,486 [INFO] ============================================================
+2026-06-08 12:43:53,488 [INFO] Browser profile found at C:\web_projects\webtracker\browser_profiles\EPR_EWASTE - will attempt session restore
+2026-06-08 12:43:54,842 [INFO] Session cookies restored from C:\web_projects\webtracker\browser_profiles\EPR_EWASTE\cookies.json
+2026-06-08 12:43:54,909 [INFO] Checking session validity for EPR EWASTE ...
+2026-06-08 12:43:57,975 [INFO] SESSION VALID — not on login/public home page (https://eprewaste.cpcb.gov.in/#/404)
+2026-06-08 12:43:57,975 [INFO] SESSION VALID — skipping manual login, proceeding to post-login crawl
+2026-06-08 12:43:57,975 [INFO] === STEP 10: Dashboard (scroll) ===
+2026-06-08 12:44:08,596 [INFO]   scrollHeight=900px viewport=900px
+2026-06-08 12:44:09,171 [INFO]   scrollY=0px piece=1
+2026-06-08 12:44:10,730 [INFO]   Stitched 1280x900 from 1 pieces
+2026-06-08 12:44:16,275 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_LOGGEDIN_Dashboard\20260608_124416
+2026-06-08 12:44:16,279 [INFO] Failed to load baseline screenshot — skipping visual diff
+2026-06-08 12:44:16,280 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__LOGGEDIN_Dashboard — any_changed=False
+2026-06-08 12:44:16,293 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__LOGGEDIN_Dashboard
+2026-06-08 12:44:16,295 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_LOGGEDIN_Dashboard\20260608_124416
+2026-06-08 12:44:16,296 [INFO]   'Dashboard' done | pages_visited=9
+2026-06-08 12:44:16,305 [INFO] Session cookies saved to C:\web_projects\webtracker\browser_profiles\EPR_EWASTE\cookies.json
+2026-06-08 12:44:16,962 [INFO] Persistent browser profile saved to C:\web_projects\webtracker\browser_profiles\EPR_EWASTE
+2026-06-08 12:44:17,015 [INFO] Crawl log finished - id=7 pages=9 status=done
+2026-06-08 12:44:17,015 [INFO] === EPR E-WASTE ALL DONE: 9 pages ===
+2026-06-08 12:44:17,015 [INFO] CRAWL_FINISHED: 9 pages
+2026-06-08 12:44:17,015 [INFO] ALL DONE - pages complete
+2026-06-08 12:44:17,015 [INFO] Portal EPR EWASTE finished \u2713
+2026-06-08 12:44:17,015 [INFO] Skipping portal: EPR BATTERY (filter=EPR EWASTE)
+2026-06-08 12:44:17,016 [INFO] Skipping portal: EPR TYRES (filter=EPR EWASTE)
+2026-06-08 12:44:17,016 [INFO] Skipping portal: EPR USEDOIL (filter=EPR EWASTE)
+2026-06-08 12:44:17,016 [INFO] Skipping portal: EPR ELV (filter=EPR EWASTE)

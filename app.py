@@ -13,40 +13,31 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # ── BUILT-IN SCHEDULER ─────────────────────────────────────────────────────────
-# This ensures that when pushed to a live server, the crawlers run automatically 
-# at the specified times without needing OS-level cron configurations.
 @st.cache_resource
 def start_background_scheduler():
     def run_schedule():
         last_run = {}
-        # Target times in 24-hour format: 7 AM, 3 PM, 3:10 PM, 3:20 PM, 3:30 PM, 10 PM
         target_times = ["07:00", "15:00", "15:10", "15:20", "15:30", "22:00"]
-        
         import datetime as dt
-        # Set timezone to IST (UTC +5:30)
         ist = dt.timezone(dt.timedelta(hours=5, minutes=30))
-        
         while True:
-            now = dt.datetime.now(ist)
+            now          = dt.datetime.now(ist)
             current_time = now.strftime("%H:%M")
-            
             if current_time in target_times and last_run.get(current_time) != now.date():
                 last_run[current_time] = now.date()
                 print(f"[{now}] In-app scheduler triggered for {current_time}!")
                 try:
                     root = Path(__file__).parent
-                    cmd = [sys.executable, str(root / "cron_tasks.py"), "start_crawl"]
+                    cmd  = [sys.executable, str(root / "cron_tasks.py"), "start_crawl"]
                     subprocess.Popen(cmd, cwd=str(root))
                 except Exception as e:
                     print(f"[{now}] In-app scheduler failed: {e}")
-                    
             time.sleep(30)
 
     t = threading.Thread(target=run_schedule, daemon=True)
     t.start()
     return t
 
-# Start the scheduler (runs exactly once per server boot)
 start_background_scheduler()
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
@@ -58,7 +49,6 @@ ARCHIVE_DIR = config["storage"]["archive_dir"]
 
 # ── ENVIRONMENT / CLOUD DETECTION ─────────────────────────────────────────────
 load_dotenv(dotenv_path=Path(__file__).parent / ".env", override=True)
-
 IS_CLOUD = os.getenv("STREAMLIT_SHARING_MODE") is not None or os.path.exists("/mount/src")
 
 def _secret(key, default=None):
@@ -67,11 +57,11 @@ def _secret(key, default=None):
     except Exception:
         return os.getenv(key, default)
 
-SUPABASE_HOST = _secret("SUPABASE_HOST")
-SUPABASE_PORT = _secret("SUPABASE_PORT")
-SUPABASE_DB   = _secret("SUPABASE_DB")
-SUPABASE_USER = _secret("SUPABASE_USER")
-SUPABASE_PWD  = _secret("SUPABASE_PASSWORD")
+SUPABASE_HOST         = _secret("SUPABASE_HOST")
+SUPABASE_PORT         = _secret("SUPABASE_PORT")
+SUPABASE_DB           = _secret("SUPABASE_DB")
+SUPABASE_USER         = _secret("SUPABASE_USER")
+SUPABASE_PWD          = _secret("SUPABASE_PASSWORD")
 SUPABASE_SERVICE_ROLE = _secret("SUPABASE_SERVICE_ROLE_KEY")
 
 USE_SUPABASE = all([
@@ -84,12 +74,8 @@ if USE_SUPABASE:
     import psycopg2.pool
     from psycopg2.extras import RealDictCursor
     _DSN = (
-        f"host={SUPABASE_HOST} "
-        f"port={SUPABASE_PORT} "
-        f"dbname={SUPABASE_DB} "
-        f"user={SUPABASE_USER} "
-        f"password={SUPABASE_SERVICE_ROLE or SUPABASE_PWD} "
-        f"sslmode=require"
+        f"host={SUPABASE_HOST} port={SUPABASE_PORT} dbname={SUPABASE_DB} "
+        f"user={SUPABASE_USER} password={SUPABASE_SERVICE_ROLE or SUPABASE_PWD} sslmode=require"
     )
 
     @st.cache_resource
@@ -116,7 +102,7 @@ st.set_page_config(
 # ── LOGIN GATE ────────────────────────────────────────────────────────────────
 def _check_credentials(username: str, password: str) -> bool:
     valid_user = _secret("LOGIN_USER", os.getenv("LOGIN_USER", "webtracker@test.com"))
-    valid_pass = _secret("LOGIN_PASS", os.getenv("LOGIN_PASS", "12345"))
+    valid_pass = _secret("LOGIN_PASS",  os.getenv("LOGIN_PASS",  "12345"))
     return username.strip() == valid_user and password == valid_pass
 
 if "authenticated" not in st.session_state:
@@ -126,193 +112,63 @@ if not st.session_state["authenticated"]:
     st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
-
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html, body,
-[data-testid="stAppViewContainer"],
-[data-testid="stApp"] {
-    background: #05070f !important;
-    font-family: 'Inter', sans-serif !important;
-    min-height: 100vh !important;
+html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
+    background: #05070f !important; font-family: 'Inter', sans-serif !important; min-height: 100vh !important;
 }
-
-[data-testid="stToolbar"], [data-testid="stHeader"],
-[data-testid="stDecoration"], [data-testid="stSidebar"],
-[data-testid="stSidebarCollapsedControl"],
-#MainMenu, header, footer { display: none !important; }
-
-.main .block-container {
-    padding: 0 !important;
-    max-width: 100% !important;
-    min-height: 100vh;
-}
-
+[data-testid="stToolbar"],[data-testid="stHeader"],[data-testid="stDecoration"],
+[data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"],
+#MainMenu,header,footer { display:none !important; }
+.main .block-container { padding:0 !important; max-width:100% !important; min-height:100vh; }
 [data-testid="stAppViewContainer"]::before {
-    content: '';
-    position: fixed; inset: 0; z-index: 0;
-    background-image:
-        linear-gradient(rgba(30,58,138,0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(30,58,138,0.08) 1px, transparent 1px);
-    background-size: 48px 48px;
-    animation: gridMove 20s linear infinite;
+    content:''; position:fixed; inset:0; z-index:0;
+    background-image: linear-gradient(rgba(30,58,138,0.08) 1px,transparent 1px),
+                      linear-gradient(90deg,rgba(30,58,138,0.08) 1px,transparent 1px);
+    background-size:48px 48px; animation:gridMove 20s linear infinite;
 }
-@keyframes gridMove {
-    0%   { background-position: 0 0; }
-    100% { background-position: 48px 48px; }
-}
-
-[data-testid="stAppViewContainer"]::after {
-    content: '';
-    position: fixed;
-    top: -20%; left: -10%;
-    width: 60vw; height: 60vw;
-    background: radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%);
-    z-index: 0; pointer-events: none;
-    animation: orbFloat 8s ease-in-out infinite alternate;
-}
-@keyframes orbFloat {
-    from { transform: translate(0, 0) scale(1); }
-    to   { transform: translate(60px, 40px) scale(1.1); }
-}
-
-.login-outer {
-    position: relative; z-index: 1;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    min-height: 100vh;
-    padding: 40px 16px;
-}
-
-.login-card {
-    width: 100%; max-width: 440px;
-    background: linear-gradient(160deg, rgba(13,18,30,0.95) 0%, rgba(10,14,25,0.98) 100%);
-    border: 1px solid rgba(59,130,246,0.18);
-    border-radius: 24px;
-    padding: 52px 44px 44px;
-    box-shadow:
-        0 0 0 1px rgba(255,255,255,0.03),
-        0 32px 80px rgba(0,0,0,0.7),
-        0 0 80px rgba(37,99,235,0.08);
-    backdrop-filter: blur(24px);
-    animation: cardIn 0.5s cubic-bezier(.16,1,.3,1) both;
-}
-@keyframes cardIn {
-    from { opacity: 0; transform: translateY(24px) scale(0.97); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.login-badge {
-    display: inline-flex; align-items: center; gap: 7px;
-    background: rgba(37,99,235,0.12);
-    border: 1px solid rgba(59,130,246,0.25);
-    border-radius: 100px;
-    padding: 5px 14px 5px 10px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em;
-    color: #60a5fa; text-transform: uppercase;
-    margin-bottom: 28px;
-}
-.login-badge .dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: #3b82f6;
-    box-shadow: 0 0 6px #3b82f6;
-    animation: pulse 2s ease-in-out infinite;
-}
-@keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.5; transform: scale(0.8); }
-}
-
-.login-title {
-    font-size: 30px; font-weight: 800;
-    color: #f1f5f9; letter-spacing: -0.02em;
-    line-height: 1.15; margin-bottom: 8px;
-}
-.login-title span { color: #3b82f6; }
-.login-sub {
-    font-size: 13.5px; color: #475569;
-    line-height: 1.5; margin-bottom: 40px;
-}
-
-.login-divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(59,130,246,0.2), transparent);
-    margin-bottom: 32px;
-}
-
-.field-label {
-    font-size: 11px; font-weight: 600; letter-spacing: 0.09em;
-    text-transform: uppercase; color: #64748b;
-    margin-bottom: 7px; margin-top: 20px;
-    display: block;
-}
-.field-label:first-of-type { margin-top: 0; }
-
-[data-testid="stTextInput"] > div > div {
-    background: rgba(8,13,26,0.8) !important;
-    border: 1px solid rgba(51,65,85,0.8) !important;
-    border-radius: 12px !important;
-    transition: border-color 0.25s, box-shadow 0.25s !important;
-}
-[data-testid="stTextInput"] > div > div:focus-within {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.16) !important;
-}
-[data-testid="stTextInput"] input {
-    background: transparent !important;
-    color: #e2e8f0 !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 14.5px !important;
-    padding: 13px 16px !important;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-}
-[data-testid="stTextInput"] input::placeholder { color: #334155 !important; }
-
-div[data-testid="stButton"] > button {
-    background: linear-gradient(135deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%) !important;
-    color: #fff !important; border: none !important;
-    border-radius: 12px !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 15px !important; font-weight: 600 !important;
-    letter-spacing: 0.01em !important;
-    padding: 14px 0 !important;
-    width: 100% !important; margin-top: 24px !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 4px 20px rgba(37,99,235,0.35) !important;
-}
-div[data-testid="stButton"] > button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 30px rgba(37,99,235,0.5) !important;
-    filter: brightness(1.08) !important;
-}
-div[data-testid="stButton"] > button:active {
-    transform: translateY(0) !important;
-}
-
-[data-testid="stAlert"] {
-    background: rgba(239,68,68,0.08) !important;
-    border: 1px solid rgba(239,68,68,0.25) !important;
-    border-radius: 10px !important; margin-top: 14px !important;
-    color: #f87171 !important;
-}
-
-.login-footer {
-    font-size: 11px; color: #1e293b; text-align: center;
-    margin-top: 32px; letter-spacing: 0.05em;
-    font-family: 'IBM Plex Mono', monospace;
-}
+@keyframes gridMove { 0%{background-position:0 0} 100%{background-position:48px 48px} }
+.login-outer { position:relative;z-index:1;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;min-height:100vh;padding:40px 16px; }
+.login-card { width:100%;max-width:440px;
+    background:linear-gradient(160deg,rgba(13,18,30,0.95) 0%,rgba(10,14,25,0.98) 100%);
+    border:1px solid rgba(59,130,246,0.18);border-radius:24px;padding:52px 44px 44px;
+    box-shadow:0 0 0 1px rgba(255,255,255,0.03),0 32px 80px rgba(0,0,0,0.7),0 0 80px rgba(37,99,235,0.08);
+    backdrop-filter:blur(24px);animation:cardIn 0.5s cubic-bezier(.16,1,.3,1) both; }
+@keyframes cardIn { from{opacity:0;transform:translateY(24px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+.login-badge { display:inline-flex;align-items:center;gap:7px;background:rgba(37,99,235,0.12);
+    border:1px solid rgba(59,130,246,0.25);border-radius:100px;padding:5px 14px 5px 10px;
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:0.14em;
+    color:#60a5fa;text-transform:uppercase;margin-bottom:28px; }
+.login-badge .dot { width:6px;height:6px;border-radius:50%;background:#3b82f6;
+    box-shadow:0 0 6px #3b82f6;animation:pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+.login-title { font-size:30px;font-weight:800;color:#f1f5f9;letter-spacing:-0.02em;line-height:1.15;margin-bottom:8px; }
+.login-title span { color:#3b82f6; }
+.login-sub { font-size:13.5px;color:#475569;line-height:1.5;margin-bottom:40px; }
+.login-divider { height:1px;background:linear-gradient(90deg,transparent,rgba(59,130,246,0.2),transparent);margin-bottom:32px; }
+.field-label { font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:#64748b;
+    margin-bottom:7px;margin-top:20px;display:block; }
+.field-label:first-of-type { margin-top:0; }
+[data-testid="stTextInput"]>div>div { background:rgba(8,13,26,0.8)!important;border:1px solid rgba(51,65,85,0.8)!important;
+    border-radius:12px!important;transition:border-color 0.25s,box-shadow 0.25s!important; }
+[data-testid="stTextInput"]>div>div:focus-within { border-color:#3b82f6!important;box-shadow:0 0 0 3px rgba(59,130,246,0.16)!important; }
+[data-testid="stTextInput"] input { background:transparent!important;color:#e2e8f0!important;
+    font-family:'Inter',sans-serif!important;font-size:14.5px!important;padding:13px 16px!important;
+    border:none!important;outline:none!important;box-shadow:none!important; }
+[data-testid="stTextInput"] input::placeholder { color:#334155!important; }
+div[data-testid="stButton"]>button { background:linear-gradient(135deg,#1e40af 0%,#2563eb 50%,#3b82f6 100%)!important;
+    color:#fff!important;border:none!important;border-radius:12px!important;
+    font-family:'Inter',sans-serif!important;font-size:15px!important;font-weight:600!important;
+    padding:14px 0!important;width:100%!important;margin-top:24px!important;
+    box-shadow:0 4px 20px rgba(37,99,235,0.35)!important; }
+[data-testid="stAlert"] { background:rgba(239,68,68,0.08)!important;border:1px solid rgba(239,68,68,0.25)!important;
+    border-radius:10px!important;margin-top:14px!important;color:#f87171!important; }
+.login-footer { font-size:11px;color:#1e293b;text-align:center;margin-top:32px;
+    letter-spacing:0.05em;font-family:'IBM Plex Mono',monospace; }
 </style>
-
 <div class="login-outer">
   <div class="login-card">
-    <div class="login-badge">
-      <span class="dot"></span>
-      CPCB EPR · Web Tracker
-    </div>
+    <div class="login-badge"><span class="dot"></span>CPCB EPR · Web Tracker</div>
     <div class="login-title">Welcome <span>Back</span></div>
     <div class="login-sub">Sign in to access the portal change monitoring dashboard.</div>
     <div class="login-divider"></div>
@@ -324,13 +180,9 @@ div[data-testid="stButton"] > button:active {
     with mid:
         st.markdown("<div style='margin-top:-245px; padding-bottom:52px'>", unsafe_allow_html=True)
         st.markdown("<span class='field-label'>Username</span>", unsafe_allow_html=True)
-        username = st.text_input("u", placeholder="e.g. admin",
-                                 label_visibility="collapsed", key="login_user")
-        st.markdown("<span class='field-label' style='display:block;margin-top:16px'>Password</span>",
-                    unsafe_allow_html=True)
-        password = st.text_input("p", placeholder="••••••••",
-                                 type="password", label_visibility="collapsed",
-                                 key="login_pass")
+        username = st.text_input("u", placeholder="e.g. admin", label_visibility="collapsed", key="login_user")
+        st.markdown("<span class='field-label' style='display:block;margin-top:16px'>Password</span>", unsafe_allow_html=True)
+        password = st.text_input("p", placeholder="••••••••", type="password", label_visibility="collapsed", key="login_pass")
         if st.button("Sign In →", key="login_submit", use_container_width=True):
             if _check_credentials(username, password):
                 st.session_state["authenticated"] = True
@@ -339,28 +191,21 @@ div[data-testid="stButton"] > button:active {
                 st.error("Incorrect username or password. Please try again.")
         st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown(
-        "<div class='login-footer'>CPCB Portal Change Monitor &nbsp;·&nbsp; Internal Use Only</div>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div class='login-footer'>CPCB Portal Change Monitor &nbsp;·&nbsp; Internal Use Only</div>", unsafe_allow_html=True)
     st.stop()
 
-# ── LOGOUT helper ─────────────────────────────────────────────────────────────
+
 def logout():
     st.session_state["authenticated"] = False
     st.rerun()
 
 
-# ── PLAYWRIGHT CLOUD INITIALISATION ───────────────────────────────────────────
+# ── PLAYWRIGHT CLOUD INIT ─────────────────────────────────────────────────────
 if IS_CLOUD:
-    import subprocess
-    import sys
     @st.cache_resource
     def install_playwright_on_cloud():
         try:
-            print("☁️ Streamlit Cloud: Installing Playwright Chromium browser binary...", flush=True)
             subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=True)
-            print("☁️ Streamlit Cloud: Playwright Chromium browser installed successfully!", flush=True)
             return True
         except Exception as e:
             print(f"☁️ Playwright installation failed: {e}", flush=True)
@@ -370,249 +215,102 @@ if IS_CLOUD:
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;}
+[data-testid="stToolbar"],[data-testid="stHeader"],#MainMenu,header,[data-testid="stDecoration"],
+[data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarCollapseButton"],button[aria-label="Close sidebar"],
+button[aria-label="Collapse sidebar"]{display:none!important;visibility:hidden!important;width:0!important;height:0!important}
+html,body,[data-testid="stAppViewContainer"]{font-family:'IBM Plex Sans',sans-serif!important;background:#080b10!important;}
+.main .block-container{padding:0!important;max-width:100%!important;}
+[data-testid="stButton"] button{font-family:'IBM Plex Sans',sans-serif!important;font-size:12px!important;
+    font-weight:500!important;padding:5px 12px!important;height:32px!important;border-radius:6px!important;
+    white-space:nowrap!important;line-height:1!important;letter-spacing:0.02em!important;min-width:0!important;}
+[data-testid="stButton"] button[kind="primary"]{background:#1d4ed8!important;border:1px solid #2563eb!important;color:#fff!important;}
+[data-testid="stButton"] button[kind="primary"]:hover{background:#2563eb!important;}
+[data-testid="stButton"] button[kind="secondary"]{background:#0f1623!important;border:1px solid #1e2d47!important;color:#94a3b8!important;}
+[data-testid="stButton"] button[kind="secondary"]:hover{background:#131929!important;color:#e2e8f0!important;border-color:#2a3a5c!important;}
+.stat-card{background:#0c0f16;border:1px solid #1a1f2e;border-radius:10px;padding:16px 20px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent,#3b82f6);opacity:0.6;}
+.stat-card .s-label{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:0.12em;
+    text-transform:uppercase;color:#3d4f6b;margin-bottom:8px;}
+.stat-card .s-value{font-family:'IBM Plex Mono',monospace;font-size:32px;font-weight:600;color:var(--accent,#e2e8f0);line-height:1;}
+.section-hdr{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:0.14em;
+    text-transform:uppercase;color:#2d3a52;border-bottom:1px solid #131929;padding-bottom:8px;margin:24px 0 16px 0;}
+.page-title{font-family:'IBM Plex Sans',sans-serif;font-size:22px;font-weight:700;color:#e2e8f0;
+    margin:0 0 4px 0;letter-spacing:-0.02em;display:flex;align-items:center;gap:10px;}
+.page-subtitle{font-size:13px;color:#3d4f6b;margin-bottom:24px;font-weight:400;}
+[data-testid="stExpander"]{background:#0c0f16!important;border:1px solid #1a1f2e!important;border-radius:8px!important;margin-bottom:6px!important;}
+[data-testid="stExpander"] summary{background:#0c0f16!important;color:#c8d6e8!important;font-size:13px!important;
+    font-weight:500!important;font-family:'IBM Plex Sans',sans-serif!important;}
+[data-testid="stExpander"] summary *{color:#c8d6e8!important;}
+[data-testid="stExpander"] svg{stroke:#3d4f6b!important;}
+[data-testid="stExpander"] div,[data-testid="stExpander"] section,
+[data-testid="stExpanderDetails"],[data-testid="stExpanderDetails"] div{background:#0c0f16!important;}
+[data-testid="stExpander"] p{color:#8899b4!important;}
+[data-testid="stExpander"] strong,[data-testid="stExpander"] b{color:#c8d6e8!important;}
+.main h1,.main h2,.main h3,.main h4{color:#e2e8f0!important;font-family:'IBM Plex Sans',sans-serif!important;}
+.stMarkdown p,.stMarkdown span,.stMarkdown li{color:#8899b4!important;}
+.stCaption,[data-testid="stCaptionContainer"]{color:#3d4f6b!important;}
+code{background:#0f1623!important;color:#60a5fa!important;border-radius:4px!important;
+    font-family:'IBM Plex Mono',monospace!important;font-size:11.5px!important;}
+hr{border-color:#1a1f2e!important;}
+[data-testid="stSelectbox"]>div>div{background:#0c0f16!important;border:1px solid #1a1f2e!important;
+    color:#c8d6e8!important;border-radius:7px!important;font-size:12.5px!important;
+    height:32px!important;min-height:32px!important;font-family:'IBM Plex Sans',sans-serif!important;}
+[data-testid="stSelectbox"] span{color:#c8d6e8!important;}
+[data-testid="stSelectbox"] svg{fill:#3d4f6b!important;}
+[data-baseweb="popover"],[data-baseweb="menu"],[data-baseweb="select"] ul{
+    background:#0c0f16!important;border:1px solid #1a1f2e!important;border-radius:8px!important;}
+[data-baseweb="menu"] li,[data-baseweb="option"],[role="option"]{background:#0c0f16!important;
+    color:#8899b4!important;font-size:12.5px!important;font-family:'IBM Plex Sans',sans-serif!important;}
+[data-baseweb="option"]:hover,[role="option"]:hover,[aria-selected="true"][role="option"]{
+    background:#0f1623!important;color:#60a5fa!important;}
+[data-testid="stTextInput"] input{background:#0c0f16!important;border:1px solid #1a1f2e!important;
+    color:#c8d6e8!important;border-radius:7px!important;font-size:12.5px!important;
+    height:32px!important;font-family:'IBM Plex Sans',sans-serif!important;}
+[data-testid="stTextInput"] input::placeholder{color:#2d3a52!important;}
+[data-testid="stMetricValue"]{color:#e2e8f0!important;font-family:'IBM Plex Mono',monospace!important;font-size:22px!important;}
+[data-testid="stMetricLabel"] p{color:#3d4f6b!important;font-size:11px!important;}
+.diff-line{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:3px 10px 3px 6px;margin:1px 0;
+    border-radius:4px;white-space:pre-wrap;word-break:break-all;line-height:1.75;display:flex;gap:8px;align-items:baseline;}
+.diff-gutter{flex-shrink:0;width:12px;text-align:center;font-size:13px;font-weight:700;user-select:none;}
+.diff-added{background:#0a2016;border-left:3px solid #22c55e;color:#86efac;}
+.diff-removed{background:#200a0a;border-left:3px solid #ef4444;color:#fca5a5;}
+.diff-context{background:transparent;color:#3a4a60;border-left:3px solid #1e2a3a;}
+ins.word{background:#14532d;color:#86efac;border-radius:3px;padding:1px 5px;font-weight:700;text-decoration:none;}
+del.word{background:#450a0a;color:#fca5a5;border-radius:3px;padding:1px 5px;font-weight:700;text-decoration:none;}
+.diff-badge-added{background:#0d2b1a;color:#4ade80;border:1px solid #166534;border-radius:4px;
+    padding:2px 8px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;}
+.diff-badge-removed{background:#2b0d0d;color:#f87171;border:1px solid #991b1b;border-radius:4px;
+    padding:2px 8px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;}
 
-*, *::before, *::after { box-sizing: border-box; }
-[data-testid="stToolbar"], [data-testid="stHeader"], #MainMenu, header,
-[data-testid="stDecoration"], [data-testid="stSidebar"],
-[data-testid="stSidebarCollapsedControl"], [data-testid="stSidebarCollapseButton"],
-button[aria-label="Close sidebar"], button[aria-label="Collapse sidebar"]
-{ display:none!important; visibility:hidden!important; width:0!important; height:0!important }
-
-html, body, [data-testid="stAppViewContainer"] {
-    font-family: 'IBM Plex Sans', sans-serif !important;
-    background: #080b10 !important;
-}
-.main .block-container { padding: 0 !important; max-width: 100% !important; }
-
-[data-testid="stButton"] button {
-    font-family: 'IBM Plex Sans', sans-serif !important;
-    font-size: 12px !important; font-weight: 500 !important;
-    padding: 5px 12px !important; height: 32px !important;
-    border-radius: 6px !important; white-space: nowrap !important;
-    line-height: 1 !important; letter-spacing: 0.02em !important; min-width: 0 !important;
-}
-[data-testid="stButton"] button[kind="primary"] {
-    background: #1d4ed8 !important; border: 1px solid #2563eb !important; color: #fff !important;
-}
-[data-testid="stButton"] button[kind="primary"]:hover { background: #2563eb !important; }
-[data-testid="stButton"] button[kind="secondary"] {
-    background: #0f1623 !important; border: 1px solid #1e2d47 !important; color: #94a3b8 !important;
-}
-[data-testid="stButton"] button[kind="secondary"]:hover {
-    background: #131929 !important; color: #e2e8f0 !important; border-color: #2a3a5c !important;
-}
-
-/* Logout button — subtle red tint to distinguish from nav */
-button[data-testid="baseButton-secondary"][key="logout_btn"],
-div[data-testid="stButton"]:last-child button[kind="secondary"] {
-    color: #e05252 !important;
-    border-color: #3a1a1a !important;
-    background: #120808 !important;
-}
-div[data-testid="stButton"]:last-child button[kind="secondary"]:hover {
-    background: #1e0d0d !important;
-    color: #f87171 !important;
-    border-color: #5a2020 !important;
-}
-
-.stat-card {
-    background: #0c0f16; border: 1px solid #1a1f2e; border-radius: 10px;
-    padding: 16px 20px; position: relative; overflow: hidden;
-}
-.stat-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0;
-    height: 2px; background: var(--accent, #3b82f6); opacity: 0.6;
-}
-.stat-card .s-label {
-    font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; font-weight: 600;
-    letter-spacing: 0.12em; text-transform: uppercase; color: #3d4f6b; margin-bottom: 8px;
-}
-.stat-card .s-value {
-    font-family: 'IBM Plex Mono', monospace; font-size: 32px;
-    font-weight: 600; color: var(--accent, #e2e8f0); line-height: 1;
-}
-.section-hdr {
-    font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; font-weight: 600;
-    letter-spacing: 0.14em; text-transform: uppercase; color: #2d3a52;
-    border-bottom: 1px solid #131929; padding-bottom: 8px; margin: 24px 0 16px 0;
-}
-.page-title {
-    font-family: 'IBM Plex Sans', sans-serif; font-size: 22px; font-weight: 700;
-    color: #e2e8f0; margin: 0 0 4px 0; letter-spacing: -0.02em;
-    display: flex; align-items: center; gap: 10px;
-}
-.page-subtitle { font-size: 13px; color: #3d4f6b; margin-bottom: 24px; font-weight: 400; }
-
-[data-testid="stExpander"] {
-    background: #0c0f16 !important; border: 1px solid #1a1f2e !important;
-    border-radius: 8px !important; margin-bottom: 6px !important;
-}
-[data-testid="stExpander"] summary {
-    background: #0c0f16 !important; color: #c8d6e8 !important;
-    font-size: 13px !important; font-weight: 500 !important;
-    font-family: 'IBM Plex Sans', sans-serif !important;
-}
-[data-testid="stExpander"] summary * { color: #c8d6e8 !important; }
-[data-testid="stExpander"] svg { stroke: #3d4f6b !important; }
-[data-testid="stExpander"] div, [data-testid="stExpander"] section,
-[data-testid="stExpanderDetails"], [data-testid="stExpanderDetails"] div
-{ background: #0c0f16 !important; }
-[data-testid="stExpander"] p { color: #8899b4 !important; }
-[data-testid="stExpander"] strong, [data-testid="stExpander"] b { color: #c8d6e8 !important; }
-
-.main h1,.main h2,.main h3,.main h4 { color: #e2e8f0 !important; font-family: 'IBM Plex Sans', sans-serif !important; }
-.stMarkdown p,.stMarkdown span,.stMarkdown li { color: #8899b4 !important; }
-.stCaption,[data-testid="stCaptionContainer"] { color: #3d4f6b !important; }
-code {
-    background: #0f1623 !important; color: #60a5fa !important; border-radius: 4px !important;
-    font-family: 'IBM Plex Mono', monospace !important; font-size: 11.5px !important;
-}
-hr { border-color: #1a1f2e !important; }
-
-[data-testid="stSelectbox"] > div > div {
-    background: #0c0f16 !important; border: 1px solid #1a1f2e !important; color: #c8d6e8 !important;
-    border-radius: 7px !important; font-size: 12.5px !important; height: 32px !important;
-    min-height: 32px !important; font-family: 'IBM Plex Sans', sans-serif !important;
-}
-[data-testid="stSelectbox"] span { color: #c8d6e8 !important; }
-[data-testid="stSelectbox"] svg  { fill: #3d4f6b !important; }
-[data-baseweb="popover"],[data-baseweb="menu"],[data-baseweb="select"] ul {
-    background: #0c0f16 !important; border: 1px solid #1a1f2e !important; border-radius: 8px !important;
-}
-[data-baseweb="menu"] li,[data-baseweb="option"],[role="option"] {
-    background: #0c0f16 !important; color: #8899b4 !important;
-    font-size: 12.5px !important; font-family: 'IBM Plex Sans', sans-serif !important;
-}
-[data-baseweb="option"]:hover,[role="option"]:hover,[aria-selected="true"][role="option"] {
-    background: #0f1623 !important; color: #60a5fa !important;
-}
-[data-testid="stTextInput"] input {
-    background: #0c0f16 !important; border: 1px solid #1a1f2e !important; color: #c8d6e8 !important;
-    border-radius: 7px !important; font-size: 12.5px !important; height: 32px !important;
-    font-family: 'IBM Plex Sans', sans-serif !important;
-}
-[data-testid="stTextInput"] input::placeholder { color: #2d3a52 !important; }
-[data-testid="stMetricValue"] {
-    color: #e2e8f0 !important; font-family: 'IBM Plex Mono', monospace !important; font-size: 22px !important;
-}
-[data-testid="stMetricLabel"] p { color: #3d4f6b !important; font-size: 11px !important; }
-
-/* ── Diff highlight styles ── */
-.diff-line {
-    font-family: 'IBM Plex Mono', monospace; font-size: 12px;
-    padding: 3px 10px 3px 6px; margin: 1px 0; border-radius: 4px;
-    white-space: pre-wrap; word-break: break-all; line-height: 1.75;
-    display: flex; gap: 8px; align-items: baseline;
-}
-.diff-gutter {
-    flex-shrink: 0; width: 12px; text-align: center;
-    font-size: 13px; font-weight: 700; user-select: none;
-}
-.diff-added   { background: #0a2016; border-left: 3px solid #22c55e; color: #86efac; }
-.diff-removed { background: #200a0a; border-left: 3px solid #ef4444; color: #fca5a5; }
-.diff-context { background: transparent; color: #3a4a60; border-left: 3px solid #1e2a3a; }
-.diff-header  { background: #0c1525; color: #60a5fa; border-left: 3px solid #3b82f6;
-                font-style: italic; display: block; padding: 3px 10px; }
-
-ins.word {
-    background: #14532d; color: #86efac; border-radius: 3px; padding: 1px 5px;
-    font-weight: 700; text-decoration: none; font-style: normal; outline: 1px solid #22c55e44;
-}
-del.word {
-    background: #450a0a; color: #fca5a5; border-radius: 3px; padding: 1px 5px;
-    font-weight: 700; text-decoration: none; font-style: normal; outline: 1px solid #ef444444;
-}
-
-.diff-badge-added   { background:#0d2b1a; color:#4ade80; border:1px solid #166534; border-radius:4px; padding:2px 8px; font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600; }
-.diff-badge-removed { background:#2b0d0d; color:#f87171; border:1px solid #991b1b; border-radius:4px; padding:2px 8px; font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600; }
-
-/* ── Running banner with CSS spinner ── */
-.running-banner {
-    background: #091a10;
-    border: 1px solid #0f3320;
-    border-radius: 8px;
-    padding: 14px 20px;
-    font-size: 14px;
-    color: #34d399;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 16px;
-    font-family: 'IBM Plex Mono', monospace;
-    box-shadow: 0 0 0 1px rgba(52,211,153,0.08), 0 4px 20px rgba(0,0,0,0.3);
-}
-.running-banner .spinner-ring {
-    display: inline-block;
-    width: 22px;
-    height: 22px;
-    border: 3px solid rgba(52,211,153,0.2);
-    border-top-color: #34d399;
-    border-radius: 50%;
-    animation: spinRing 0.75s linear infinite;
-    flex-shrink: 0;
-}
-@keyframes spinRing {
-    to { transform: rotate(360deg); }
-}
-.running-banner .banner-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-.running-banner .banner-title {
-    font-size: 14px;
-    color: #34d399;
-    font-weight: 600;
-}
-.running-banner .banner-sub {
-    font-size: 11px;
-    color: #1f6b47;
-    font-weight: 400;
-}
-
-.idle-banner {
-    background:#0c0f16; border:1px solid #1a1f2e; border-radius:8px; padding:10px 16px;
-    font-size:12.5px; color:#3d4f6b; font-weight:500; display:flex; align-items:center;
-    gap:8px; margin-bottom:16px; font-family:'IBM Plex Mono',monospace;
-}
-
-/* Responsive columns wrapping */
-[data-testid="stHorizontalBlock"] {
-    flex-wrap: wrap !important;
-}
-@media (max-width: 768px) {
-    [data-testid="column"] {
-        min-width: 180px !important;
-        flex: 1 1 auto !important;
-    }
-}
-
-/* Premium styled control container card */
-div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: #0c0f16 !important;
-    border: 1px solid #1a1f2e !important;
-    border-radius: 12px !important;
-    padding: 18px 20px !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
-}
-
-/* Header row — force all columns to vertically align center */
-[data-testid="stHorizontalBlock"]:has(> [data-testid="stColumn"]) {
-    align-items: center !important;
-}
-
-/* Logout button — position it flush right inside its column */
-.logout-col [data-testid="stButton"] {
-    display: flex;
-    justify-content: flex-end;
-}
-.logout-col [data-testid="stButton"] button {
-    white-space: nowrap;
-    padding: 6px 20px !important;
-    font-size: 13px !important;
-}
-
+/* ── Banners ── */
+.running-banner{background:#091a10;border:1px solid #0f3320;border-radius:8px;padding:14px 20px;
+    font-size:14px;color:#34d399;font-weight:600;display:flex;align-items:center;gap:14px;
+    margin-bottom:16px;font-family:'IBM Plex Mono',monospace;
+    box-shadow:0 0 0 1px rgba(52,211,153,0.08),0 4px 20px rgba(0,0,0,0.3);}
+.login-wait-banner{background:#1a1200;border:1px solid #3a2800;border-radius:8px;padding:14px 20px;
+    font-size:14px;color:#fbbf24;font-weight:600;display:flex;align-items:center;gap:14px;
+    margin-bottom:16px;font-family:'IBM Plex Mono',monospace;
+    box-shadow:0 0 0 1px rgba(251,191,36,0.08),0 4px 20px rgba(0,0,0,0.3);}
+.spinner-ring{display:inline-block;width:22px;height:22px;border:3px solid rgba(52,211,153,0.2);
+    border-top-color:#34d399;border-radius:50%;animation:spinRing 0.75s linear infinite;flex-shrink:0;}
+.spinner-ring-amber{display:inline-block;width:22px;height:22px;border:3px solid rgba(251,191,36,0.2);
+    border-top-color:#fbbf24;border-radius:50%;animation:spinRing 1.2s linear infinite;flex-shrink:0;}
+@keyframes spinRing{to{transform:rotate(360deg)}}
+.banner-text{display:flex;flex-direction:column;gap:2px;}
+.banner-title{font-size:14px;font-weight:600;}
+.banner-sub{font-size:11px;font-weight:400;}
+.idle-banner{background:#0c0f16;border:1px solid #1a1f2e;border-radius:8px;padding:10px 16px;
+    font-size:12.5px;color:#3d4f6b;font-weight:500;display:flex;align-items:center;
+    gap:8px;margin-bottom:16px;font-family:'IBM Plex Mono',monospace;}
+[data-testid="stHorizontalBlock"]{flex-wrap:wrap!important;}
+@media(max-width:768px){[data-testid="column"]{min-width:180px!important;flex:1 1 auto!important;}}
+div[data-testid="stVerticalBlockBorderWrapper"]{background:#0c0f16!important;border:1px solid #1a1f2e!important;
+    border-radius:12px!important;padding:18px 20px!important;box-shadow:0 4px 20px rgba(0,0,0,0.25)!important;}
+[data-testid="stHorizontalBlock"]:has(>[data-testid="stColumn"]){align-items:center!important;}
+.logout-col [data-testid="stButton"]{display:flex;justify-content:flex-end;}
+.logout-col [data-testid="stButton"] button{white-space:nowrap;padding:6px 20px!important;font-size:13px!important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -640,20 +338,11 @@ def init_db():
             html_path TEXT, screenshot_path TEXT, har_path TEXT, updated_at TEXT NOT NULL
         );
     """)
-    cur.execute("PRAGMA table_info(changes)")
-    changes_cols = {row[1] for row in cur.fetchall()}
-    if "screenshot_url" not in changes_cols:
-        cur.execute("ALTER TABLE changes ADD COLUMN screenshot_url TEXT")
-    if "html_url" not in changes_cols:
-        cur.execute("ALTER TABLE changes ADD COLUMN html_url TEXT")
-
-    cur.execute("PRAGMA table_info(baselines)")
-    baselines_cols = {row[1] for row in cur.fetchall()}
-    if "screenshot_url" not in baselines_cols:
-        cur.execute("ALTER TABLE baselines ADD COLUMN screenshot_url TEXT")
-    if "html_url" not in baselines_cols:
-        cur.execute("ALTER TABLE baselines ADD COLUMN html_url TEXT")
-
+    for col in ["screenshot_url", "html_url"]:
+        for table in ["changes", "baselines"]:
+            cur.execute(f"PRAGMA table_info({table})")
+            if col not in {row[1] for row in cur.fetchall()}:
+                cur.execute(f"ALTER TABLE {table} ADD COLUMN {col} TEXT")
     conn.commit(); conn.close()
 
 init_db()
@@ -662,7 +351,7 @@ def _pg_query_to_sqlite(query):
     q = query.replace("?", "%s")
     q = q.replace("started_at >= datetime('now','-15 minutes')", "CAST(started_at AS timestamp) >= NOW() - INTERVAL '15 minutes'")
     q = q.replace("started_at >= datetime('now', '-15 minutes')", "CAST(started_at AS timestamp) >= NOW() - INTERVAL '15 minutes'")
-    q = q.replace("started_at < datetime('now','-15 minutes')", "CAST(started_at AS timestamp) < NOW() - INTERVAL '15 minutes'")
+    q = q.replace("started_at < datetime('now','-15 minutes')",  "CAST(started_at AS timestamp) < NOW() - INTERVAL '15 minutes'")
     q = q.replace("started_at < datetime('now', '-15 minutes')", "CAST(started_at AS timestamp) < NOW() - INTERVAL '15 minutes'")
     q = q.replace("datetime('now')", "NOW()")
     return q
@@ -679,23 +368,17 @@ def query_db(query, args=()):
                     rows = cur.fetchall()
                     return [dict(r) for r in rows]
             except (psycopg2.OperationalError, psycopg2.InterfaceError):
-                try:
-                    pool.putconn(conn, close=True)
-                except Exception:
-                    pass
+                try: pool.putconn(conn, close=True)
+                except Exception: pass
                 returned = True
-                conn = pool.getconn()
-                returned = False
+                conn = pool.getconn(); returned = False
                 with conn.cursor(cursor_factory=RealDictCursor) as cur:
                     cur.execute(_pg_query_to_sqlite(query), args)
-                    rows = cur.fetchall()
-                    return [dict(r) for r in rows]
+                    return [dict(r) for r in cur.fetchall()]
             finally:
                 if not returned:
-                    try:
-                        pool.putconn(conn)
-                    except Exception:
-                        pass
+                    try: pool.putconn(conn)
+                    except Exception: pass
         else:
             conn = sqlite3.connect(DB_PATH)
             conn.row_factory = sqlite3.Row
@@ -711,29 +394,23 @@ def exec_db(query, args=()):
     try:
         if USE_SUPABASE:
             pool = get_connection_pool()
-            conn = pool.getconn()
-            returned = False
+            conn = pool.getconn(); returned = False
             try:
                 with conn.cursor(cursor_factory=RealDictCursor) as cur:
                     cur.execute(_pg_query_to_sqlite(query), args)
                     conn.commit()
             except (psycopg2.OperationalError, psycopg2.InterfaceError):
-                try:
-                    pool.putconn(conn, close=True)
-                except Exception:
-                    pass
+                try: pool.putconn(conn, close=True)
+                except Exception: pass
                 returned = True
-                conn = pool.getconn()
-                returned = False
+                conn = pool.getconn(); returned = False
                 with conn.cursor(cursor_factory=RealDictCursor) as cur:
                     cur.execute(_pg_query_to_sqlite(query), args)
                     conn.commit()
             finally:
                 if not returned:
-                    try:
-                        pool.putconn(conn)
-                    except Exception:
-                        pass
+                    try: pool.putconn(conn)
+                    except Exception: pass
         else:
             conn = sqlite3.connect(DB_PATH)
             conn.execute(query, args)
@@ -745,10 +422,7 @@ def exec_db(query, args=()):
 # ── HELPERS ───────────────────────────────────────────────────────────────────
 def time_ago(ts):
     try:
-        if isinstance(ts, datetime):
-            diff = datetime.now() - ts
-        else:
-            diff = datetime.now() - datetime.fromisoformat(str(ts))
+        diff = datetime.now() - (ts if isinstance(ts, datetime) else datetime.fromisoformat(str(ts)))
         s = int(diff.total_seconds())
         if s < 60:    return "just now"
         if s < 3600:  return f"{s//60}m ago"
@@ -756,32 +430,59 @@ def time_ago(ts):
         return f"{diff.days}d ago"
     except Exception: return str(ts)
 
+
 def friendly_page_name(url):
+    """Convert internal URL keys to human-readable page names."""
     try:
+        # Post-login pages — show lock icon
+        if "__LOGGEDIN_" in url:
+            return "🔐 " + url.split("__LOGGEDIN_")[-1].replace("_", " ").title()
         if "__DROPDOWN_" in url:
-            return "↓ " + url.split("__DROPDOWN_")[-1].replace("_"," ").title()
+            return "↓ " + url.split("__DROPDOWN_")[-1].replace("_", " ").title()
         if "__PAGE_" in url:
-            return url.split("__PAGE_")[-1].replace("_"," ").title()
+            return url.split("__PAGE_")[-1].replace("_", " ").title()
         if "#/plastic/home/" in url.lower():
             name = url.lower().split("#/plastic/home/")[-1]
-            return name.replace("/"," › ").replace("-"," ").replace("_"," ").title()
+            return name.replace("/", " › ").replace("-", " ").replace("_", " ").title()
         if url.endswith("/plastic/home") or "/#/plastic/home" in url:
             return "Home Page"
         slug = url.rstrip("/").split("/")[-1].split("#")[-1]
-        return slug.replace("_"," ").replace("-"," ").title() or "Home Page"
-    except Exception: return url
+        return slug.replace("_", " ").replace("-", " ").title() or "Home Page"
+    except Exception:
+        return url
+
 
 DIFF_LABELS = {
-    "html":   ("📄","Content"),
-    "visual": ("🖼️","Visual"),
-    "json":   ("📊","Data"),
-    "har":    ("🔌","API"),
+    "html":   ("📄", "Content"),
+    "visual": ("🖼️", "Visual"),
+    "json":   ("📊", "Data"),
+    "har":    ("🔌", "API"),
 }
 
 def severity_badge(diff_lines):
     if diff_lines > 50: return "🔴 High",   "High"
     if diff_lines > 10: return "🟡 Medium", "Medium"
     return "🟢 Low", "Low"
+
+
+# ── Crawler state helpers ──────────────────────────────────────────────────────
+IS_CLOUD_APP  = os.getenv("STREAMLIT_SHARING_MODE") is not None or os.path.exists("/mount/src")
+_BASE_APP_DIR = os.path.dirname(os.path.abspath(__file__)) or "."
+
+if IS_CLOUD_APP:
+    PID_FILE   = "/tmp/.crawler.pid"
+    LOG_FILE   = "/tmp/.crawler.log"
+    LOGIN_FLAG = "/tmp/.login_needed"
+else:
+    PID_FILE   = os.path.join(_BASE_APP_DIR, ".crawler.pid")
+    LOG_FILE   = os.path.join(_BASE_APP_DIR, ".crawler.log")
+    LOGIN_FLAG = os.path.join(_BASE_APP_DIR, ".login_needed")
+
+
+def is_waiting_for_login() -> bool:
+    """True when crawler has opened a headful browser and is waiting for manual login."""
+    return os.path.exists(LOGIN_FLAG)
+
 
 def is_crawl_running():
     rows = query_db(
@@ -792,7 +493,6 @@ def is_crawl_running():
     if not rows:
         return None
     row = rows[0]
-
     try:
         if os.path.exists(PID_FILE):
             try:
@@ -804,79 +504,58 @@ def is_crawl_running():
             def process_running(pid_val):
                 try:
                     if sys.platform == "win32":
-                        out = subprocess.check_output(["tasklist", "/FI", f"PID eq {pid_val}"], stderr=subprocess.DEVNULL, text=True)
+                        out = subprocess.check_output(["tasklist", "/FI", f"PID eq {pid_val}"],
+                                                      stderr=subprocess.DEVNULL, text=True)
                         return str(pid_val) in out
                     else:
-                        proc = subprocess.run(["ps", "-p", str(pid_val)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        proc = subprocess.run(["ps", "-p", str(pid_val)],
+                                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                         return proc.returncode == 0
                 except Exception:
                     return False
 
             if pid and process_running(pid):
                 return row
+            try: os.remove(PID_FILE)
+            except Exception: pass
             try:
-                os.remove(PID_FILE)
-            except Exception:
-                pass
-            try:
-                exec_db("UPDATE crawl_log SET status='stopped', finished_at=datetime('now') WHERE id=?", (row["id"],))
-            except Exception:
-                pass
+                exec_db("UPDATE crawl_log SET status='stopped', finished_at=datetime('now') WHERE id=?",
+                        (row["id"],))
+            except Exception: pass
             return None
         else:
             try:
-                exec_db("UPDATE crawl_log SET status='stopped', finished_at=datetime('now') WHERE id=?", (row["id"],))
-            except Exception:
-                pass
+                exec_db("UPDATE crawl_log SET status='stopped', finished_at=datetime('now') WHERE id=?",
+                        (row["id"],))
+            except Exception: pass
             return None
     except Exception:
         return row
 
+
 def fix_stale_crawls():
     try:
-        exec_db("""UPDATE crawl_log SET status='done'
-                   WHERE status='running' AND started_at < datetime('now','-15 minutes')""")
+        exec_db("UPDATE crawl_log SET status='done' WHERE status='running' AND started_at < datetime('now','-15 minutes')")
     except Exception: pass
 
-if IS_CLOUD:
-    PID_FILE = "/tmp/.crawler.pid"
-    LOG_FILE = "/tmp/.crawler.log"
-else:
-    PID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)) or ".", ".crawler.pid")
-    LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)) or ".", ".crawler.log")
-
-PORTAL_CRAWLER_MAP = {
-    "EPR PLASTIC":  "crawler.py",
-    "EPR EWASTE":   "crawler_ewaste.py",
-    "EPR BATTERY":  "crawler_battery.py",
-    "EPR TYRES":    "crawler_tyres.py",
-    "EPR USEDOIL":  "crawler_usedoil.py",
-    "EPR ELV":      "crawler_elv.py",
-}
 
 def launch_crawl(portal=None):
     cmd = [sys.executable, "crawler.py", "--once"]
     if portal:
         cmd.extend(["--portal", portal])
-
     env = os.environ.copy()
-    if IS_CLOUD:
+    if IS_CLOUD_APP:
         for k in st.secrets.keys():
-            try:
-                env[k] = str(st.secrets[k])
-            except Exception:
-                pass
-                
-    # Ensure playwright browsers are installed (Crucial for Streamlit Cloud!)
+            try: env[k] = str(st.secrets[k])
+            except Exception: pass
     subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=False)
-
     log_fh = open(LOG_FILE, "w", encoding="utf-8", buffering=1)
-    proc = subprocess.Popen(cmd, stdout=log_fh, stderr=log_fh,
-                            cwd=os.path.dirname(os.path.abspath(__file__)) or ".",
-                            env=env)
+    proc   = subprocess.Popen(cmd, stdout=log_fh, stderr=log_fh,
+                               cwd=_BASE_APP_DIR, env=env)
     try:
         with open(PID_FILE, "w") as f: f.write(str(proc.pid))
     except Exception: pass
+
 
 def read_log(tail=60):
     try:
@@ -888,6 +567,7 @@ def read_log(tail=60):
     except Exception as e:
         return [f"Could not read log: {e}"]
 
+
 def stop_crawl():
     killed = False
     try:
@@ -895,11 +575,16 @@ def stop_crawl():
             with open(PID_FILE) as f: pid = int(f.read().strip())
             import signal
             if sys.platform == "win32":
-                subprocess.call(["taskkill","/F","/T","/PID",str(pid)],
+                subprocess.call(["taskkill", "/F", "/T", "/PID", str(pid)],
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             else:
                 os.kill(pid, signal.SIGTERM)
             os.remove(PID_FILE); killed = True
+    except Exception: pass
+    # Clean up login flag if crawler was stopped mid-login
+    try:
+        if os.path.exists(LOGIN_FLAG):
+            os.remove(LOGIN_FLAG)
     except Exception: pass
     try:
         exec_db("UPDATE crawl_log SET status='stopped', finished_at=datetime('now') WHERE status='running'")
@@ -907,15 +592,25 @@ def stop_crawl():
     return killed
 
 
+def clear_portal_profile(portal_name: str) -> bool:
+    """Delete the persistent browser profile — forces re-login on next run."""
+    portal_cfg = get_portal_config(portal_name)
+    if not portal_cfg:
+        return False
+    try:
+        from auth import clear_profile
+        return clear_profile(portal_cfg)
+    except Exception as e:
+        st.error(f"Could not clear profile: {e}")
+        return False
+
+
 # ── DATA ──────────────────────────────────────────────────────────────────────
 @st.cache_data(ttl=30)
 def get_all_portals():
     configured = [p["name"] for p in config.get("portals", [])]
     db_portals = [r["portal"] for r in query_db("SELECT DISTINCT portal FROM crawl_log")]
-    all_p = []
-    for p in configured:
-        if p not in all_p:
-            all_p.append(p)
+    all_p = list(configured)
     for p in db_portals:
         if p not in all_p:
             all_p.append(p)
@@ -924,8 +619,8 @@ def get_all_portals():
 @st.cache_data(ttl=30)
 def get_portal_stats(portal=None):
     and_clause = "AND cl.portal = ?" if portal else ""
-    args = (portal,) if portal else ()
-    db_stats = query_db(f"""
+    args       = (portal,) if portal else ()
+    db_stats   = query_db(f"""
         SELECT cl.portal, cl.started_at AS last_crawl_at, cl.pages_visited,
                cl.status AS last_status,
                COALESCE(td.today_changes,0) AS today_changes,
@@ -933,212 +628,100 @@ def get_portal_stats(portal=None):
         FROM crawl_log cl
         LEFT JOIN (SELECT portal,COUNT(*) AS today_changes FROM changes
                    WHERE date(timestamp)=date('now') GROUP BY portal) td ON td.portal=cl.portal
-        LEFT JOIN (SELECT portal,COUNT(*) AS all_changes FROM changes
-                   GROUP BY portal) at_ ON at_.portal=cl.portal
+        LEFT JOIN (SELECT portal,COUNT(*) AS all_changes FROM changes GROUP BY portal) at_ ON at_.portal=cl.portal
         WHERE cl.id IN (SELECT MAX(id) FROM crawl_log GROUP BY portal)
         {and_clause} ORDER BY cl.portal
     """, args)
-
-    stats_map = {s["portal"]: s for s in db_stats}
+    stats_map         = {s["portal"]: s for s in db_stats}
     configured_portals = config.get("portals", [])
     if portal:
         configured_portals = [p for p in configured_portals if p["name"] == portal]
-
-    merged_stats = []
+    merged = []
     for p in configured_portals:
         name = p["name"]
-        if name in stats_map:
-            merged_stats.append(stats_map[name])
-        else:
-            merged_stats.append({
-                "portal": name,
-                "last_crawl_at": None,
-                "pages_visited": 0,
-                "last_status": "never",
-                "today_changes": 0,
-                "all_time_changes": 0
-            })
-
+        merged.append(stats_map[name] if name in stats_map else {
+            "portal": name, "last_crawl_at": None, "pages_visited": 0,
+            "last_status": "never", "today_changes": 0, "all_time_changes": 0,
+        })
     for name, s in stats_map.items():
         if name not in [p["name"] for p in configured_portals]:
-            merged_stats.append(s)
-
-    return merged_stats
+            merged.append(s)
+    return merged
 
 @st.cache_data(ttl=30)
 def get_latest_crawl_changes(portal=None):
     if portal:
-        row = query_db("SELECT started_at,finished_at FROM crawl_log "
-                       "WHERE portal=? AND status='done' ORDER BY started_at DESC LIMIT 1", (portal,))
+        row = query_db("SELECT started_at,finished_at FROM crawl_log WHERE portal=? AND status='done' ORDER BY started_at DESC LIMIT 1", (portal,))
     else:
-        row = query_db("SELECT started_at,finished_at FROM crawl_log "
-                       "WHERE status='done' ORDER BY started_at DESC LIMIT 1")
+        row = query_db("SELECT started_at,finished_at FROM crawl_log WHERE status='done' ORDER BY started_at DESC LIMIT 1")
     if not row: return []
     s = row[0]["started_at"]
     f = row[0]["finished_at"] or datetime.now().isoformat()
     if portal:
-        return query_db("SELECT * FROM changes WHERE portal=? AND timestamp>=? AND timestamp<=? "
-                        "ORDER BY timestamp DESC LIMIT 200", (portal, s, f))
-    return query_db("SELECT * FROM changes WHERE timestamp>=? AND timestamp<=? "
-                    "ORDER BY timestamp DESC LIMIT 200", (s, f))
+        return query_db("SELECT * FROM changes WHERE portal=? AND timestamp>=? AND timestamp<=? ORDER BY timestamp DESC LIMIT 200", (portal, s, f))
+    return query_db("SELECT * FROM changes WHERE timestamp>=? AND timestamp<=? ORDER BY timestamp DESC LIMIT 200", (s, f))
 
 @st.cache_data(ttl=30)
 def get_crawl_history(portal=None, limit=50):
     if portal:
-        return query_db("SELECT * FROM crawl_log WHERE portal=? ORDER BY started_at DESC LIMIT ?",
-                        (portal, limit))
+        return query_db("SELECT * FROM crawl_log WHERE portal=? ORDER BY started_at DESC LIMIT ?", (portal, limit))
     return query_db("SELECT * FROM crawl_log ORDER BY started_at DESC LIMIT ?", (limit,))
 
 
-# ── HIGHLIGHTED DIFF RENDERERS ────────────────────────────────────────────────
-
+# ── DIFF RENDERERS ────────────────────────────────────────────────────────────
 def render_highlighted_html_diff(detail):
     highlighted_lines = detail.get("highlighted_lines", [])
     summary           = detail.get("summary", "")
-
     if not highlighted_lines:
-        if summary:
-            st.info(f"💬 {summary}")
+        if summary: st.info(f"💬 {summary}")
         return
 
     def is_noise_line(line):
         html = (line.get("html") or "").lower()
         text = (line.get("text") or "").strip()
-        if "data:image" in html or "base64" in html:
-            return True
-        if re.search(r"[A-Za-z0-9+/]{80,}", html) or re.search(r"[A-Za-z0-9+/]{80,}", text):
-            return True
-        if len(text) > 80 and " " not in text:
-            return True
-        visible = re.sub(r"<[^>]+>", "", html).strip()
-        if len(visible) == 0 and len(text) == 0:
-            return True
-        return False
+        if "data:image" in html or "base64" in html: return True
+        if re.search(r"[A-Za-z0-9+/]{80,}", html) or re.search(r"[A-Za-z0-9+/]{80,}", text): return True
+        if len(text) > 80 and " " not in text: return True
+        return len(re.sub(r"<[^>]+>", "", html).strip()) == 0 and len(text) == 0
 
-    filtered_lines = [l for l in highlighted_lines if not is_noise_line(l)]
-    if not filtered_lines:
-        if summary:
-            st.info(f"💬 {summary}  — (Rendering/noise-only changes filtered)")
-        else:
-            st.info("No readable text changes detected (rendering changes filtered).")
+    filtered = [l for l in highlighted_lines if not is_noise_line(l)]
+    if not filtered:
+        st.info(f"💬 {summary}  — (Rendering/noise-only changes filtered)" if summary else "No readable text changes detected.")
         return
 
     added_count   = sum(1 for l in highlighted_lines if l["type"] == "added")
     removed_count = sum(1 for l in highlighted_lines if l["type"] == "removed")
-
     badges = ""
-    if added_count:
-        badges += f"<span class='diff-badge-added'>+{added_count} added</span>&nbsp;"
-    if removed_count:
-        badges += f"<span class='diff-badge-removed'>-{removed_count} removed</span>"
+    if added_count:   badges += f"<span class='diff-badge-added'>+{added_count} added</span>&nbsp;"
+    if removed_count: badges += f"<span class='diff-badge-removed'>-{removed_count} removed</span>"
 
     header_html = (
-        f"<div style='display:flex;align-items:center;gap:10px;"
-        f"margin-bottom:8px;flex-wrap:wrap'>"
-        f"<span style='font-family:\"IBM Plex Mono\",monospace;font-size:11.5px;"
-        f"color:#6a8aaa'>💬 {summary}</span>"
-        f"&nbsp;{badges}</div>"
-        if summary else
-        f"<div style='margin-bottom:8px'>{badges}</div>"
+        f"<div style='display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap'>"
+        f"<span style='font-family:\"IBM Plex Mono\",monospace;font-size:11.5px;color:#6a8aaa'>💬 {summary}</span>"
+        f"&nbsp;{badges}</div>" if summary else f"<div style='margin-bottom:8px'>{badges}</div>"
     )
-
     lines_html = [header_html]
-
-    cws = detail.get("changes_with_selectors", []) or []
-    if cws:
-        human_items = []
-        for it in cws[:8]:
-            t = it.get("type")
-            txt = it.get("text", "")
-            sel = it.get("selector", "")
-            disp = txt
-            if isinstance(disp, str) and disp.startswith('"') and disp.endswith('"'):
-                disp = disp[1:-1]
-            if t == "added":
-                human_items.append(f"<span class='diff-badge-added'>+ added</span> {disp} <small style='color:#6b7788'>[{sel}]</small>")
-            elif t == "removed":
-                human_items.append(f"<span class='diff-badge-removed'>- removed</span> {disp} <small style='color:#6b7788'>[{sel}]</small>")
-        if human_items:
-            lines_html.append("<div style='margin-bottom:8px'>" + "<br>".join(human_items) + "</div>")
-
-    for line in [l for l in filtered_lines if l.get("type") in ("added", "removed")][:200]:
-        typ = line["type"]
+    for line in [l for l in filtered if l.get("type") in ("added", "removed")][:200]:
+        typ     = line["type"]
         content = line.get("html") or line.get("text", "")
-        if typ == "added":
-            lines_html.append(
-                f"<div class='diff-line diff-added'>"
-                f"<span class='diff-gutter'>+</span>{content}</div>"
-            )
-        else:
-            lines_html.append(
-                f"<div class='diff-line diff-removed'>"
-                f"<span class='diff-gutter'>-</span>{content}</div>"
-            )
-
-    container_html = (
-        "<style>"
-        ".diff-area .diff-line{display:block !important; white-space:pre-wrap !important; word-break:normal !important; overflow-x:auto !important;}"
-        ".diff-area .diff-gutter{width:28px !important;}"
-        "</style>"
-        + "<div class='diff-area' style='"
-        "background:#05070a;"
-        "border:1px solid #1a1f2e;"
-        "border-radius:10px;"
-        "padding:14px 16px;"
-        "max-height:520px;"
-        "overflow-y:auto;"
-        "font-family:\"IBM Plex Mono\",monospace;"
-        "font-size:12px;"
-        "line-height:1.6;"
-        "'>"
-        + "".join(lines_html)
-        + "</div>"
-    )
-    st.markdown(container_html, unsafe_allow_html=True)
-
-
-def render_unified_html_diff(detail):
-    html_snippet = detail.get("html_snippet")
-    diff_sample  = detail.get("diff_sample", [])
-
-    if html_snippet:
-        st.markdown(
-            "<div style='background:#05070a;border:1px solid #1a1f2e;border-radius:10px;padding:12px;"
-            "max-height:520px;overflow:auto;font-family:\"IBM Plex Mono\",monospace;font-size:12px;line-height:1.6;'>"
-            + html_snippet +
-            "</div>",
-            unsafe_allow_html=True,
-        )
-        return
-
-    lines = []
-    for line in diff_sample[:200]:
-        esc = line.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        if line.startswith("+") and not line.startswith("+++"):
-            lines.append(f"<div style='color:#86efac;background:#062014;padding:3px;border-radius:4px'>+ {esc[1:]}</div>")
-        elif line.startswith("-") and not line.startswith("---"):
-            lines.append(f"<div style='color:#fca5a5;background:#2a0a0a;padding:3px;border-radius:4px'>- {esc[1:]}</div>")
-        elif line.startswith("@@"):
-            lines.append(f"<div style='color:#60a5fa;font-style:italic;padding:3px'>{esc}</div>")
-        else:
-            lines.append(f"<div style='color:#8899b4;padding:3px'>{esc}</div>")
+        cls     = "diff-added" if typ == "added" else "diff-removed"
+        gutter  = "+" if typ == "added" else "-"
+        lines_html.append(f"<div class='diff-line {cls}'><span class='diff-gutter'>{gutter}</span>{content}</div>")
 
     st.markdown(
-        "<div style='background:#05070a;border:1px solid #1a1f2e;border-radius:10px;padding:12px;"
-        "max-height:520px;overflow:auto;font-family:\"IBM Plex Mono\",monospace;font-size:12px;line-height:1.6;'>"
-        + "".join(lines) +
-        "</div>",
+        "<div class='diff-area' style='background:#05070a;border:1px solid #1a1f2e;border-radius:10px;"
+        "padding:14px 16px;max-height:520px;overflow-y:auto;font-family:\"IBM Plex Mono\",monospace;"
+        "font-size:12px;line-height:1.6;'>"
+        + "".join(lines_html) + "</div>",
         unsafe_allow_html=True,
     )
 
 
 def render_visual_diff(detail, change, baseline_path=None, current_path=None):
-    ratio         = detail.get("change_ratio", 0)
-    pixels        = detail.get("changed_pixels", 0)
+    ratio        = detail.get("change_ratio", 0)
+    pixels       = detail.get("changed_pixels", 0)
     diff_img_path = detail.get("diff_image_path")
-
     st.info(f"🖼️ **{pixels:,} pixels changed ({ratio*100:.1f}%)**")
-
     if diff_img_path and os.path.exists(diff_img_path):
         st.markdown("**🔴 Highlighted diff — red areas show what changed:**")
         st.image(diff_img_path, use_container_width=True)
@@ -1146,17 +729,15 @@ def render_visual_diff(detail, change, baseline_path=None, current_path=None):
         c1, c2 = st.columns(2)
         with c1:
             st.markdown("**⬅️ Before**")
-            if baseline_path and (baseline_path.startswith("http://") or baseline_path.startswith("https://") or os.path.exists(baseline_path)):
+            if baseline_path and (baseline_path.startswith("http") or os.path.exists(baseline_path)):
                 st.image(baseline_path, use_container_width=True)
             else:
                 st.info("No baseline image")
         with c2:
             st.markdown("**➡️ After**")
-            screenshot_url = change.get("screenshot_url")
-            if screenshot_url:
-                st.image(screenshot_url, use_container_width=True)
-            elif current_path and (current_path.startswith("http://") or current_path.startswith("https://") or os.path.exists(current_path)):
-                st.image(current_path, use_container_width=True)
+            p = change.get("screenshot_url") or current_path
+            if p and (p.startswith("http") or os.path.exists(p)):
+                st.image(p, use_container_width=True)
             else:
                 st.info("No current image")
 
@@ -1165,21 +746,18 @@ def render_change_expander(change):
     page_name = friendly_page_name(change["url"])
     when      = time_ago(change["timestamp"])
     try:
-        detail     = json.loads(change["diff_detail"])
+        detail    = json.loads(change["diff_detail"])
         diff_lines = detail.get("diff_lines", 0)
         sev, sev_label = severity_badge(diff_lines)
-        summary    = detail.get("summary", "")
+        summary   = detail.get("summary", "")
     except Exception:
         detail = {}; sev = "🟢 Low"; sev_label = "Low"; summary = ""
 
-    icon, _ = DIFF_LABELS.get(change["diff_type"], ("❓",""))
-    label_str = {"html":"Content","visual":"Visual","json":"Data","har":"API"}.get(change["diff_type"],"?")
-    sev_icon = {"High":"🔴","Medium":"🟡","Low":"🟢"}.get(sev_label,"🟢")
+    icon, _    = DIFF_LABELS.get(change["diff_type"], ("❓", ""))
+    label_str  = {"html": "Content", "visual": "Visual", "json": "Data", "har": "API"}.get(change["diff_type"], "?")
+    sev_icon   = {"High": "🔴", "Medium": "🟡", "Low": "🟢"}.get(sev_label, "🟢")
 
-    with st.expander(
-        f"{icon} [{change['portal']}]  {page_name} — {label_str} — {sev_icon} {sev_label} — {when}",
-        expanded=False
-    ):
+    with st.expander(f"{icon} [{change['portal']}]  {page_name} — {label_str} — {sev_icon} {sev_label} — {when}", expanded=False):
         c1, c2, c3 = st.columns(3)
         with c1:
             st.markdown(f"**Portal:** `{change['portal']}`")
@@ -1188,26 +766,18 @@ def render_change_expander(change):
             st.markdown(f"**Severity:** {sev_label}")
             st.markdown(f"**Type:** {label_str}")
         with c3:
-            ts = change.get('timestamp')
-            ts_str = str(ts)[:16] if ts else "N/A"
-            st.markdown(f"**Detected:** {ts_str}")
-
+            ts = change.get("timestamp")
+            st.markdown(f"**Detected:** {str(ts)[:16] if ts else 'N/A'}")
         st.markdown("---")
-
         if change["diff_type"] == "html":
             render_highlighted_html_diff(detail)
-
         elif change["diff_type"] == "visual":
-            baseline_rows = query_db(
-                "SELECT screenshot_path, screenshot_url FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2",
-                (change["url"],)
-            )
+            baseline_rows = query_db("SELECT screenshot_path, screenshot_url FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2", (change["url"],))
             baseline_path = (baseline_rows[1].get("screenshot_url") or baseline_rows[1].get("screenshot_path")) if len(baseline_rows) > 1 else None
             current_path  = (baseline_rows[0].get("screenshot_url") or baseline_rows[0].get("screenshot_path")) if len(baseline_rows) > 0 else None
             render_visual_diff(detail, change, baseline_path, current_path)
-
         elif change["diff_type"] == "har":
-            new_ep  = detail.get("new_endpoints", [])
+            new_ep  = detail.get("new_endpoints",     [])
             rem_ep  = detail.get("removed_endpoints", [])
             if new_ep:
                 st.markdown(f"🟢 **{len(new_ep)} new endpoint(s)**")
@@ -1229,31 +799,23 @@ if "portal" not in st.session_state: st.session_state.portal = "All Portals"
 all_portals    = get_all_portals()
 portal_options = ["All Portals"] + all_portals
 running_crawl  = is_crawl_running()
+waiting_login  = is_waiting_for_login()
 
 @st.cache_data(ttl=60)
 def _get_global_counts():
-    tc = (query_db("SELECT COUNT(*) as c FROM crawl_log") or [{"c":0}])[0]["c"]
-    ac = (query_db("SELECT COUNT(*) as c FROM changes")   or [{"c":0}])[0]["c"]
+    tc = (query_db("SELECT COUNT(*) as c FROM crawl_log") or [{"c": 0}])[0]["c"]
+    ac = (query_db("SELECT COUNT(*) as c FROM changes")   or [{"c": 0}])[0]["c"]
     return tc, ac
 total_crawls, all_time_changes = _get_global_counts()
 
 portal_filter  = None if st.session_state.portal == "All Portals" else st.session_state.portal
 latest_changes = get_latest_crawl_changes(portal_filter)
 
+# Detect crawl finish from logs
 try:
     recent_log = read_log(tail=80)
-    finish_patterns = [
-        r"all done", r"finished crawling", r"pages complete", r"crawl finished",
-        r"crawl complete", r"all pages processed", r"ALL DONE"
-    ]
-    found = False
-    for ln in recent_log:
-        for patt in finish_patterns:
-            if re.search(patt, ln, re.IGNORECASE):
-                found = True
-                break
-        if found:
-            break
+    finish_patterns = [r"all done", r"finished crawling", r"pages complete", r"crawl finished", r"crawl complete", r"ALL DONE"]
+    found = any(re.search(p, ln, re.IGNORECASE) for ln in recent_log for p in finish_patterns)
     if found:
         if st.session_state.get("crawler_prev_running", False) or running_crawl:
             st.session_state.pop("crawler_manual_running", None)
@@ -1263,15 +825,11 @@ try:
             try:
                 row = query_db("SELECT id FROM crawl_log WHERE status='running' ORDER BY started_at DESC LIMIT 1")
                 if row:
-                    rid = row[0]["id"]
-                    exec_db("UPDATE crawl_log SET status='done', finished_at=datetime('now') WHERE id=?", (rid,))
-            except Exception:
-                pass
+                    exec_db("UPDATE crawl_log SET status='done', finished_at=datetime('now') WHERE id=?", (row[0]["id"],))
+            except Exception: pass
             try:
-                if os.path.exists(PID_FILE):
-                    os.remove(PID_FILE)
-            except Exception:
-                pass
+                if os.path.exists(PID_FILE): os.remove(PID_FILE)
+            except Exception: pass
             st.cache_data.clear()
             st.success("Crawl finished (detected in logs). Showing changes.")
             st.markdown("<script>setTimeout(()=>window.location.reload(),900)</script>", unsafe_allow_html=True)
@@ -1281,15 +839,17 @@ except Exception:
 
 # ── NAVBAR ────────────────────────────────────────────────────────────────────
 nav_views = [
-    ("overview","🏠","Overview"),("changes","🚨","Changes"),
-    ("screenshots","📸","Screenshots"),("history","📅","History"),("console","🖥️","Console"),
+    ("overview",    "🏠", "Overview"),
+    ("changes",     "🚨", "Changes"),
+    ("screenshots", "📸", "Screenshots"),
+    ("history",     "📅", "History"),
+    ("console",     "🖥️", "Console"),
 ]
 
 def on_portal_change():
     if "top_portal_select" in st.session_state:
         st.session_state.portal = st.session_state.top_portal_select
 
-# ── Header row: Branding | Nav tabs | Logout ──────────────────────────────────
 hdr_left, hdr_mid, hdr_logout = st.columns([1.2, 2.4, 0.7])
 
 with hdr_left:
@@ -1304,8 +864,7 @@ with hdr_mid:
     for col, (view_id, icon, label) in zip(tab_cols, nav_views):
         with col:
             is_active = st.session_state.view == view_id
-            if st.button(f"{icon} {label}", key=f"nav_{view_id}",
-                         use_container_width=True,
+            if st.button(f"{icon} {label}", key=f"nav_{view_id}", use_container_width=True,
                          type="primary" if is_active else "secondary"):
                 st.session_state.view = view_id; st.rerun()
 
@@ -1317,7 +876,7 @@ with hdr_logout:
 
 st.markdown("<hr style='margin:4px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 
-# ── Control panel card ────────────────────────────────────────────────────────
+# ── Control panel ─────────────────────────────────────────────────────────────
 if "run_warning" not in st.session_state:
     st.session_state["run_warning"] = False
 
@@ -1326,21 +885,20 @@ with st.container(border=True):
         st.warning("⚠️ Please select a specific portal first (do not leave 'All Portals').")
         st.session_state["run_warning"] = False
 
-    cc1, cc2 = st.columns([4, 3])
+    cc1, cc2, cc3 = st.columns([4, 2, 2])
 
     with cc1:
-        st.markdown("<div style='font-size:10.5px; font-family:\"IBM Plex Mono\",monospace; color:#526d95; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.04em'>🎯 Target Portal</div>", unsafe_allow_html=True)
-        curr_portal = st.session_state.portal
-        if curr_portal not in portal_options:
-            curr_portal = "All Portals"
-        st.selectbox("portal_sel", portal_options,
-                     index=portal_options.index(curr_portal),
-                     label_visibility="collapsed",
-                     key="top_portal_select",
-                     on_change=on_portal_change)
+        st.markdown("<div style='font-size:10.5px;font-family:\"IBM Plex Mono\",monospace;color:#526d95;"
+                    "text-transform:uppercase;margin-bottom:6px;letter-spacing:0.04em'>🎯 Target Portal</div>",
+                    unsafe_allow_html=True)
+        curr_portal = st.session_state.portal if st.session_state.portal in portal_options else "All Portals"
+        st.selectbox("portal_sel", portal_options, index=portal_options.index(curr_portal),
+                     label_visibility="collapsed", key="top_portal_select", on_change=on_portal_change)
 
     with cc2:
-        st.markdown("<div style='font-size:10.5px; font-family:\"IBM Plex Mono\",monospace; color:#526d95; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.04em'>🤖 Crawler Actions</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:10.5px;font-family:\"IBM Plex Mono\",monospace;color:#526d95;"
+                    "text-transform:uppercase;margin-bottom:6px;letter-spacing:0.04em'>🤖 Crawler</div>",
+                    unsafe_allow_html=True)
         manual_running = st.session_state.get("crawler_manual_running", False)
         if running_crawl or manual_running:
             if st.button("⏹ Stop", use_container_width=True, type="primary", key="stop_btn"):
@@ -1348,20 +906,53 @@ with st.container(border=True):
                 st.session_state.pop("crawler_manual_running", None)
                 st.session_state.pop("crawler_manual_started_at", None)
                 st.cache_data.clear()
-                time.sleep(1)
-                st.rerun()
+                time.sleep(1); st.rerun()
         else:
             if st.button("▶ Run", use_container_width=True, type="primary", key="run_btn"):
                 if portal_filter is None:
                     st.session_state["run_warning"] = True
-                    time.sleep(0.1)
-                    st.rerun()
-                st.session_state["crawler_manual_running"] = True
+                    time.sleep(0.1); st.rerun()
+                st.session_state["crawler_manual_running"]   = True
                 st.session_state["crawler_manual_started_at"] = datetime.now().isoformat()
                 launch_crawl(portal_filter)
                 st.cache_data.clear()
-                time.sleep(1)
-                st.rerun()
+                time.sleep(1); st.rerun()
+
+    with cc3:
+        # ── Session status — for all persistent-auth portals ──────────────
+        st.markdown("<div style='font-size:10.5px;font-family:\"IBM Plex Mono\",monospace;color:#526d95;"
+                    "text-transform:uppercase;margin-bottom:6px;letter-spacing:0.04em'>🔐 Session</div>",
+                    unsafe_allow_html=True)
+        selected_portal = st.session_state.portal
+        pcfg = get_portal_config(selected_portal) if selected_portal != "All Portals" else None
+        if pcfg and pcfg.get("auth") == "persistent":
+            profile_dir  = Path(pcfg.get("browser_profile_dir",
+                               f"browser_profiles/{selected_portal.replace(' ', '_')}"))
+            cookies_path = profile_dir / "cookies.json"
+            profile_ok   = profile_dir.exists() and any(profile_dir.iterdir()) if profile_dir.exists() else False
+            cookies_ok   = cookies_path.exists() and cookies_path.stat().st_size > 10 if cookies_path.exists() else False
+            btn_disabled = running_crawl is not None or manual_running
+            if cookies_ok:
+                st.markdown("<div style='font-size:11px;color:#22c55e;margin-bottom:4px'>✅ Session saved</div>",
+                            unsafe_allow_html=True)
+            elif profile_ok:
+                st.markdown("<div style='font-size:11px;color:#f59e0b;margin-bottom:4px'>⚠ Login needed</div>",
+                            unsafe_allow_html=True)
+            else:
+                st.markdown("<div style='font-size:11px;color:#94a3b8;margin-bottom:4px'>○ No session yet</div>",
+                            unsafe_allow_html=True)
+            btn_label = "↺ Re-login" if profile_ok else "⚙ First login"
+            if st.button(btn_label, use_container_width=True, key="relogin_btn",
+                         disabled=bool(btn_disabled),
+                         help="Clear saved session — next crawl will open login window"):
+                if clear_portal_profile(selected_portal):
+                    st.success(f"Session cleared for {selected_portal}. Next crawl will open login window.")
+                else:
+                    st.info("No profile to clear.")
+                time.sleep(1); st.rerun()
+        else:
+            st.markdown("<div style='font-size:11px;color:#2d3a52;padding-top:6px'>— select a portal</div>",
+                        unsafe_allow_html=True)
 
 st.markdown("<hr style='margin:4px 0 20px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 st.markdown("<div style='padding:0 8px'>", unsafe_allow_html=True)
@@ -1375,89 +966,79 @@ if manual_running and not running_crawl:
             st.session_state.pop("crawler_manual_running", None)
             st.session_state.pop("crawler_manual_started_at", None)
             manual_running = False
-    except Exception:
-        pass
+    except Exception: pass
+
 current_running = bool(running_crawl or manual_running)
-prev_running = st.session_state.get("crawler_prev_running", False)
+prev_running    = st.session_state.get("crawler_prev_running", False)
 
 # Notify when crawl finishes
 if prev_running and not current_running:
     try:
         last = query_db("SELECT * FROM crawl_log ORDER BY started_at DESC LIMIT 1")
         if last:
-            lr = last[0]
-            pages = lr.get("pages_visited", 0)
+            lr      = last[0]
+            pages   = lr.get("pages_visited", 0)
             started = lr.get("started_at")
-            finished = lr.get("finished_at") or datetime.now().isoformat()
-            changes_row = query_db("SELECT COUNT(*) as c FROM changes WHERE timestamp>=? AND timestamp<=?", (started, finished))
+            finished= lr.get("finished_at") or datetime.now().isoformat()
+            changes_row = query_db("SELECT COUNT(*) as c FROM changes WHERE timestamp>=? AND timestamp<=?",
+                                   (started, finished))
             changes = changes_row[0]["c"] if changes_row else 0
-            msg = f"Crawl finished — {pages} pages visited · {changes} change(s)."
+            msg     = f"Crawl finished — {pages} pages visited · {changes} change(s)."
             st.success(msg)
-            js = f'''
-            <script>
-            (function(){{
-              function notify() {{
-                if (!("Notification" in window)) return;
-                if (Notification.permission === "granted") {{
-                  new Notification({json.dumps("Crawl finished")}, {{body: {json.dumps(msg)}}});
-                }} else if (Notification.permission !== "denied") {{
-                  Notification.requestPermission().then(function(p){{ if(p==='granted') new Notification({json.dumps("Crawl finished")}, {{body: {json.dumps(msg)}}}); }});
-                }}
-              }}
-              setTimeout(notify, 200);
-            }})();
-            </script>
-            '''
-            st.markdown(js, unsafe_allow_html=True)
-    except Exception:
-        pass
+    except Exception: pass
     try:
         st.session_state.pop("crawler_manual_running", None)
         st.session_state.pop("crawler_manual_started_at", None)
-    except Exception:
-        pass
-    try:
-        st.markdown("<script>setTimeout(()=>window.location.reload(),1500)</script>", unsafe_allow_html=True)
-    except Exception:
-        pass
+    except Exception: pass
 
-# ── Running banner (large spinner) ────────────────────────────────────────────
-if current_running:
+# ── Banners ───────────────────────────────────────────────────────────────────
+if waiting_login:
+    # Amber banner — waiting for manual login
+    st.markdown(
+        "<div class='login-wait-banner'>"
+        "  <div class='spinner-ring-amber'></div>"
+        "  <div class='banner-text'>"
+        "    <span class='banner-title' style='color:#fbbf24'>Waiting for manual login</span>"
+        "    <span class='banner-sub' style='color:#92681a'>"
+        "      Browser window is open on the server — complete login to continue crawling. "
+        "      Session will be saved and reused on future runs automatically."
+        "    </span>"
+        "  </div>"
+        "</div>",
+        unsafe_allow_html=True
+    )
+    st.markdown("<script>setTimeout(()=>window.location.reload(),5000)</script>", unsafe_allow_html=True)
+
+elif current_running:
+    # Green banner — crawling
     st.markdown(
         "<div class='running-banner'>"
         "  <div class='spinner-ring'></div>"
         "  <div class='banner-text'>"
         "    <span class='banner-title'>Crawler is running</span>"
-        "    <span class='banner-sub'>Refreshing every second &mdash; do not close this tab</span>"
+        "    <span class='banner-sub' style='color:#1f6b47'>Refreshing every second — do not close this tab</span>"
         "  </div>"
         "</div>",
         unsafe_allow_html=True
     )
-    # Progress bar (if page count is available)
     try:
-        pages = running_crawl.get("pages_visited") if running_crawl else None
-        portal_name = (running_crawl.get("portal") if running_crawl else None) or st.session_state.get("portal")
+        pages      = running_crawl.get("pages_visited") if running_crawl else None
+        portal_name= (running_crawl.get("portal") if running_crawl else None) or st.session_state.get("portal")
         portal_cfg = get_portal_config(portal_name) if portal_name else None
-        max_pages = portal_cfg.get("max_pages") if portal_cfg else None
+        max_pages  = portal_cfg.get("max_pages") if portal_cfg else None
         if pages is not None and max_pages:
-            pct = min(100, int(pages / max_pages * 100)) if max_pages else 0
+            pct = min(100, int(pages / max_pages * 100))
             st.markdown(
                 f"<div style='margin-top:8px'>"
                 f"<div style='background:rgba(255,255,255,0.04);height:8px;border-radius:6px;overflow:hidden'>"
-                f"<div style='width:{pct}%;height:100%;background:linear-gradient(90deg,#34d399,#60a5fa);transition:width 800ms'></div>"
-                f"</div>"
-                f"<div style='font-size:12px;color:#cfe8ff;margin-top:6px'>{pages} / {max_pages} pages</div>"
-                f"</div>",
+                f"<div style='width:{pct}%;height:100%;background:linear-gradient(90deg,#34d399,#60a5fa)'></div></div>"
+                f"<div style='font-size:12px;color:#cfe8ff;margin-top:6px'>{pages} / {max_pages} pages</div></div>",
                 unsafe_allow_html=True,
             )
         elif pages is not None:
-            st.markdown(
-                f"<div style='margin-top:6px;font-size:13px;color:#cfe8ff'>Pages visited: {pages}</div>",
-                unsafe_allow_html=True,
-            )
-    except Exception:
-        pass
-
+            st.markdown(f"<div style='margin-top:6px;font-size:13px;color:#cfe8ff'>Pages visited: {pages}</div>",
+                        unsafe_allow_html=True)
+    except Exception: pass
     st.markdown("<script>setTimeout(()=>window.location.reload(),1000)</script>", unsafe_allow_html=True)
 
 st.session_state["crawler_prev_running"] = current_running
@@ -1469,16 +1050,14 @@ st.session_state["crawler_prev_running"] = current_running
 if st.session_state.view == "overview":
     portal_stats  = get_portal_stats(portal_filter)
     total_portals = len(portal_stats)
-    portals_alert = sum(1 for p in portal_stats if p["today_changes"]>3)
-    portals_warn  = sum(1 for p in portal_stats if 0<p["today_changes"]<=3)
-    portals_ok    = sum(1 for p in portal_stats if p["today_changes"]==0)
+    portals_alert = sum(1 for p in portal_stats if p["today_changes"] > 3)
+    portals_warn  = sum(1 for p in portal_stats if 0 < p["today_changes"] <= 3)
+    portals_ok    = sum(1 for p in portal_stats if p["today_changes"] == 0)
     total_today   = sum(p["today_changes"] for p in portal_stats)
 
-    st.markdown(
-        "<div class='page-title'>🏠 Portal Overview</div>"
-        "<div class='page-subtitle'>Health summary for every monitored portal</div>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div class='page-title'>🏠 Portal Overview</div>"
+                "<div class='page-subtitle'>Health summary for every monitored portal</div>",
+                unsafe_allow_html=True)
 
     cards = [
         ("PORTALS",       total_portals, "#3b82f6"),
@@ -1490,12 +1069,10 @@ if st.session_state.view == "overview":
     cols = st.columns(5)
     for col, (label, val, color) in zip(cols, cards):
         with col:
-            st.markdown(
-                f"<div class='stat-card' style='--accent:{color}'>"
-                f"<div class='s-label'>{label}</div>"
-                f"<div class='s-value' style='color:{color}'>{val}</div>"
-                f"</div>", unsafe_allow_html=True
-            )
+            st.markdown(f"<div class='stat-card' style='--accent:{color}'>"
+                        f"<div class='s-label'>{label}</div>"
+                        f"<div class='s-value' style='color:{color}'>{val}</div></div>",
+                        unsafe_allow_html=True)
 
     st.markdown("<div class='section-hdr'>Per-portal status</div>", unsafe_allow_html=True)
 
@@ -1503,44 +1080,41 @@ if st.session_state.view == "overview":
         st.info("No portals crawled yet. Click **▶ Run** above to start.")
     else:
         for p in portal_stats:
-            chg  = p["today_changes"]
-            status = "alert" if chg>3 else ("warn" if chg>0 else "ok")
-            dot  = "🔴" if status=="alert" else ("🟡" if status=="warn" else "🟢")
+            chg         = p["today_changes"]
+            status      = "alert" if chg > 3 else ("warn" if chg > 0 else "ok")
+            dot         = "🔴" if status == "alert" else ("🟡" if status == "warn" else "🟢")
             lc_time     = time_ago(p["last_crawl_at"]) if p["last_crawl_at"] else "never"
             last_status = p["last_status"] or "unknown"
             pages_val   = p["pages_visited"] if p["pages_visited"] else "—"
-            stale = False
-            if last_status=="running" and p["last_crawl_at"]:
+            stale       = False
+            if last_status == "running" and p["last_crawl_at"]:
                 try:
-                    lca = p["last_crawl_at"]
-                    if isinstance(lca, datetime):
-                        stale = datetime.now() - lca > timedelta(minutes=30)
-                    else:
-                        stale = datetime.now() - datetime.fromisoformat(str(lca)) > timedelta(minutes=30)
+                    lca   = p["last_crawl_at"]
+                    stale = datetime.now() - (lca if isinstance(lca, datetime) else datetime.fromisoformat(str(lca))) > timedelta(minutes=30)
                 except Exception: pass
             display_status = (
                 "❌ crashed"  if stale else
-                "🔄 running…" if last_status=="running" else
-                "✅ done"     if last_status=="done" else last_status
+                "🔄 running…" if last_status == "running" else
+                "✅ done"     if last_status == "done" else last_status
             )
             with st.expander(
                 f"{dot}  {p['portal']}  —  "
-                f"{'⚠️ '+str(chg)+' change(s) today' if chg else '✅ Clean today'}  —  "
-                f"Last crawl: {lc_time}", expanded=(status!="ok")
+                f"{'⚠️ ' + str(chg) + ' change(s) today' if chg else '✅ Clean today'}  —  "
+                f"Last crawl: {lc_time}", expanded=(status != "ok")
             ):
-                pc1,pc2,pc3,pc4 = st.columns(4)
-                pc1.metric("Today", chg); pc2.metric("All-time", p["all_time_changes"])
-                pc3.metric("Pages", pages_val); pc4.metric("Status", display_status)
-                if last_status=="running" and not stale: st.warning("🔄 Crawl in progress…")
+                pc1, pc2, pc3, pc4 = st.columns(4)
+                pc1.metric("Today",    chg); pc2.metric("All-time", p["all_time_changes"])
+                pc3.metric("Pages",    pages_val); pc4.metric("Status", display_status)
+                if last_status == "running" and not stale: st.warning("🔄 Crawl in progress…")
                 elif stale: st.error("❌ Crawl seems crashed. Use **▶ Run** to restart.")
                 st.caption(f"Last crawl: {p['last_crawl_at'][:16] if p['last_crawl_at'] else 'never'}")
                 if chg > 0:
                     st.markdown("---"); st.markdown("**Latest changes:**")
                     for ch in query_db(
-                        "SELECT * FROM changes WHERE portal=? AND date(timestamp)=date('now') "
-                        "ORDER BY timestamp DESC LIMIT 5", (p["portal"],)
+                        "SELECT * FROM changes WHERE portal=? AND date(timestamp)=date('now') ORDER BY timestamp DESC LIMIT 5",
+                        (p["portal"],)
                     ):
-                        icon, lbl = DIFF_LABELS.get(ch["diff_type"],("❓","?"))
+                        icon, lbl = DIFF_LABELS.get(ch["diff_type"], ("❓", "?"))
                         st.markdown(f"&nbsp;&nbsp;{icon} `{friendly_page_name(ch['url'])}` — {lbl} — {time_ago(ch['timestamp'])}")
 
 
@@ -1549,46 +1123,37 @@ if st.session_state.view == "overview":
 # ════════════════════════════════════════════════════════════════════════════════
 elif st.session_state.view == "changes":
     scope = f"Portal: **{st.session_state.portal}**" if portal_filter else "All portals"
-    st.markdown(
-        "<div class='page-title'>🚨 Latest Changes</div>"
-        f"<div class='page-subtitle'>Scope: {scope} · Most recent crawl run</div>",
-        unsafe_allow_html=True
-    )
+    st.markdown(f"<div class='page-title'>🚨 Latest Changes</div>"
+                f"<div class='page-subtitle'>Scope: {scope} · Most recent crawl run</div>",
+                unsafe_allow_html=True)
 
-    f1,f2,f3,f4 = st.columns([2,2,2,3])
+    f1, f2, f3, f4 = st.columns([2, 2, 2, 3])
     with f1:
-        filter_type = st.selectbox("Type",
-            ["All Types","📄 Content","🖼️ Visual","📊 Data","🔌 API"], key="filter_type")
+        filter_type = st.selectbox("Type",     ["All Types", "📄 Content", "🖼️ Visual", "📊 Data", "🔌 API"], key="filter_type")
     with f2:
-        filter_sev = st.selectbox("Severity",
-            ["All Severities","🔴 High","🟡 Medium","🟢 Low"], key="filter_sev")
+        filter_sev  = st.selectbox("Severity", ["All Severities", "🔴 High", "🟡 Medium", "🟢 Low"],          key="filter_sev")
     with f3:
-        if not portal_filter:
-            fp_local = st.selectbox("Portal", ["All Portals"]+all_portals, key="fp_local")
-        else:
-            fp_local = st.session_state.portal
-            st.caption(f"Portal: {st.session_state.portal}")
+        fp_local    = st.session_state.portal if portal_filter else st.selectbox("Portal", ["All Portals"] + all_portals, key="fp_local")
     with f4:
-        search_q = st.text_input("🔍 Search page", placeholder="e.g. Home, SOP…", key="search_q")
+        search_q    = st.text_input("🔍 Search page", placeholder="e.g. Home, SOP, Dashboard…", key="search_q")
 
     st.markdown("<hr style='margin:8px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 
     if not latest_changes:
         st.success("✅ No changes in the latest crawl.")
     else:
-        type_map = {"📄 Content":"html","🖼️ Visual":"visual","📊 Data":"json","🔌 API":"har"}
+        type_map = {"📄 Content": "html", "🖼️ Visual": "visual", "📊 Data": "json", "🔌 API": "har"}
         filtered = latest_changes[:]
         if filter_type != "All Types":
-            filtered = [c for c in filtered if c["diff_type"]==type_map.get(filter_type)]
+            filtered = [c for c in filtered if c["diff_type"] == type_map.get(filter_type)]
         if filter_sev != "All Severities":
-            sl = filter_sev.split(" ",1)[1]
+            sl = filter_sev.split(" ", 1)[1]
             def sev_of(c):
-                try:
-                    d=json.loads(c["diff_detail"]); _,s=severity_badge(d.get("diff_lines",0)); return s
+                try: _, s = severity_badge(json.loads(c["diff_detail"]).get("diff_lines", 0)); return s
                 except: return "Low"
-            filtered = [c for c in filtered if sev_of(c)==sl]
+            filtered = [c for c in filtered if sev_of(c) == sl]
         if fp_local != "All Portals":
-            filtered = [c for c in filtered if c["portal"]==fp_local]
+            filtered = [c for c in filtered if c["portal"] == fp_local]
         if search_q:
             filtered = [c for c in filtered if search_q.lower() in friendly_page_name(c["url"]).lower()]
 
@@ -1601,99 +1166,74 @@ elif st.session_state.view == "changes":
 # VIEW: SCREENSHOTS
 # ════════════════════════════════════════════════════════════════════════════════
 elif st.session_state.view == "screenshots":
-    st.markdown(
-        "<div class='page-title'>📸 Changed Pages</div>"
-        "<div class='page-subtitle'>Before / after screenshots with highlighted differences</div>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div class='page-title'>📸 Changed Pages</div>"
+                "<div class='page-subtitle'>Before / after screenshots with highlighted differences</div>",
+                unsafe_allow_html=True)
 
     if not latest_changes:
         st.success("✅ No changed pages in the latest crawl.")
     else:
         changed_urls = list({c["url"] for c in latest_changes})
         def url_label(url):
-            chg = next((c for c in latest_changes if c["url"]==url),{})
-            p   = chg.get("portal","")
+            chg = next((c for c in latest_changes if c["url"] == url), {})
+            p   = chg.get("portal", "")
             return f"[{p}] {friendly_page_name(url)}" if p else friendly_page_name(url)
-
         labels       = [url_label(u) for u in changed_urls]
         sel_label    = st.selectbox(f"Select page ({len(changed_urls)} changed)", labels)
         selected_url = changed_urls[labels.index(sel_label)]
-
         st.markdown("<hr style='margin:8px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 
         @st.cache_data(ttl=60)
         def _get_baseline_rows(url):
-            return query_db(
-                "SELECT * FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2", (url,)
-            )
+            return query_db("SELECT * FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2", (url,))
         @st.cache_data(ttl=60)
         def _get_page_changes(url):
-            return query_db(
-                "SELECT * FROM changes WHERE url=? ORDER BY timestamp DESC LIMIT 100", (url,)
-            )
+            return query_db("SELECT * FROM changes WHERE url=? ORDER BY timestamp DESC LIMIT 100", (url,))
+
         baseline_rows = _get_baseline_rows(selected_url)
         page_changes  = _get_page_changes(selected_url)
-        latest_b   = baseline_rows[0] if len(baseline_rows) > 0 else None
-        prev_b     = baseline_rows[1] if len(baseline_rows) > 1 else None
-        chg_portal = page_changes[0]["portal"] if page_changes else "—"
+        latest_b      = baseline_rows[0] if len(baseline_rows) > 0 else None
+        prev_b        = baseline_rows[1] if len(baseline_rows) > 1 else None
+        chg_portal    = page_changes[0]["portal"] if page_changes else "—"
 
         st.markdown(
             f"<div class='page-title' style='font-size:17px'>{friendly_page_name(selected_url)}"
             f" <span style='font-size:12px;color:#a78bfa;font-weight:500'>[{chg_portal}]</span></div>",
             unsafe_allow_html=True
         )
-
-        visual_change = next((c for c in page_changes if c["diff_type"]=="visual"), None)
+        visual_change = next((c for c in page_changes if c["diff_type"] == "visual"), None)
         if visual_change:
             try:
-                detail = json.loads(visual_change["diff_detail"])
+                detail        = json.loads(visual_change["diff_detail"])
                 diff_img_path = detail.get("diff_image_path")
                 if diff_img_path and os.path.exists(diff_img_path):
                     st.markdown("### 🔴 Highlighted Diff")
-                    st.markdown("*Red areas = pixels that changed between crawls*")
                     st.image(diff_img_path, use_container_width=True)
-            except Exception:
-                pass
+            except Exception: pass
 
         st.markdown("### Before / After")
         sc1, sc2 = st.columns(2)
         with sc1:
             st.markdown("**⬅️ Previous snapshot**")
-            if prev_b:
-                p = prev_b.get("screenshot_url") or prev_b.get("screenshot_path")
-                if p and (p.startswith("http://") or p.startswith("https://") or os.path.exists(p)):
-                    st.image(p, use_container_width=True)
-                else:
-                    st.info("Not available")
-            else:
-                st.info("No previous snapshot")
+            p = (prev_b.get("screenshot_url") or prev_b.get("screenshot_path")) if prev_b else None
+            st.image(p, use_container_width=True) if p and (p.startswith("http") or os.path.exists(p)) else st.info("No previous snapshot")
         with sc2:
             st.markdown("**➡️ Latest snapshot**")
-            if latest_b:
-                p = latest_b.get("screenshot_url") or latest_b.get("screenshot_path")
-                if p and (p.startswith("http://") or p.startswith("https://") or os.path.exists(p)):
-                    st.image(p, use_container_width=True)
-                else:
-                    st.info("Not available")
-            else:
-                st.info("No latest snapshot")
+            p = (latest_b.get("screenshot_url") or latest_b.get("screenshot_path")) if latest_b else None
+            st.image(p, use_container_width=True) if p and (p.startswith("http") or os.path.exists(p)) else st.info("No latest snapshot")
 
         st.markdown("---")
         for change in page_changes[:5]:
-            icon, label = DIFF_LABELS.get(change["diff_type"],("❓","?"))
+            icon, label = DIFF_LABELS.get(change["diff_type"], ("❓", "?"))
             with st.expander(f"{icon} {label} change — {time_ago(change['timestamp'])}", expanded=True):
                 try:
                     detail = json.loads(change["diff_detail"])
                     if change["diff_type"] == "html":
                         render_highlighted_html_diff(detail)
                     elif change["diff_type"] == "visual":
-                        render_visual_diff(
-                            detail,
-                            change,
+                        render_visual_diff(detail, change,
                             prev_b.get("screenshot_url") or prev_b.get("screenshot_path") if prev_b else None,
-                            latest_b.get("screenshot_url") or latest_b.get("screenshot_path") if latest_b else None,
-                        )
+                            latest_b.get("screenshot_url") or latest_b.get("screenshot_path") if latest_b else None)
                 except Exception:
                     st.info("Details unavailable.")
 
@@ -1703,14 +1243,11 @@ elif st.session_state.view == "screenshots":
 # ════════════════════════════════════════════════════════════════════════════════
 elif st.session_state.view == "history":
     scope = f"Portal: **{st.session_state.portal}**" if portal_filter else "All portals"
-    st.markdown(
-        "<div class='page-title'>📅 Crawl History</div>"
-        f"<div class='page-subtitle'>Scope: {scope}</div>", unsafe_allow_html=True
-    )
-    h1,_ = st.columns([2,5])
+    st.markdown(f"<div class='page-title'>📅 Crawl History</div>"
+                f"<div class='page-subtitle'>Scope: {scope}</div>", unsafe_allow_html=True)
+    h1, _ = st.columns([2, 5])
     with h1:
-        hist_filter = st.selectbox("Filter",
-            ["All Crawls","✅ With Changes","🟢 No Changes"], key="hist_filter")
+        hist_filter = st.selectbox("Filter", ["All Crawls", "✅ With Changes", "🟢 No Changes"], key="hist_filter")
     crawl_logs = get_crawl_history(portal_filter)
     if not crawl_logs:
         st.info("No crawls recorded yet.")
@@ -1719,30 +1256,31 @@ elif st.session_state.view == "history":
         for log in crawl_logs:
             count_row = query_db(
                 "SELECT COUNT(*) as c FROM changes WHERE portal=? AND timestamp>=? AND timestamp<=?",
-                (log["portal"], log["started_at"], log["finished_at"] or datetime.now().isoformat()))
+                (log["portal"], log["started_at"], log["finished_at"] or datetime.now().isoformat())
+            )
             count = count_row[0]["c"] if count_row else 0
-            if hist_filter=="✅ With Changes" and count==0: continue
-            if hist_filter=="🟢 No Changes"  and count>0:  continue
+            if hist_filter == "✅ With Changes" and count == 0: continue
+            if hist_filter == "🟢 No Changes"  and count > 0:  continue
             started  = str(log["started_at"])[:16]
             finished = str(log["finished_at"])[:16] if log["finished_at"] else "—"
-            done     = log["status"]=="done"
+            done     = log["status"] == "done"
             with st.expander(
                 f"{'✅' if done else '🔄' if log['status']=='running' else '❌'} "
                 f"[{log['portal']}]  {started}  |  "
-                f"{'⚠️ '+str(count)+' change(s)' if count>0 else '✅ No changes'}  |  "
+                f"{'⚠️ ' + str(count) + ' change(s)' if count > 0 else '✅ No changes'}  |  "
                 f"{log['pages_visited']} pages", expanded=False
             ):
-                dc1,dc2,dc3,dc4 = st.columns(4)
-                dc1.metric("Pages", log["pages_visited"]); dc2.metric("Changes", count)
+                dc1, dc2, dc3, dc4 = st.columns(4)
+                dc1.metric("Pages",    log["pages_visited"]); dc2.metric("Changes", count)
                 dc3.markdown(f"**Started:** {started}"); dc4.markdown(f"**Finished:** {finished}")
                 st.markdown(f"**Portal:** `{log['portal']}`  **Status:** `{log['status']}`")
                 if count > 0:
                     st.markdown("---"); st.markdown("**Pages that changed:**")
                     for p_row in query_db(
                         "SELECT DISTINCT url,diff_type FROM changes WHERE portal=? AND timestamp>=? AND timestamp<=?",
-                        (log["portal"],log["started_at"],log["finished_at"] or datetime.now().isoformat())
+                        (log["portal"], log["started_at"], log["finished_at"] or datetime.now().isoformat())
                     )[:10]:
-                        icon, lbl = DIFF_LABELS.get(p_row["diff_type"],("❓","?"))
+                        icon, lbl = DIFF_LABELS.get(p_row["diff_type"], ("❓", "?"))
                         st.markdown(f"&nbsp;&nbsp;{icon} `{friendly_page_name(p_row['url'])}` — {lbl}")
 
 
@@ -1750,107 +1288,93 @@ elif st.session_state.view == "history":
 # VIEW: CONSOLE
 # ════════════════════════════════════════════════════════════════════════════════
 elif st.session_state.view == "console":
-    st.markdown(
-        "<div class='page-title'>🖥️ Crawler Console</div>"
-        "<div class='page-subtitle'>Live output from the crawler process</div>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div class='page-title'>🖥️ Crawler Console</div>"
+                "<div class='page-subtitle'>Live output from the crawler process</div>",
+                unsafe_allow_html=True)
     cc1, cc2, _ = st.columns([2, 2, 5])
     with cc1:
         if st.button("⏹ Stop crawler", use_container_width=True, key="console_stop"):
             stopped = stop_crawl()
-            if stopped:
-                st.success("Stop signal sent to crawler.")
-            else:
-                st.warning("Could not send stop (no PID file?).")
-            st.cache_data.clear()
-            time.sleep(0.8)
-            st.rerun()
+            st.success("Stop signal sent.") if stopped else st.warning("Could not send stop (no PID file?).")
+            st.cache_data.clear(); time.sleep(0.8); st.rerun()
     with cc2:
         if st.button("↺ Refresh", use_container_width=True, key="console_refresh_btn"):
-            st.cache_data.clear()
-            st.rerun()
-    tail_lines = 60
-    log_lines = read_log(tail=tail_lines)
-    if running_crawl:
+            st.cache_data.clear(); st.rerun()
+
+    log_lines = read_log(tail=60)
+
+    if waiting_login:
+        st.markdown(
+            "<div class='login-wait-banner'>"
+            "  <div class='spinner-ring-amber'></div>"
+            "  <div class='banner-text'>"
+            "    <span class='banner-title' style='color:#fbbf24'>Waiting for manual login</span>"
+            "    <span class='banner-sub' style='color:#92681a'>Complete login in the browser window to continue</span>"
+            "  </div>"
+            "</div>",
+            unsafe_allow_html=True
+        )
+    elif running_crawl:
         st.markdown(
             "<div class='running-banner'>"
             "  <div class='spinner-ring'></div>"
             "  <div class='banner-text'>"
             "    <span class='banner-title'>Active crawl log stream</span>"
-            "    <span class='banner-sub'>Auto-refreshing every 3 seconds</span>"
+            "    <span class='banner-sub' style='color:#1f6b47'>Auto-refreshing every 3 seconds</span>"
             "  </div>"
             "</div>",
             unsafe_allow_html=True
         )
     else:
-        st.markdown("<div class='idle-banner'>⏸ Crawler idle — click ▶ Run in the top bar to start</div>",
+        st.markdown("<div class='idle-banner'>⏸ Crawler idle — click ▶ Run to start</div>",
                     unsafe_allow_html=True)
 
     def colorize(line):
-        if "ScriptRunContext" in line: return ""
-        if not line.strip(): return ""
-        if any(x in line for x in ["ERROR","error","Exception","Traceback"]): color = "#f87171"
-        elif any(x in line for x in ["WARNING","warning","WARN"]): color = "#fbbf24"
-        elif any(x in line for x in ["✓","Done","done","saved","Saved","ALL DONE"]): color = "#34d399"
-        elif any(x in line for x in ["═══","STEP","Step"]): color = "#60a5fa"
-        elif any(x in line for x in ["✅","Change","change"]): color = "#a78bfa"
-        else: color = "#8899b4"
-        escaped = line.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;")
+        if "ScriptRunContext" in line or not line.strip(): return ""
+        if any(x in line for x in ["ERROR", "error", "Exception", "Traceback"]):  color = "#f87171"
+        elif any(x in line for x in ["WARNING", "warning", "WARN"]):              color = "#fbbf24"
+        elif any(x in line for x in ["WAITING FOR LOGIN"]):                        color = "#fbbf24"  # amber
+        elif any(x in line for x in ["LOGIN DETECTED", "SESSION VALID"]):          color = "#34d399"  # green
+        elif any(x in line for x in ["SESSION EXPIRED", "LOGIN TIMEOUT"]):         color = "#f87171"  # red
+        elif any(x in line for x in ["✓", "Done", "done", "saved", "Saved", "ALL DONE"]): color = "#34d399"
+        elif any(x in line for x in ["═══", "━", "STEP", "Step", "PHASE"]):       color = "#60a5fa"
+        elif any(x in line for x in ["🔐", "LOGGEDIN"]):                           color = "#a78bfa"  # purple for post-login pages
+        elif any(x in line for x in ["✅", "Change", "change"]):                   color = "#a78bfa"
+        else:                                                                        color = "#8899b4"
+        escaped = line.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
         return f"<span style='color:{color}'>{escaped}</span>"
 
     colored_lines = [colorize(l) for l in log_lines]
-    log_html = "<br>".join(c for c in colored_lines if c)
-    st.markdown(f"""
-        <div style='background:#050709;border:1px solid #1a1f2e;border-radius:10px;
-                    padding:18px 20px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
-                    line-height:1.75;max-height:520px;overflow-y:auto;
-                    white-space:pre-wrap;word-break:break-all'>{log_html}</div>
-    """, unsafe_allow_html=True)
-    try:
-        print_to_browser = st.checkbox("Print logs to browser console", value=True, key="print_to_browser")
-        if print_to_browser and log_lines:
-            js_lines = json.dumps(log_lines)
-            js = f"""
-            <script>
-            (function() {{
-                try {{
-                    const logs = {js_lines};
-                    console.clear();
-                    logs.forEach(l => console.log(l));
-                }} catch(e){{ console.error("Log print error", e); }}
-            }})();
-            </script>
-            """
-            st.markdown(js, unsafe_allow_html=True)
-    except Exception:
-        pass
-        
-    # Inject auto-refresh and auto-scroll if the crawler is actively running
-    if running_crawl:
+    log_html      = "<br>".join(c for c in colored_lines if c)
+    st.markdown(
+        f"<div style='background:#050709;border:1px solid #1a1f2e;border-radius:10px;"
+        f"padding:18px 20px;font-family:\"IBM Plex Mono\",monospace;font-size:11.5px;"
+        f"line-height:1.75;max-height:520px;overflow-y:auto;white-space:pre-wrap;word-break:break-all'>"
+        f"{log_html}</div>",
+        unsafe_allow_html=True
+    )
+
+    if running_crawl or waiting_login:
+        refresh_ms = 5000 if waiting_login else 3000
         st.markdown(
-            """
-            <script>
-                const logBox = document.querySelector('[style*="max-height:520px"]');
-                if (logBox) logBox.scrollTop = logBox.scrollHeight;
-                setTimeout(() => window.parent.location.reload(), 3000);
-            </script>
-            """,
+            f"<script>"
+            f"const logBox = document.querySelector('[style*=\"max-height:520px\"]');"
+            f"if (logBox) logBox.scrollTop = logBox.scrollHeight;"
+            f"setTimeout(() => window.parent.location.reload(), {refresh_ms});"
+            f"</script>",
             unsafe_allow_html=True
         )
+
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "rb") as f:
-            st.download_button("⬇ Download full log", f, file_name="crawler.log",
-                               mime="text/plain", use_container_width=False)
+            st.download_button("⬇ Download full log", f, file_name="crawler.log", mime="text/plain")
 
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
 st.markdown("</div>", unsafe_allow_html=True)
 st.markdown("<hr style='border-color:#1a1f2e;margin-top:32px'>", unsafe_allow_html=True)
 st.markdown(
-    f"<div style='font-family:\"IBM Plex Mono\",monospace;font-size:11px;color:#2d3a52;"
-    f"padding:0 8px 16px'>"
-    f"Portal Change Monitor · {st.session_state.portal} · "
-    f"{datetime.now().strftime('%d %b %Y, %I:%M %p')}</div>",
+    f"<div style='font-family:\"IBM Plex Mono\",monospace;font-size:11px;color:#2d3a52;padding:0 8px 16px'>"
+    f"Portal Change Monitor · {st.session_state.portal} · {datetime.now().strftime('%d %b %Y, %I:%M %p')}</div>",
     unsafe_allow_html=True
 )

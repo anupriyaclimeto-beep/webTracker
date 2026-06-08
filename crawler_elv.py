@@ -20,7 +20,7 @@ from playwright.async_api import async_playwright
 
 os.environ.setdefault("PWDEBUG", "0")
 
-from auth import handle_auth
+from auth import handle_auth, ensure_logged_in, get_profile_dir, profile_exists, save_context_cookies
 from diff_engine import run_all_diffs
 from storage import (
     init_db, update_baseline, get_baseline,
@@ -224,6 +224,13 @@ async def crawl_elv_portal(portal_config: dict):
     crawl_id = start_crawl_log(PORTAL_NAME)
     pv       = 0
 
+    # ══════════════════════════════════════════════════════════════════════════
+    # PHASE 1 — Headless: public pre-login pages
+    # ══════════════════════════════════════════════════════════════════════════
+    logger.info("=" * 60)
+    logger.info("PHASE 1 - Headless public crawl")
+    logger.info("=" * 60)
+
     async with async_playwright() as p:
         browser = await p.chromium.launch(
             headless=True,
@@ -240,11 +247,6 @@ async def crawl_elv_portal(portal_config: dict):
             ),
         )
         page = await context.new_page()
-
-        try:
-            await handle_auth(page, portal_config)
-        except Exception as e:
-            logger.warning("Auth skipped: %s", e)
 
         # ── STEP 1: Home ──────────────────────────────────────────────────────
         logger.info("═══ STEP 1: Home page ═══")
@@ -329,8 +331,118 @@ async def crawl_elv_portal(portal_config: dict):
         await context.close()
         await browser.close()
 
+    logger.info("PHASE 1 complete | pv=%d", pv)
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # PHASE 2 — Persistent context: post-login pages
+    # ══════════════════════════════════════════════════════════════════════════
+    post_login_pages = portal_config.get("post_login_pages", [])
+    if not post_login_pages:
+        logger.info("No post_login_pages configured — skipping Phase 2")
+        finish_crawl_log(crawl_id, pv, status="done")
+        logger.info("═══ EPR ELV ALL DONE: %d pages ═══", pv)
+        return
+
+    logger.info("=" * 60)
+    logger.info("PHASE 2 - Persistent context post-login crawl")
+    logger.info("=" * 60)
+
+    profile_dir = get_profile_dir(portal_config)
+    first_run   = not profile_exists(portal_config)
+
+    if first_run:
+        logger.info("First run - no browser profile found at %s", profile_dir)
+        logger.info("Browser will open headful for manual login")
+    else:
+        logger.info("Browser profile found at %s - will attempt session restore", profile_dir)
+
+    async with async_playwright() as p:
+        persistent_ctx = await p.chromium.launch_persistent_context(
+            user_data_dir=str(profile_dir),
+            headless=False,
+            args=["--start-maximized", "--no-sandbox", "--disable-dev-shm-usage",
+                  "--disable-blink-features=AutomationControlled"],
+            viewport={"width": 1280, "height": 900},
+            ignore_https_errors=True,
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36"
+            ),
+        )
+
+        # Restore saved cookies if available
+        cookies_path = profile_dir / "cookies.json"
+        if cookies_path.exists():
+            try:
+                cookies = json.loads(cookies_path.read_text())
+                await persistent_ctx.add_cookies(cookies)
+                logger.info("Session cookies restored from %s", cookies_path)
+            except Exception as e:
+                logger.warning("Failed to restore session cookies: %s", e)
+
+        page = await persistent_ctx.new_page()
+
+        # Ensure logged in
+        try:
+            await ensure_logged_in(page, portal_config)
+        except TimeoutError as e:
+            logger.error("Login timed out: %s", e)
+            await persistent_ctx.close()
+            finish_crawl_log(crawl_id, pv, status="error")
+            return
+        except Exception as e:
+            logger.error("Login failed: %s", e)
+            await persistent_ctx.close()
+            finish_crawl_log(crawl_id, pv, status="error")
+            return
+
+        # Crawl each post-login page
+        for step_idx, page_cfg in enumerate(post_login_pages, start=10):
+            label    = page_cfg.get("label", f"PostLogin_{step_idx}")
+            url      = page_cfg.get("url", "")
+            method   = page_cfg.get("method", "scroll")
+            page_key = HOME_URL + f"__LOGGEDIN_{label}"
+
+            if not url:
+                logger.warning("Step %d: no URL for '%s' — skipping", step_idx, label)
+                continue
+
+            logger.info("=== STEP %d: %s (%s) ===", step_idx, label, method)
+
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                try:
+                    await page.wait_for_load_state("networkidle", timeout=8000)
+                except Exception:
+                    pass
+                await asyncio.sleep(2)
+            except Exception as e:
+                logger.warning("Navigation failed for '%s': %s", label, e)
+                continue
+
+            if method == "scroll":
+                screenshot_bytes = await scroll_and_stitch(page)
+            else:
+                screenshot_bytes = await page.screenshot(full_page=False, type="png")
+
+            snap = await save_snapshot(page, page_key, screenshot_bytes)
+            await diff_and_store(page_key, snap, har_path)
+            pv += 1
+            logger.info("  '%s' done | pv=%d", label, pv)
+
+        # Save cookies before closing
+        try:
+            await save_context_cookies(persistent_ctx, portal_config)
+        except Exception as e:
+            logger.warning("Failed to save session cookies: %s", e)
+
+        await persistent_ctx.close()
+        logger.info("Persistent browser profile saved to %s", profile_dir)
+
     finish_crawl_log(crawl_id, pv, status="done")
     logger.info("═══ EPR ELV ALL DONE: %d pages ═══", pv)
+    logger.info("CRAWL_FINISHED: %d pages", pv)
+    logger.info("ALL DONE - pages complete")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

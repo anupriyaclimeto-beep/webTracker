@@ -21,3 +21,10 @@ __pycache__/
 
 # Local crawler snapshots and HAR file archives
 archive/
+
+# Local browser profile data (session cookies, cache)
+browser_profiles/
+
+# Local scratch files
+scratch/
+

@@ -22,7 +22,7 @@ from playwright.async_api import async_playwright
 
 os.environ.setdefault("PWDEBUG", "0")
 
-from auth import handle_auth
+from auth import handle_auth, ensure_logged_in, get_profile_dir, profile_exists, save_context_cookies
 from diff_engine import run_all_diffs
 from storage import (
     init_db, update_baseline, get_baseline,
@@ -257,6 +257,13 @@ async def crawl_tyres_portal(portal_config: dict):
     crawl_id      = start_crawl_log(PORTAL_NAME)
     pages_visited = 0
 
+    # ══════════════════════════════════════════════════════════════════════════
+    # PHASE 1 — Headless: public pre-login pages
+    # ══════════════════════════════════════════════════════════════════════════
+    logger.info("=" * 60)
+    logger.info("PHASE 1 - Headless public crawl")
+    logger.info("=" * 60)
+
     async with async_playwright() as p:
         browser = await p.chromium.launch(
             headless=True,
@@ -293,12 +300,15 @@ async def crawl_tyres_portal(portal_config: dict):
         clicked = await click_dashboard_nav(page)
         if not clicked:
             logger.info("  Fallback → direct URL: %s", DASHBOARD_URL)
-            await page.goto(DASHBOARD_URL, wait_until="domcontentloaded", timeout=30000)
             try:
-                await page.wait_for_load_state("networkidle", timeout=12000)
-            except Exception:
-                pass
-            await asyncio.sleep(3)
+                await page.goto(DASHBOARD_URL, wait_until="domcontentloaded", timeout=30000)
+                try:
+                    await page.wait_for_load_state("networkidle", timeout=12000)
+                except Exception:
+                    pass
+                await asyncio.sleep(3)
+            except Exception as e:
+                logger.warning("Failed to navigate to dashboard URL: %s", e)
         logger.info("  Dashboard URL after navigation: %s", page.url)
         snap = await save_snapshot(page, DASHBOARD_URL, await scroll_and_stitch(page))
         await diff_and_store(DASHBOARD_URL, snap, har_path)
@@ -306,10 +316,6 @@ async def crawl_tyres_portal(portal_config: dict):
         logger.info("Dashboard done ✓")
 
         # ── STEP 3: Rules dropdown ─────────────────────────────────────────────
-        # Navbar label: "Rules ▾"
-        # Dropdown shows:  AMENDMENT RULES section
-        #   • HOW (M & TM) Amendment Rules, 2022
-        #   • HOW (M & TM) Amendment Rules, 2024
         logger.info("═══ STEP 3: Rules dropdown ═══")
         await goto_home(page)
         rules_ss = await open_dropdown_and_screenshot(
@@ -326,17 +332,6 @@ async def crawl_tyres_portal(portal_config: dict):
             logger.warning("Rules dropdown screenshot skipped — element not found")
 
         # ── STEP 4: Important Informations dropdown ────────────────────────────
-        # Navbar label: "Important Informations ▾"
-        # Dropdown shows two sections:
-        #   RULES & GUIDELINES
-        #     • Notice and Environment Compensation (EC) Guidelines under
-        #       Hazardous and Other Wastes (M&TM) Amendments Rules, 2022 and Amendments thereof
-        #     • Notice issued to producers and recyclers regarding upload of
-        #       E-GST Linked invoice on EPR Portal  [NEW] [SCN]
-        #   GUIDANCE & SOP
-        #     • Guidance Document for Generation and Transfer of EPR Certificate
-        #     • Interim Arrangement (SOP)
-        #     • Mechanism for Interim Arrangement
         logger.info("═══ STEP 4: Important Informations dropdown ═══")
         await goto_home(page)
         imp_ss = await open_dropdown_and_screenshot(
@@ -356,8 +351,118 @@ async def crawl_tyres_portal(portal_config: dict):
         await context.close()
         await browser.close()
 
+    logger.info("PHASE 1 complete | pages_visited=%d", pages_visited)
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # PHASE 2 — Persistent context: post-login pages
+    # ══════════════════════════════════════════════════════════════════════════
+    post_login_pages = portal_config.get("post_login_pages", [])
+    if not post_login_pages:
+        logger.info("No post_login_pages configured — skipping Phase 2")
+        finish_crawl_log(crawl_id, pages_visited, status="done")
+        logger.info("═══ EPR TYRES ALL DONE: %d pages ═══", pages_visited)
+        return
+
+    logger.info("=" * 60)
+    logger.info("PHASE 2 - Persistent context post-login crawl")
+    logger.info("=" * 60)
+
+    profile_dir = get_profile_dir(portal_config)
+    first_run   = not profile_exists(portal_config)
+
+    if first_run:
+        logger.info("First run - no browser profile found at %s", profile_dir)
+        logger.info("Browser will open headful for manual login")
+    else:
+        logger.info("Browser profile found at %s - will attempt session restore", profile_dir)
+
+    async with async_playwright() as p:
+        persistent_ctx = await p.chromium.launch_persistent_context(
+            user_data_dir=str(profile_dir),
+            headless=False,
+            args=["--start-maximized", "--no-sandbox", "--disable-dev-shm-usage",
+                  "--disable-blink-features=AutomationControlled"],
+            viewport={"width": 1280, "height": 900},
+            ignore_https_errors=True,
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36"
+            ),
+        )
+
+        # Restore saved cookies if available
+        cookies_path = profile_dir / "cookies.json"
+        if cookies_path.exists():
+            try:
+                cookies = json.loads(cookies_path.read_text())
+                await persistent_ctx.add_cookies(cookies)
+                logger.info("Session cookies restored from %s", cookies_path)
+            except Exception as e:
+                logger.warning("Failed to restore session cookies: %s", e)
+
+        page = await persistent_ctx.new_page()
+
+        # Ensure logged in
+        try:
+            await ensure_logged_in(page, portal_config)
+        except TimeoutError as e:
+            logger.error("Login timed out: %s", e)
+            await persistent_ctx.close()
+            finish_crawl_log(crawl_id, pages_visited, status="error")
+            return
+        except Exception as e:
+            logger.error("Login failed: %s", e)
+            await persistent_ctx.close()
+            finish_crawl_log(crawl_id, pages_visited, status="error")
+            return
+
+        # Crawl each post-login page
+        for step_idx, page_cfg in enumerate(post_login_pages, start=5):
+            label    = page_cfg.get("label", f"PostLogin_{step_idx}")
+            url      = page_cfg.get("url", "")
+            method   = page_cfg.get("method", "scroll")
+            page_key = HOME_URL + f"__LOGGEDIN_{label}"
+
+            if not url:
+                logger.warning("Step %d: no URL for '%s' — skipping", step_idx, label)
+                continue
+
+            logger.info("=== STEP %d: %s (%s) ===", step_idx, label, method)
+
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                try:
+                    await page.wait_for_load_state("networkidle", timeout=8000)
+                except Exception:
+                    pass
+                await asyncio.sleep(2)
+            except Exception as e:
+                logger.warning("Navigation failed for '%s': %s", label, e)
+                continue
+
+            if method == "scroll":
+                screenshot_bytes = await scroll_and_stitch(page)
+            else:
+                screenshot_bytes = await page.screenshot(full_page=False, type="png")
+
+            snap = await save_snapshot(page, page_key, screenshot_bytes)
+            await diff_and_store(page_key, snap, har_path)
+            pages_visited += 1
+            logger.info("  '%s' done | pages_visited=%d", label, pages_visited)
+
+        # Save cookies before closing
+        try:
+            await save_context_cookies(persistent_ctx, portal_config)
+        except Exception as e:
+            logger.warning("Failed to save session cookies: %s", e)
+
+        await persistent_ctx.close()
+        logger.info("Persistent browser profile saved to %s", profile_dir)
+
     finish_crawl_log(crawl_id, pages_visited, status="done")
     logger.info("═══ EPR TYRES ALL DONE: %d pages ═══", pages_visited)
+    logger.info("CRAWL_FINISHED: %d pages", pages_visited)
+    logger.info("ALL DONE - pages complete")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

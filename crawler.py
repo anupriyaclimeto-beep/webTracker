@@ -9,15 +9,26 @@ Routes:
   EPR ELV      → crawler_elv.py
   EPR USEDOIL  → crawler_usedoil.py
 
-Plastic portal steps:
-  1. Home page                        → scroll & stitch
-  2. Plastic Waste Management         → dropdown screenshot
-  3. About EPR                        → dropdown screenshot
-  4. About EPR sub-pages (4 pages)    → scroll & stitch each
-  5. Important Documents              → click dropdown + scroll page
-  6. Bulk Upload                      → click dropdown + viewport screenshot
-  7. Lodge Complaint                  → click dropdown + viewport screenshot
-  8. SOP                              → click dropdown + viewport screenshot
+EPR Plastic crawl — two phases:
+
+  PHASE 1 — Headless (public, pre-login):
+    1.  Home page                        → scroll & stitch
+    2.  Plastic Waste Management         → dropdown screenshot
+    3.  About EPR                        → dropdown screenshot
+    4.  About EPR sub-pages (4 pages)    → scroll & stitch each
+    5.  Important Documents              → click dropdown + scroll page
+    6.  Bulk Upload                      → click dropdown + viewport screenshot
+    7.  Lodge Complaint                  → click dropdown + viewport screenshot
+    8.  SOP                              → click dropdown + viewport screenshot
+
+  PHASE 2 — Headful persistent context (post-login):
+    9+. All pages in config post_login_pages list
+        - First run   : browser opens, user logs in manually, profile saved to disk
+        - After that  : session restored from disk automatically, no interaction needed
+        - Session dead: browser re-opens for re-login, profile refreshed
+
+Flag files written during run (same pattern as .crawler.pid):
+  .login_needed  → app.py shows amber "waiting for login" banner
 """
 
 import asyncio
@@ -27,13 +38,19 @@ import io
 import json
 import logging
 import re
+import shutil
 from datetime import datetime
 from pathlib import Path
 
 from PIL import Image
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
 
-from auth import handle_auth
+from auth import (
+    handle_auth,
+    ensure_logged_in,
+    get_profile_dir,
+    profile_exists,
+)
 from diff_engine import run_all_diffs
 from storage import (
     init_db, update_baseline, get_baseline,
@@ -48,8 +65,8 @@ with open("config.json") as f:
     config = json.load(f)
 
 from storage import ARCHIVE_DIR
-HOME_URL    = "https://eprplastic.cpcb.gov.in/#/plastic/home"
-BASE_URL    = "https://eprplastic.cpcb.gov.in/"
+HOME_URL = "https://eprplastic.cpcb.gov.in/#/plastic/home"
+BASE_URL = "https://eprplastic.cpcb.gov.in/"
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -107,12 +124,11 @@ async def save_snapshot(page, portal_name: str, key: str, screenshot_bytes: byte
         "screenshot_path":  str(screenshot_path),
     }
 
+
 async def diff_and_store(portal_name: str, url: str, snap: dict, har_path: str):
     baseline = get_baseline(portal_name, url)
 
-    # Save highlighted diff image alongside the snapshot
-    from pathlib import Path as _Path
-    _snap_dir      = _Path(snap["screenshot_path"]).parent
+    _snap_dir      = Path(snap["screenshot_path"]).parent
     _diff_img_path = str(_snap_dir / "diff_highlight.png")
 
     diff_result = await run_all_diffs(
@@ -120,11 +136,11 @@ async def diff_and_store(portal_name: str, url: str, snap: dict, har_path: str):
         current_screenshot=snap["screenshot_bytes"],
         current_html=snap["html"],
         baseline=baseline,
-        diff_image_save_path=_diff_img_path,   # ← NEW
+        diff_image_save_path=_diff_img_path,
     )
-    # Upload screenshot and HTML snapshot to Cloudinary
+
     screenshot_url = upload_to_cloudinary(snap["screenshot_path"], resource_type="image")
-    html_url       = upload_to_cloudinary(snap["html_path"], resource_type="raw")
+    html_url       = upload_to_cloudinary(snap["html_path"],        resource_type="raw")
     if screenshot_url:
         logger.info("  Cloudinary screenshot: %s", screenshot_url)
     if html_url:
@@ -148,6 +164,7 @@ async def diff_and_store(portal_name: str, url: str, snap: dict, har_path: str):
                           diff_type=diff_type, diff_detail=diff_data,
                           screenshot_url=screenshot_url, html_url=html_url)
                 logger.info("  Change detected: %s | %s", url, diff_type)
+
     # Cleanup local archive folder
     try:
         shutil.rmtree(_snap_dir)
@@ -186,7 +203,32 @@ async def scroll_and_stitch(page) -> bytes:
     return buf.getvalue()
 
 
-# ── EPR Plastic crawl ─────────────────────────────────────────────────────────
+# ── Browser config helper ─────────────────────────────────────────────────────
+
+def _browser_args():
+    return [
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-blink-features=AutomationControlled",
+    ]
+
+def _user_agent():
+    return (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36"
+    )
+
+def _viewport():
+    browser_cfg = config.get("browser", {})
+    return {
+        "width":  browser_cfg.get("viewport", {}).get("width",  1280),
+        "height": browser_cfg.get("viewport", {}).get("height",  900),
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EPR Plastic crawl
+# ══════════════════════════════════════════════════════════════════════════════
 
 async def crawl_portal(portal_config: dict):
     portal_name = portal_config["name"]
@@ -198,31 +240,24 @@ async def crawl_portal(portal_config: dict):
     pages_visited = 0
     logger.info("Starting crawl for portal: %s (crawl_id=%s)", portal_name, crawl_id)
 
+    # ══════════════════════════════════════════════════════════════════════════
+    # PHASE 1 — Headless: public pre-login pages (steps 1–8)
+    # ══════════════════════════════════════════════════════════════════════════
+    logger.info("━" * 60)
+    logger.info("PHASE 1 — Headless pre-login crawl (steps 1–8)")
+    logger.info("━" * 60)
+
     async with async_playwright() as p:
-        browser_cfg = config.get("browser", {})
-        browser     = await p.chromium.launch(
-            headless=True,
-            args=[
-                "--no-sandbox",
-                "--disable-dev-shm-usage",
-                "--disable-blink-features=AutomationControlled",
-            ],
-        )
+        browser = await p.chromium.launch(headless=True, args=_browser_args())
         context = await browser.new_context(
-            viewport={
-                "width":  browser_cfg.get("viewport", {}).get("width",  1280),
-                "height": browser_cfg.get("viewport", {}).get("height",  900),
-            },
+            viewport=_viewport(),
             record_har_path=har_path,
             ignore_https_errors=True,
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36"
-            ),
+            user_agent=_user_agent(),
         )
         page = await context.new_page()
 
-        # ── Auth ──────────────────────────────────────────────────────────────
+        # Auth (public for pre-login phase — just navigate)
         try:
             await handle_auth(page, portal_config)
         except Exception as e:
@@ -231,7 +266,7 @@ async def crawl_portal(portal_config: dict):
             finish_crawl_log(crawl_id, 0, status="error")
             return
 
-        # ── STEP 1: Home page ─────────────────────────────────────────────────
+        # ── STEP 1: Home page ─────────────────────────────────────────────
         logger.info("═══ STEP 1: Home page — scroll & stitch ═══")
         await safe_goto(page, HOME_URL, label="Home")
         snap = await save_snapshot(page, portal_name, HOME_URL,
@@ -240,7 +275,7 @@ async def crawl_portal(portal_config: dict):
         pages_visited += 1
         logger.info("Home page done ✓ | pages_visited=%d", pages_visited)
 
-        # ── STEP 2: Plastic Waste Management dropdown ─────────────────────────
+        # ── STEP 2: Plastic Waste Management dropdown ──────────────────────
         logger.info("═══ STEP 2: Plastic Waste Management dropdown ═══")
         dropdown_key = HOME_URL + "__DROPDOWN_PlasticWasteManagement"
         clicked = False
@@ -269,7 +304,7 @@ async def crawl_portal(portal_config: dict):
         else:
             logger.warning("  Could not find 'Plastic Waste Management' link")
 
-        # ── STEP 3: About EPR dropdown ────────────────────────────────────────
+        # ── STEP 3: About EPR dropdown ────────────────────────────────────
         logger.info("═══ STEP 3: About EPR dropdown ═══")
         about_epr_key = HOME_URL + "__DROPDOWN_AboutEPR"
 
@@ -300,7 +335,7 @@ async def crawl_portal(portal_config: dict):
         else:
             logger.warning("  Could not find 'About EPR' link")
 
-        # ── STEP 4: About EPR sub-pages ───────────────────────────────────────
+        # ── STEP 4: About EPR sub-pages ───────────────────────────────────
         about_epr_subpages = [
             ("Categories Of Plastic Waste", "#/plastic/home/categoriesepr"),
             ("EPR Target",                  "#/plastic/home/eprtargets"),
@@ -313,15 +348,14 @@ async def crawl_portal(portal_config: dict):
             await safe_goto(page, BASE_URL, label=label)
             await page.evaluate(f"window.location.hash = '{item_hash}'")
             await asyncio.sleep(1)
-            logger.info("  Navigated to: %s", page.url)
             item_snap = await save_snapshot(page, portal_name, item_url,
                                             await scroll_and_stitch(page))
             await diff_and_store(portal_name, item_url, item_snap, har_path)
             pages_visited += 1
             logger.info("  ✓ '%s' saved | pages_visited=%d", label, pages_visited)
 
-        # ── STEP 5: Important Documents — click + scroll page ─────────────────
-        logger.info("═══ STEP 5: Important Documents dropdown — click + scroll page ═══")
+        # ── STEP 5: Important Documents ───────────────────────────────────
+        logger.info("═══ STEP 5: Important Documents dropdown ═══")
         imp_docs_key = HOME_URL + "__DROPDOWN_ImportantDocuments"
         await safe_goto(page, HOME_URL, label="Important Documents")
         imp_opened = False
@@ -335,7 +369,6 @@ async def crawl_portal(portal_config: dict):
                 if await el.is_visible(timeout=3000):
                     await el.click()
                     await asyncio.sleep(1.5)
-                    logger.info("  Dropdown opened — page is now scrollable")
                     imp_opened = True
                     break
             except Exception:
@@ -345,12 +378,12 @@ async def crawl_portal(portal_config: dict):
                                         await scroll_and_stitch(page))
             await diff_and_store(portal_name, imp_docs_key, snap5, har_path)
             pages_visited += 1
-            logger.info("  Important Documents full snapshot done ✓ | pages_visited=%d", pages_visited)
+            logger.info("  Important Documents done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'Important Documents' link")
 
-        # ── STEP 6: Bulk Upload — click + viewport screenshot ─────────────────
-        logger.info("═══ STEP 6: Bulk Upload dropdown — click + screenshot ═══")
+        # ── STEP 6: Bulk Upload ───────────────────────────────────────────
+        logger.info("═══ STEP 6: Bulk Upload dropdown ═══")
         bulk_upload_key = HOME_URL + "__DROPDOWN_BulkUpload"
         await safe_goto(page, HOME_URL, label="Bulk Upload")
         bulk_opened = False
@@ -364,7 +397,6 @@ async def crawl_portal(portal_config: dict):
                 if await el.is_visible(timeout=3000):
                     await el.click()
                     await asyncio.sleep(1.5)
-                    logger.info("  Bulk Upload dropdown opened")
                     bulk_opened = True
                     break
             except Exception:
@@ -374,12 +406,12 @@ async def crawl_portal(portal_config: dict):
                                         await page.screenshot(full_page=False, type="png"))
             await diff_and_store(portal_name, bulk_upload_key, snap6, har_path)
             pages_visited += 1
-            logger.info("  Bulk Upload snapshot done ✓ | pages_visited=%d", pages_visited)
+            logger.info("  Bulk Upload done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'Bulk Upload' link")
 
-        # ── STEP 7: Lodge Complaint — click + viewport screenshot ─────────────
-        logger.info("═══ STEP 7: Lodge Complaint dropdown — click + screenshot ═══")
+        # ── STEP 7: Lodge Complaint ───────────────────────────────────────
+        logger.info("═══ STEP 7: Lodge Complaint dropdown ═══")
         lodge_key = HOME_URL + "__DROPDOWN_LodgeComplaint"
         await safe_goto(page, HOME_URL, label="Lodge Complaint")
         lodge_opened = False
@@ -393,7 +425,6 @@ async def crawl_portal(portal_config: dict):
                 if await el.is_visible(timeout=3000):
                     await el.click()
                     await asyncio.sleep(1.5)
-                    logger.info("  Lodge Complaint dropdown opened")
                     lodge_opened = True
                     break
             except Exception:
@@ -403,12 +434,12 @@ async def crawl_portal(portal_config: dict):
                                         await page.screenshot(full_page=False, type="png"))
             await diff_and_store(portal_name, lodge_key, snap7, har_path)
             pages_visited += 1
-            logger.info("  Lodge Complaint snapshot done ✓ | pages_visited=%d", pages_visited)
+            logger.info("  Lodge Complaint done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'Lodge Complaint' link")
 
-        # ── STEP 8: SOP — click + viewport screenshot ─────────────────────────
-        logger.info("═══ STEP 8: SOP dropdown — click + screenshot ═══")
+        # ── STEP 8: SOP ───────────────────────────────────────────────────
+        logger.info("═══ STEP 8: SOP dropdown ═══")
         sop_key = HOME_URL + "__DROPDOWN_SOP"
         await safe_goto(page, HOME_URL, label="SOP")
         sop_opened = False
@@ -422,7 +453,6 @@ async def crawl_portal(portal_config: dict):
                 if await el.is_visible(timeout=3000):
                     await el.click()
                     await asyncio.sleep(1.5)
-                    logger.info("  SOP dropdown opened")
                     sop_opened = True
                     break
             except Exception:
@@ -432,32 +462,156 @@ async def crawl_portal(portal_config: dict):
                                         await page.screenshot(full_page=False, type="png"))
             await diff_and_store(portal_name, sop_key, snap8, har_path)
             pages_visited += 1
-            logger.info("  SOP snapshot done ✓ | pages_visited=%d", pages_visited)
+            logger.info("  SOP done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'SOP' link")
 
         await context.close()
         await browser.close()
 
+    logger.info("PHASE 1 complete ✓ | pages_visited=%d", pages_visited)
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # PHASE 2 — Headful persistent context: post-login pages (steps 9+)
+    # ══════════════════════════════════════════════════════════════════════════
+    post_login_pages = portal_config.get("post_login_pages", [])
+    if not post_login_pages:
+        logger.info("No post_login_pages configured — skipping Phase 2")
+        finish_crawl_log(crawl_id, pages_visited, status="done")
+        logger.info("═══ EPR PLASTIC ALL DONE: %d pages crawled ═══", pages_visited)
+        logger.info("CRAWL_FINISHED: %d pages", pages_visited)
+        logger.info("ALL DONE — pages complete")
+        return
+
+    logger.info("━" * 60)
+    logger.info("PHASE 2 — Persistent context post-login crawl (steps 9+)")
+    logger.info("━" * 60)
+
+    profile_dir = get_profile_dir(portal_config)
+    first_run   = not profile_exists(portal_config)
+
+    if first_run:
+        logger.info("First run — no browser profile found at %s", profile_dir)
+        logger.info("Browser will open headful for manual login")
+    else:
+        logger.info("Browser profile found at %s — will attempt session restore", profile_dir)
+
+    async with async_playwright() as p:
+        # launch_persistent_context returns a context directly (not browser + context)
+        persistent_ctx = await p.chromium.launch_persistent_context(
+            user_data_dir=str(profile_dir),
+            headless=False,          # always headful for post-login (shows login window if needed)
+            args=_browser_args() + ["--start-maximized"],
+            viewport=_viewport(),
+            ignore_https_errors=True,
+            user_agent=_user_agent(),
+        )
+
+        # Load and restore cookies if cookies.json exists
+        cookies_path = profile_dir / "cookies.json"
+        if cookies_path.exists():
+            try:
+                cookies = json.loads(cookies_path.read_text())
+                await persistent_ctx.add_cookies(cookies)
+                logger.info("Session cookies restored from %s", cookies_path)
+            except Exception as e:
+                logger.warning("Failed to restore session cookies: %s", e)
+
+        page = await persistent_ctx.new_page()
+
+        # ── Ensure logged in (restore session or prompt manual login) ──────
+        try:
+            await ensure_logged_in(page, portal_config)
+        except TimeoutError as e:
+            logger.error("Login timed out: %s", e)
+            await persistent_ctx.close()
+            finish_crawl_log(crawl_id, pages_visited, status="error")
+            return
+        except Exception as e:
+            logger.error("Login failed: %s", e)
+            await persistent_ctx.close()
+            finish_crawl_log(crawl_id, pages_visited, status="error")
+            return
+
+        # ── Steps 9+: crawl each post-login page ──────────────────────────
+        for step_idx, page_cfg in enumerate(post_login_pages, start=9):
+            label      = page_cfg.get("label", f"PostLogin_{step_idx}")
+            url        = page_cfg.get("url", "")
+            method     = page_cfg.get("method", "scroll")  # "scroll" or "viewport"
+            page_key   = HOME_URL + f"__LOGGEDIN_{label}"
+
+            if not url:
+                logger.warning("Step %d: no URL configured for '%s' — skipping", step_idx, label)
+                continue
+
+            logger.info("═══ STEP %d: %s (%s) ═══", step_idx, label, method)
+
+            # Re-check session before each page (defensive — long crawls can expire mid-run)
+            try:
+                if not await _quick_session_check(page, portal_config):
+                    logger.warning("Session dropped mid-crawl — attempting re-login")
+                    await ensure_logged_in(page, portal_config)
+            except Exception as e:
+                logger.error("Re-login failed at step %d: %s — skipping remaining post-login pages", step_idx, e)
+                break
+
+            await safe_goto(page, url, label=label)
+
+            if method == "scroll":
+                screenshot_bytes = await scroll_and_stitch(page)
+            else:
+                screenshot_bytes = await page.screenshot(full_page=False, type="png")
+
+            snap = await save_snapshot(page, portal_name, page_key, screenshot_bytes)
+            await diff_and_store(portal_name, page_key, snap, har_path)
+            pages_visited += 1
+            logger.info("  ✓ '%s' done | pages_visited=%d", label, pages_visited)
+
+        # Save cookies at the end of crawl
+        try:
+            from auth import save_context_cookies
+            await save_context_cookies(persistent_ctx, portal_config)
+        except Exception as e:
+            logger.warning("Failed to save session cookies at end of crawl: %s", e)
+
+        # Profile is auto-saved to disk on context.close()
+        await persistent_ctx.close()
+        logger.info("Persistent browser profile saved to %s", profile_dir)
+
     finish_crawl_log(crawl_id, pages_visited, status="done")
     logger.info("═══ EPR PLASTIC ALL DONE: %d pages crawled ═══", pages_visited)
-    # explicit finish markers for UI to detect in logs
     logger.info("CRAWL_FINISHED: %d pages", pages_visited)
     logger.info("ALL DONE — pages complete")
 
 
+async def _quick_session_check(page, portal_config: dict) -> bool:
+    """
+    Lightweight session check — does NOT navigate away.
+    Just checks if the current URL looks like an authenticated page.
+    Falls back to full is_logged_in() if ambiguous.
+    """
+    current_url = page.url
+    login_url   = portal_config.get("login_url", "")
+
+    # If we're already on a login/sign page, session is dead
+    if "login" in current_url.lower() or "sign-in" in current_url.lower():
+        return False
+
+    # If we're on the home/public page (redirected after session expire), check properly
+    if current_url.rstrip("/") == HOME_URL.rstrip("/") or current_url == BASE_URL:
+        from auth import is_logged_in
+        return await is_logged_in(page, portal_config)
+
+    # Looks like we're on an authenticated page
+    return True
+
+
 # ── Multi-portal router ───────────────────────────────────────────────────────
-# ONE definition only — routes by portal name, respects --portal filter.
 
 async def run_all_portals(portal_name_filter: str | None = None):
-    """
-    Iterate over portals in config.json.
-    If portal_name_filter is set, only run that one portal.
-    """
     for portal in config.get("portals", []):
         name = portal["name"]
 
-        # ── honour --portal filter ────────────────────────────────────────────
         if portal_name_filter and name != portal_name_filter:
             logger.info("Skipping portal: %s (filter=%s)", name, portal_name_filter)
             continue
@@ -487,21 +641,23 @@ async def run_all_portals(portal_name_filter: str | None = None):
             else:
                 logger.warning("Unknown portal '%s' — skipping", name)
                 continue
-                
+
             logger.info("Portal %s finished ✓", name)
         except Exception as e:
-            logger.error("Portal %s failed with error: %s", name, e, exc_info=True)
-            # Finish crawl log as failed if it was created and didn't close
+            logger.error("Portal %s failed: %s", name, e, exc_info=True)
             try:
-                from storage import query_db, exec_db
-                exec_db("UPDATE crawl_log SET status='failed', finished_at=datetime('now') WHERE portal=? AND status='running'", (name,))
+                from storage import exec_db
+                exec_db(
+                    "UPDATE crawl_log SET status='failed', finished_at=datetime('now') "
+                    "WHERE portal=? AND status='running'",
+                    (name,)
+                )
             except Exception:
                 pass
             continue
 
 
 async def scheduler(portal_name_filter: str | None = None):
-    """Run all portals on a loop, sleeping between runs."""
     while True:
         await run_all_portals(portal_name_filter)
         intervals = [
@@ -519,18 +675,28 @@ async def scheduler(portal_name_filter: str | None = None):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="CPCB EPR Portal Crawler")
+    parser.add_argument("--portal", help="Run only this portal, e.g. 'EPR PLASTIC'")
+    parser.add_argument("--once", action="store_true", help="Run once and exit")
     parser.add_argument(
-        "--portal",
-        help="Run only this portal, e.g. 'EPR PLASTIC' or 'EPR TYRES'",
-    )
-    parser.add_argument(
-        "--once",
+        "--clear-profile",
         action="store_true",
-        help="Run once and exit (no scheduler loop)",
+        help="Delete the saved browser profile for the selected portal (forces re-login next run)"
     )
     args = parser.parse_args()
     init_db()
-    if args.once:
+
+    if args.clear_profile:
+        from auth import clear_profile
+        portal_name = args.portal or "EPR PLASTIC"
+        portal_cfg  = next(
+            (p for p in config.get("portals", []) if p["name"] == portal_name), None
+        )
+        if portal_cfg:
+            cleared = clear_profile(portal_cfg)
+            print(f"Profile {'cleared' if cleared else 'did not exist'} for {portal_name}")
+        else:
+            print(f"Portal '{portal_name}' not found in config.json")
+    elif args.once:
         asyncio.run(run_all_portals(args.portal))
     else:
         asyncio.run(scheduler(args.portal))

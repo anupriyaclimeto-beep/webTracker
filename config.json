@@ -3,59 +3,153 @@
     {
       "name": "EPR PLASTIC",
       "url": "https://eprplastic.cpcb.gov.in/#/plastic/home",
-      "auth": "manual",
+      "auth": "persistent",
       "crawl_interval_minutes": 60,
       "crawl": {
         "only_home": true,
         "capture_dropdowns": true
-      }
+      },
+      "login_url": "https://eprplastic.cpcb.gov.in/#/plastic/login",
+      "login_success_selector": "app-header .user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-root app-home-nav",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/EPR_PLASTIC",
+      "post_login_pages": [
+        {
+          "label": "Dashboard",
+          "url": "https://eprplastic.cpcb.gov.in/#/plastic/dashboard",
+          "method": "scroll"
+        },
+        {
+          "label": "Annual_Return",
+          "url": "https://eprplastic.cpcb.gov.in/#/plastic/annual-return",
+          "method": "scroll"
+        },
+        {
+          "label": "EPR_Certificate",
+          "url": "https://eprplastic.cpcb.gov.in/#/plastic/epr-certificate",
+          "method": "viewport"
+        },
+        {
+          "label": "Compliance_Report",
+          "url": "https://eprplastic.cpcb.gov.in/#/plastic/compliance-report",
+          "method": "scroll"
+        },
+        {
+          "label": "Profile",
+          "url": "https://eprplastic.cpcb.gov.in/#/plastic/profile",
+          "method": "scroll"
+        },
+        {
+          "label": "Transaction_History",
+          "url": "https://eprplastic.cpcb.gov.in/#/plastic/transaction-history",
+          "method": "scroll"
+        }
+      ]
     },
     {
       "name": "EPR EWASTE",
       "url": "https://eprewaste.cpcb.gov.in/#/",
-      "auth": "none",
+      "auth": "persistent",
       "crawl_interval_minutes": 60,
       "crawl": {
         "only_home": true,
         "capture_dropdowns": true
-      }
+      },
+      "login_url": "https://eprewaste.cpcb.gov.in/#/",
+      "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout'), .profile-name, [class*='user-info'], button:has-text('Logout')",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/EPR_EWASTE",
+      "post_login_pages": [
+        {
+          "label": "Dashboard",
+          "url": "https://eprewaste.cpcb.gov.in/#/dashboard",
+          "method": "scroll"
+        }
+      ]
     },
     {
       "name": "EPR BATTERY",
       "url": "https://eprbattery.cpcb.gov.in/",
-      "auth": "none",
+      "auth": "persistent",
       "crawl_interval_minutes": 60,
       "crawl": {
         "only_home": true,
         "capture_dropdowns": true
-      }
+      },
+      "login_url": "https://eprbattery.cpcb.gov.in/user/login",
+      "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout')",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/EPR_BATTERY",
+      "post_login_pages": [
+        {
+          "label": "Dashboard",
+          "url": "https://eprbattery.cpcb.gov.in/user/dashboard",
+          "method": "scroll"
+        }
+      ]
     },
     {
       "name": "EPR TYRES",
       "url": "https://eprtyres.cpcb.gov.in/",
-      "auth": "none",
+      "auth": "persistent",
       "crawl_interval_minutes": 60,
       "crawl": {
         "only_home": true,
         "capture_dropdowns": true
-      }
+      },
+      "login_url": "https://eprtyres.cpcb.gov.in/user/login",
+      "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout')",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/EPR_TYRES",
+      "post_login_pages": [
+        {
+          "label": "Dashboard",
+          "url": "https://eprtyres.cpcb.gov.in/user/dashboard",
+          "method": "scroll"
+        }
+      ]
     },
     {
       "name": "EPR USEDOIL",
       "url": "https://eprusedoil.cpcb.gov.in/",
-      "auth": "none",
+      "auth": "persistent",
       "crawl_interval_minutes": 60,
       "crawl": {
         "only_home": true,
         "capture_dropdowns": true
-      }
+      },
+      "login_url": "https://eprusedoil.cpcb.gov.in/login",
+      "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout')",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/EPR_USEDOIL",
+      "post_login_pages": [
+        {
+          "label": "Dashboard",
+          "url": "https://eprusedoil.cpcb.gov.in/dashboard",
+          "method": "scroll"
+        }
+      ]
     },
     {
       "name": "EPR ELV",
       "url": "https://eprelv.cpcb.gov.in/",
-      "auth": "none",
+      "auth": "persistent",
       "crawl_interval_minutes": 60,
-      "crawl": { "only_home": true, "capture_dropdowns": true }
+      "crawl": {
+        "only_home": true,
+        "capture_dropdowns": true
+      },
+      "login_url": "https://eprelv.cpcb.gov.in/login",
+      "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout')",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/EPR_ELV",
+      "post_login_pages": [
+        {
+          "label": "Dashboard",
+          "url": "https://eprelv.cpcb.gov.in/dashboard",
+          "method": "scroll"
+        }
+      ]
     }
   ],
   "schedule": {
@@ -77,8 +171,6 @@
   "browser": {
     "headless": true,
     "timeout_ms": 30000,
-    "persistent": true,
-    "user_data_dir": "browser_session",
     "viewport": {
       "width": 1280,
       "height": 800
