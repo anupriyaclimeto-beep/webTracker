@@ -230,6 +230,11 @@ async def wait_for_manual_login(page: Page, portal_config: dict) -> bool:
     login_clean = _clean(login_url) if login_url else ""
 
     while timeout_secs <= 0 or (time.time() - start < timeout_secs):
+        if page.is_closed():
+            logger.warning("Browser window was manually closed by the user. Aborting login.")
+            _delete_login_flag()
+            raise RuntimeError("Browser window closed manually by the user.")
+
         elapsed = int(time.time() - start)
 
         # Check selector
