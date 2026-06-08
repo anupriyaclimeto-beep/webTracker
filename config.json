@@ -76,7 +76,7 @@
         "only_home": true,
         "capture_dropdowns": true
       },
-      "login_url": "https://eprbattery.cpcb.gov.in/user/login",
+      "login_url": "https://eprbattery.cpcb.gov.in/",
       "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout')",
       "login_timeout_seconds": 0,
       "browser_profile_dir": "browser_profiles/EPR_BATTERY",
