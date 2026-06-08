@@ -105,9 +105,16 @@ async def is_logged_in(page: Page, portal_config: dict) -> bool:
     portal_home_url = portal_config.get("url", "")
     login_url       = portal_config.get("login_url", "")
 
-    # Use the first post-login page to check if logged in (since that requires authentication)
-    post_login_pages = portal_config.get("post_login_pages", [])
-    dashboard_url = post_login_pages[0]["url"] if post_login_pages else portal_home_url
+    # Use explicit session_check_url if given, else use first post-login page,
+    # else fall back to portal home. Avoids using public pages as session check.
+    session_check_url = portal_config.get("session_check_url", "")
+    post_login_pages  = portal_config.get("post_login_pages", [])
+    if session_check_url:
+        dashboard_url = session_check_url
+    elif post_login_pages:
+        dashboard_url = post_login_pages[0]["url"]
+    else:
+        dashboard_url = portal_home_url
 
     if not selector:
         logger.warning("No login_success_selector configured — assuming logged in")
@@ -230,7 +237,10 @@ async def wait_for_manual_login(page: Page, portal_config: dict) -> bool:
     login_clean = _clean(login_url) if login_url else ""
 
     while timeout_secs <= 0 or (time.time() - start < timeout_secs):
-        if page.is_closed():
+        # Only check for manual browser close after 5s (avoids false positive
+        # during initial navigation/redirects when Playwright may briefly
+        # report page as closed)
+        if page.is_closed() and (time.time() - start) > 5:
             logger.warning("Browser window was manually closed by the user. Aborting login.")
             _delete_login_flag()
             raise RuntimeError("Browser window closed manually by the user.")
