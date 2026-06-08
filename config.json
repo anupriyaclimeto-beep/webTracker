@@ -83,7 +83,7 @@
       "post_login_pages": [
         {
           "label": "Dashboard",
-          "url": "https://eprbattery.cpcb.gov.in/user/dashboard",
+          "url": "https://eprbattery.cpcb.gov.in/user/nationaldashboard",
           "method": "scroll"
         }
       ]
