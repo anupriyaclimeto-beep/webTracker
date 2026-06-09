@@ -32,6 +32,18 @@ Flag files written during run (same pattern as .crawler.pid):
 """
 
 import asyncio
+
+async def monitor_browser(context: BrowserContext, closed_event: asyncio.Event) -> None:
+    """Continuously monitor the persistent context. If all pages close, set the event.
+    This runs in a background task while the crawler proceeds.
+    """
+    while True:
+        open_pages = [p for p in context.pages if not p.is_closed()]
+        if not open_pages:
+            closed_event.set()
+            break
+        await asyncio.sleep(1)
+
 import os
 os.environ.setdefault("PWDEBUG", "0")
 import io
@@ -69,7 +81,181 @@ HOME_URL = "https://eprplastic.cpcb.gov.in/#/plastic/home"
 BASE_URL = "https://eprplastic.cpcb.gov.in/"
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# ── Helpers ────────────────------------------------------------------------───
+
+def normalize_url(url: str) -> str:
+    return url.lower().replace("https://", "").replace("http://", "").rstrip("/")
+
+
+async def discover_sidebar_pages(page, portal_config) -> list:
+    """
+    Dynamically finds and expands all dropdowns in the sidebar/navigation panel,
+    extracts all valid links, and returns a list of dictionaries with label, url, and method.
+    """
+    logger.info("Starting dynamic sidebar page discovery...")
+    # 1. Wait for page/sidebar to be loaded
+    await page.wait_for_load_state("domcontentloaded")
+    await asyncio.sleep(2)
+    
+    # 2. Try to locate the sidebar element
+    sidebar_selectors = [
+        "aside", "nav", ".sidebar", ".left-sidebar", "app-sidebar", 
+        "app-left-menu", ".main-sidebar", "[class*='sidebar']", "[class*='menu']"
+    ]
+    sidebar = None
+    for sel in sidebar_selectors:
+        try:
+            el = page.locator(sel).first
+            if await el.is_visible(timeout=2000):
+                sidebar = el
+                logger.info("Found sidebar container matching selector: %s", sel)
+                break
+        except Exception:
+            continue
+    
+    if sidebar is None:
+        logger.warning("Could not find sidebar container — falling back to page body")
+        sidebar = page.locator("body")
+
+    # 3. Find and click dropdown toggles to expand all sub-menus
+    dropdown_labels = [
+        "Producer", "Road Making Declaration", "PIBO Operations", "Annual Filings",
+        "Operations", "Filings", "Registration", "Declaration"
+    ]
+    
+    caret_selectors = [
+        "i[class*='arrow']", "i[class*='chevron']", "i[class*='caret']", "i[class*='angle']",
+        "mat-icon:has-text('keyboard_arrow_down')", "mat-icon:has-text('expand_more')",
+        ".caret", ".arrow", "[class*='arrow']", "[class*='chevron']"
+    ]
+    
+    toggles = []
+    # Check by labels
+    for label in dropdown_labels:
+        loc = sidebar.locator(f"a:has-text('{label}'), li:has-text('{label}'), div:has-text('{label}')").first
+        try:
+            if await loc.is_visible(timeout=1000):
+                toggles.append(loc)
+        except Exception:
+            pass
+            
+    # Check by caret selectors
+    for sel in caret_selectors:
+        try:
+            locs = sidebar.locator(sel)
+            count = await locs.count()
+            for i in range(count):
+                loc = locs.nth(i)
+                # Walk up to the clickable parent
+                parent = loc.locator("xpath=./ancestor::*[self::a or self::li or self::button or self::div][1]")
+                if await parent.is_visible(timeout=500):
+                    toggles.append(parent)
+        except Exception:
+            pass
+
+    # De-duplicate toggles by element handles
+    unique_toggles = []
+    seen_handles = set()
+    for t in toggles:
+        try:
+            h = await t.element_handle()
+            if h and h not in seen_handles:
+                seen_handles.add(h)
+                unique_toggles.append(t)
+        except Exception:
+            pass
+
+    logger.info("Found %d potential dropdown toggles to expand", len(unique_toggles))
+    for idx, t in enumerate(unique_toggles):
+        try:
+            text = (await t.inner_text()).split("\n")[0].strip()
+            if any(w in text.lower() for w in ["logout", "signout", "exit", "home", "dashboard"]):
+                continue
+                
+            # Check if it is already expanded
+            is_expanded = False
+            for attr in ["aria-expanded", "aria-selected"]:
+                val = await t.get_attribute(attr)
+                if val == "true":
+                    is_expanded = True
+                    break
+            if not is_expanded:
+                cls = await t.get_attribute("class") or ""
+                if any(w in cls.lower() for w in ["active", "expanded", "open", "show"]):
+                    is_expanded = True
+            
+            if is_expanded:
+                logger.info("  Toggle [%d]: '%s' is already expanded, skipping click", idx, text)
+                continue
+
+            logger.info("  Clicking toggle [%d]: '%s' to expand", idx, text)
+            await t.click()
+            await asyncio.sleep(0.8) # wait for animation
+        except Exception as e:
+            logger.debug("Failed to click toggle %d: %s", idx, e)
+
+    # 4. Collect all links (a tags) in the sidebar
+    links_loc = sidebar.locator("a")
+    count = await links_loc.count()
+    logger.info("Scanning %d 'a' elements in sidebar...", count)
+    
+    discovered_pages = []
+    seen_urls = set()
+    
+    for i in range(count):
+        try:
+            link = links_loc.nth(i)
+            if not await link.is_visible():
+                continue
+            
+            text = (await link.inner_text()).strip().replace("\n", " ")
+            href = await link.get_attribute("href")
+            router_link = await link.get_attribute("routerlink")
+            
+            # Resolve URL
+            url = href or router_link or ""
+            if not url or url.startswith("javascript:") or url == "#" or url == "/":
+                continue
+                
+            # Clean up / construct absolute URL
+            if url.startswith("#/"):
+                base = portal_config["url"].split("#")[0].rstrip("/")
+                url = f"{base}/{url}"
+            elif url.startswith("/"):
+                base = portal_config["url"].split("#")[0].rstrip("/")
+                from urllib.parse import urlparse
+                parsed = urlparse(base)
+                url = f"{parsed.scheme}://{parsed.netloc}{url}"
+            elif not url.startswith("http"):
+                base = portal_config["url"].split("#")[0].rstrip("/")
+                url = f"{base}/{url}"
+                
+            # Skip logouts, external links
+            text_lower = text.lower()
+            if any(w in text_lower for w in ["logout", "sign out", "signout", "exit", "log out"]):
+                continue
+            # Skip duplicate urls
+            if url in seen_urls:
+                continue
+                
+            seen_urls.add(url)
+            
+            # Generate safe label
+            label = re.sub(r"[^a-zA-Z0-9_]", "_", text).strip("_")
+            if not label:
+                label = f"Page_{len(discovered_pages) + 1}"
+                
+            discovered_pages.append({
+                "label": label,
+                "url": url,
+                "method": "scroll"
+            })
+            logger.info("  Discovered page: label='%s', url='%s'", label, url)
+        except Exception as e:
+            logger.warning("Error processing link %d: %s", i, e)
+            
+    return discovered_pages
+
 
 async def safe_goto(page, url: str, *, label: str = ""):
     """Navigate with up to 3 retries — resilient against govt-portal timeouts."""
@@ -497,31 +683,21 @@ async def crawl_portal(portal_config: dict):
         logger.info("Browser profile found at %s — will attempt session restore", profile_dir)
 
     async with async_playwright() as p:
-        # launch_persistent_context returns a context directly (not browser + context)
-        persistent_ctx = await p.chromium.launch_persistent_context(
-            user_data_dir=str(profile_dir),
-            headless=False,          # always headful for post-login (shows login window if needed)
-            args=_browser_args() + ["--start-maximized"],
-            viewport=_viewport(),
-            ignore_https_errors=True,
-            user_agent=_user_agent(),
-        )
+        from auth import launch_persistent_context, monitor_browser
+        persistent_ctx = await launch_persistent_context(p, portal_config)
+        browser_closed_event = asyncio.Event()
+        monitor_task = asyncio.create_task(monitor_browser(persistent_ctx, browser_closed_event))
+        page = persistent_ctx.pages[0] if persistent_ctx.pages else await persistent_ctx.new_page()
 
-        # Load and restore cookies if cookies.json exists
-        cookies_path = profile_dir / "cookies.json"
-        if cookies_path.exists():
-            try:
-                cookies = json.loads(cookies_path.read_text())
-                await persistent_ctx.add_cookies(cookies)
-                logger.info("Session cookies restored from %s", cookies_path)
-            except Exception as e:
-                logger.warning("Failed to restore session cookies: %s", e)
-
-        page = await persistent_ctx.new_page()
+        if browser_closed_event.is_set():
+            logger.info("User closed the browser before any navigation – aborting crawl")
+            finish_crawl_log(crawl_id, pages_visited, status="aborted")
+            await persistent_ctx.close()
+            return
 
         # ── Ensure logged in (restore session or prompt manual login) ──────
         try:
-            await ensure_logged_in(page, portal_config)
+            await ensure_logged_in(page, portal_config, force_manual=first_run)
         except TimeoutError as e:
             logger.error("Login timed out: %s", e)
             await persistent_ctx.close()
@@ -530,15 +706,56 @@ async def crawl_portal(portal_config: dict):
         except Exception as e:
             logger.error("Login failed: %s", e)
             await persistent_ctx.close()
+            if "closed manually" in str(e) or browser_closed_event.is_set():
+                finish_crawl_log(crawl_id, pages_visited, status="stopped")
+                logger.info("Exiting crawler due to manual browser closure.")
+                import sys
+                sys.exit(0)
             finish_crawl_log(crawl_id, pages_visited, status="error")
             return
 
+        if browser_closed_event.is_set():
+            logger.info("User closed the browser after login – aborting crawl")
+            finish_crawl_log(crawl_id, pages_visited, status="stopped")
+            await persistent_ctx.close()
+            import sys
+            sys.exit(0)
+
+        # ── Dynamic Sidebar Discovery ─────────────────────────────────────
+        try:
+            discovered = await discover_sidebar_pages(page, portal_config)
+            logger.info("Discovered %d pages from sidebar", len(discovered))
+        except Exception as e:
+            logger.error("Failed to dynamically discover sidebar pages: %s", e)
+            discovered = []
+
+        # Merge configured pages and dynamically discovered pages
+        final_pages = []
+        seen_normalized = set()
+
+        # 1. Add configured pages first (preserves labels and custom methods like pibo_unregistered)
+        for page_cfg in post_login_pages:
+            url_cfg = page_cfg.get("url", "")
+            if url_cfg:
+                final_pages.append(page_cfg)
+                seen_normalized.add(normalize_url(url_cfg))
+
+        # 2. Add discovered pages that aren't already configured
+        for page_cfg in discovered:
+            norm = normalize_url(page_cfg["url"])
+            if norm not in seen_normalized:
+                final_pages.append(page_cfg)
+                seen_normalized.add(norm)
+
+        logger.info("Total post-login pages to crawl: %d (configured: %d, newly discovered: %d)",
+                    len(final_pages), len(post_login_pages), len(final_pages) - len(post_login_pages))
+
         # ── Steps 9+: crawl each post-login page ──────────────────────────
-        for step_idx, page_cfg in enumerate(post_login_pages, start=9):
-            label      = page_cfg.get("label", f"PostLogin_{step_idx}")
-            url        = page_cfg.get("url", "")
-            method     = page_cfg.get("method", "scroll")  # "scroll" or "viewport"
-            page_key   = HOME_URL + f"__LOGGEDIN_{label}"
+        for step_idx, page_cfg in enumerate(final_pages, start=9):
+            label    = page_cfg.get("label", f"PostLogin_{step_idx}")
+            url      = page_cfg.get("url", "")
+            method   = page_cfg.get("method", "scroll")  # "scroll", "viewport", or "pibo_unregistered"
+            page_key = HOME_URL + f"__LOGGEDIN_{label}"
 
             if not url:
                 logger.warning("Step %d: no URL configured for '%s' — skipping", step_idx, label)
@@ -546,14 +763,31 @@ async def crawl_portal(portal_config: dict):
 
             logger.info("═══ STEP %d: %s (%s) ═══", step_idx, label, method)
 
-            # Re-check session before each page (defensive — long crawls can expire mid-run)
+            # Re-check session before each page
             try:
                 if not await _quick_session_check(page, portal_config):
                     logger.warning("Session dropped mid-crawl — attempting re-login")
                     await ensure_logged_in(page, portal_config)
             except Exception as e:
-                logger.error("Re-login failed at step %d: %s — skipping remaining post-login pages", step_idx, e)
+                logger.error("Re-login failed at step %d: %s — skipping remaining pages", step_idx, e)
+                if "closed manually" in str(e) or browser_closed_event.is_set():
+                    browser_closed_event.set()
                 break
+
+            if browser_closed_event.is_set():
+                logger.info("User closed the browser during crawl – aborting")
+                break
+
+            # Special deep-crawl mode for PIBO Unregistered Procurement
+            if method == "pibo_unregistered":
+                from pibo_crawler import crawl_pibo_unregistered_procurement
+                sub_count = await crawl_pibo_unregistered_procurement(
+                    page, portal_name, har_path,
+                    save_snapshot, diff_and_store, scroll_and_stitch, safe_goto, HOME_URL
+                )
+                pages_visited += sub_count
+                logger.info("  PIBO Unregistered done | pages_visited=%d", pages_visited)
+                continue
 
             await safe_goto(page, url, label=label)
 
@@ -565,7 +799,7 @@ async def crawl_portal(portal_config: dict):
             snap = await save_snapshot(page, portal_name, page_key, screenshot_bytes)
             await diff_and_store(portal_name, page_key, snap, har_path)
             pages_visited += 1
-            logger.info("  ✓ '%s' done | pages_visited=%d", label, pages_visited)
+            logger.info("  '%s' done | pages_visited=%d", label, pages_visited)
 
         # Save cookies at the end of crawl
         try:
@@ -574,9 +808,19 @@ async def crawl_portal(portal_config: dict):
         except Exception as e:
             logger.warning("Failed to save session cookies at end of crawl: %s", e)
 
-        # Profile is auto-saved to disk on context.close()
-        await persistent_ctx.close()
-        logger.info("Persistent browser profile saved to %s", profile_dir)
+        if not browser_closed_event.is_set():
+            from auth import wait_for_user_to_close
+            await wait_for_user_to_close(persistent_ctx)
+            logger.info("Persistent browser profile saved to %s", profile_dir)
+        else:
+            await persistent_ctx.close()
+        monitor_task.cancel()
+
+    if browser_closed_event.is_set():
+        finish_crawl_log(crawl_id, pages_visited, status="stopped")
+        logger.info("Crawl aborted due to manual browser closure.")
+        import sys
+        sys.exit(0)
 
     finish_crawl_log(crawl_id, pages_visited, status="done")
     logger.info("═══ EPR PLASTIC ALL DONE: %d pages crawled ═══", pages_visited)
@@ -604,6 +848,206 @@ async def _quick_session_check(page, portal_config: dict) -> bool:
 
     # Looks like we're on an authenticated page
     return True
+
+
+async def crawl_pibo_unregistered_procurement(page, portal_name: str, har_path: str) -> int:
+    """
+    Deep crawl of PIBO Operations → Unregistered Procurement.
+    Steps:
+      1. Navigate to Unregistered Procurement page
+      2. Scroll full page to footer → screenshot
+      3. Click "Add New" button → form modal opens
+      4. Screenshot form (initial state)
+      5. Click Registration Type dropdown → "Unregistered" option → screenshot
+      6. Close & reopen form → click Entity Type dropdown → screenshot each option
+      7. Close & reopen form → click Plastic Material Type dropdown → scroll options → screenshot
+    Returns count of pages/states captured.
+    """
+    PIBO_URL   = "https://eprplastic.cpcb.gov.in/#/plastic/pibo-unregistered-procurement"
+    BASE_KEY   = HOME_URL + "__LOGGEDIN_PIBO_Unregistered_Procurement"
+    pv         = 0
+
+    logger.info("═══ PIBO Unregistered Procurement — full deep crawl ═══")
+
+    # ── 1. Navigate and scroll full page to footer ────────────────────────────
+    logger.info("  Step 1: Navigate and scroll to footer")
+    await safe_goto(page, PIBO_URL, label="PIBO Unregistered Procurement")
+    screenshot_bytes = await scroll_and_stitch(page)
+    snap = await save_snapshot(page, portal_name, BASE_KEY + "__fullpage", screenshot_bytes)
+    await diff_and_store(portal_name, BASE_KEY + "__fullpage", snap, har_path)
+    pv += 1
+    logger.info("  Full page scrolled & stitched ✓")
+
+    # ── Helper: open the "Add New" modal ──────────────────────────────────────
+    async def open_add_new_modal() -> bool:
+        """Click the Add New button and wait for modal to appear."""
+        for sel in [
+            "button:has-text('Add New')",
+            "button:has-text('Add new')",
+            "button:has-text('+ Add New')",
+            "a:has-text('Add New')",
+            ".btn:has-text('Add')",
+            "[class*='add']:has-text('New')",
+        ]:
+            try:
+                el = page.locator(sel).first
+                if await el.is_visible(timeout=3000):
+                    await el.click()
+                    await asyncio.sleep(1.5)
+                    # Wait for modal
+                    try:
+                        await page.wait_for_selector(
+                            ".modal, mat-dialog-container, [role='dialog'], .dialog-container",
+                            timeout=5000
+                        )
+                    except Exception:
+                        pass
+                    await asyncio.sleep(0.5)
+                    logger.info("  Add New modal opened via: %s", sel)
+                    return True
+            except Exception:
+                continue
+        logger.warning("  Could not find 'Add New' button")
+        return False
+
+    # ── Helper: close modal ───────────────────────────────────────────────────
+    async def close_modal():
+        for sel in [
+            "button:has-text('×')", "button:has-text('Close')",
+            ".modal-header .close", ".btn-close",
+            "[aria-label='Close']", "mat-dialog-container button:first-child",
+        ]:
+            try:
+                el = page.locator(sel).first
+                if await el.is_visible(timeout=1500):
+                    await el.click()
+                    await asyncio.sleep(1)
+                    return
+            except Exception:
+                continue
+        await page.keyboard.press("Escape")
+        await asyncio.sleep(1)
+
+    # ── Helper: click a dropdown in the form and screenshot ───────────────────
+    async def click_form_dropdown_and_screenshot(dropdown_label: str, key_suffix: str) -> bool:
+        """
+        Find a dropdown by its label text, click it to open, scroll through options,
+        and take a full screenshot of the expanded dropdown.
+        """
+        for sel in [
+            f"mat-select[placeholder*='{dropdown_label}']:not([disabled])",
+            f"mat-select:near(:text('{dropdown_label}'), 100)",
+            f"select:near(:text('{dropdown_label}'), 100)",
+            f"[class*='select']:near(:text('{dropdown_label}'), 100)",
+            f".ng-select:near(:text('{dropdown_label}'), 100)",
+        ]:
+            try:
+                el = page.locator(sel).first
+                if await el.is_visible(timeout=2000):
+                    await el.click()
+                    await asyncio.sleep(1.2)
+                    # Scroll dropdown options if present
+                    try:
+                        panel = page.locator(
+                            "mat-option, .mat-option, .dropdown-item, .ng-option, [role='option']"
+                        ).first
+                        await panel.wait_for(timeout=3000)
+                        # Scroll to bottom of options list
+                        await page.evaluate("""
+                            const panel = document.querySelector(
+                                '.mat-select-panel, .cdk-overlay-pane, .dropdown-menu, .ng-dropdown-panel'
+                            );
+                            if (panel) panel.scrollTop = panel.scrollHeight;
+                        """)
+                        await asyncio.sleep(0.5)
+                    except Exception:
+                        pass
+                    snap = await save_snapshot(
+                        page, portal_name,
+                        BASE_KEY + f"__form__{key_suffix}",
+                        await page.screenshot(full_page=False, type="png")
+                    )
+                    await diff_and_store(portal_name, BASE_KEY + f"__form__{key_suffix}", snap, har_path)
+                    logger.info("  Dropdown '%s' captured ✓", dropdown_label)
+                    # Close dropdown
+                    await page.keyboard.press("Escape")
+                    await asyncio.sleep(0.5)
+                    return True
+            except Exception:
+                continue
+        logger.warning("  Dropdown '%s' not found", dropdown_label)
+        return False
+
+    # ── 2. Open modal — initial screenshot ───────────────────────────────────
+    logger.info("  Step 2: Open Add New modal (initial state)")
+    if await open_add_new_modal():
+        snap = await save_snapshot(
+            page, portal_name,
+            BASE_KEY + "__form__initial",
+            await page.screenshot(full_page=False, type="png")
+        )
+        await diff_and_store(portal_name, BASE_KEY + "__form__initial", snap, har_path)
+        pv += 1
+        logger.info("  Form initial state captured ✓")
+
+        # ── 3. Registration Type dropdown (Registered / Unregistered) ─────────
+        logger.info("  Step 3: Registration Type dropdown")
+        if await click_form_dropdown_and_screenshot("Registration Type", "RegistrationType_dropdown"):
+            pv += 1
+
+        # Select "Unregistered" option to reveal more fields ──────────────────
+        logger.info("  Step 3b: Select 'Unregistered' option")
+        for sel in [
+            "mat-option:has-text('Unregistered')",
+            ".mat-option:has-text('Unregistered')",
+            "[role='option']:has-text('Unregistered')",
+            ".dropdown-item:has-text('Unregistered')",
+        ]:
+            try:
+                el = page.locator(sel).first
+                if await el.is_visible(timeout=3000):
+                    await el.click()
+                    await asyncio.sleep(1.5)
+                    snap = await save_snapshot(
+                        page, portal_name,
+                        BASE_KEY + "__form__after_unregistered_selected",
+                        await page.screenshot(full_page=False, type="png")
+                    )
+                    await diff_and_store(portal_name, BASE_KEY + "__form__after_unregistered_selected", snap, har_path)
+                    pv += 1
+                    logger.info("  'Unregistered' selected, new fields captured ✓")
+                    break
+            except Exception:
+                continue
+
+        # ── 4. Entity Type dropdown ──────────────────────────────────────────
+        logger.info("  Step 4: Entity Type dropdown")
+        if await click_form_dropdown_and_screenshot("Entity Type", "EntityType_dropdown"):
+            pv += 1
+
+        # ── 5. Plastic Material Type dropdown ────────────────────────────────
+        logger.info("  Step 5: Plastic Material Type dropdown")
+        if await click_form_dropdown_and_screenshot("Plastic Material Type", "PlasticMaterialType_dropdown"):
+            pv += 1
+
+        # ── 6. Final form screenshot (all visible fields filled/empty) ────────
+        logger.info("  Step 6: Final form state screenshot")
+        snap = await save_snapshot(
+            page, portal_name,
+            BASE_KEY + "__form__final_state",
+            await page.screenshot(full_page=False, type="png")
+        )
+        await diff_and_store(portal_name, BASE_KEY + "__form__final_state", snap, har_path)
+        pv += 1
+
+        # Close modal
+        await close_modal()
+        logger.info("  Modal closed ✓")
+    else:
+        logger.warning("  Skipping form screenshots — Add New button not found")
+
+    logger.info("  PIBO Unregistered Procurement complete | sub-pages captured: %d", pv)
+    return pv
 
 
 # ── Multi-portal router ───────────────────────────────────────────────────────

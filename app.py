@@ -539,6 +539,22 @@ def fix_stale_crawls():
     except Exception: pass
 
 
+def tee_output(pipe, log_file, is_stderr=False):
+    try:
+        with open(log_file, "a", encoding="utf-8", errors="replace") as f:
+            for line in iter(pipe.readline, ""):
+                f.write(line)
+                f.flush()
+                if is_stderr:
+                    sys.stderr.write(line)
+                    sys.stderr.flush()
+                else:
+                    sys.stdout.write(line)
+                    sys.stdout.flush()
+    except Exception as e:
+        print(f"Error in logging tee: {e}")
+
+
 def launch_crawl(portal=None):
     cmd = [sys.executable, "crawler.py", "--once"]
     if portal:
@@ -549,12 +565,39 @@ def launch_crawl(portal=None):
             try: env[k] = str(st.secrets[k])
             except Exception: pass
     subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], check=False)
-    log_fh = open(LOG_FILE, "w", encoding="utf-8", buffering=1)
-    proc   = subprocess.Popen(cmd, stdout=log_fh, stderr=log_fh,
-                               cwd=_BASE_APP_DIR, env=env)
+    
+    # Reset log file
     try:
+        if os.path.exists(LOG_FILE):
+            os.remove(LOG_FILE)
+    except Exception:
+        pass
+    try:
+        with open(LOG_FILE, "w", encoding="utf-8") as f:
+            f.write("")
+    except Exception:
+        pass
+
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            cwd=_BASE_APP_DIR,
+            env=env
+        )
+        
+        t1 = threading.Thread(target=tee_output, args=(proc.stdout, LOG_FILE, False), daemon=True)
+        t2 = threading.Thread(target=tee_output, args=(proc.stderr, LOG_FILE, True), daemon=True)
+        t1.start()
+        t2.start()
+        
         with open(PID_FILE, "w") as f: f.write(str(proc.pid))
-    except Exception: pass
+    except Exception as e:
+        print(f"Failed to launch crawl: {e}")
 
 
 def read_log(tail=60):
@@ -648,18 +691,40 @@ def get_portal_stats(portal=None):
             merged.append(s)
     return merged
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=15)
 def get_latest_crawl_changes(portal=None):
+    """Return changes from the most recent crawl run (any finished status)."""
+    # Accept any status except 'running' so error/aborted/stopped crawls
+    # still show their captured changes in the UI.
     if portal:
-        row = query_db("SELECT started_at,finished_at FROM crawl_log WHERE portal=? AND status='done' ORDER BY started_at DESC LIMIT 1", (portal,))
+        row = query_db(
+            "SELECT started_at,finished_at FROM crawl_log "
+            "WHERE portal=? AND status NOT IN ('running') "
+            "ORDER BY started_at DESC LIMIT 1",
+            (portal,)
+        )
     else:
-        row = query_db("SELECT started_at,finished_at FROM crawl_log WHERE status='done' ORDER BY started_at DESC LIMIT 1")
-    if not row: return []
+        row = query_db(
+            "SELECT started_at,finished_at FROM crawl_log "
+            "WHERE status NOT IN ('running') "
+            "ORDER BY started_at DESC LIMIT 1"
+        )
+    if not row:
+        return []
     s = row[0]["started_at"]
+    # Add 5-minute buffer after finished_at to catch late-written records
     f = row[0]["finished_at"] or datetime.now().isoformat()
     if portal:
-        return query_db("SELECT * FROM changes WHERE portal=? AND timestamp>=? AND timestamp<=? ORDER BY timestamp DESC LIMIT 200", (portal, s, f))
-    return query_db("SELECT * FROM changes WHERE timestamp>=? AND timestamp<=? ORDER BY timestamp DESC LIMIT 200", (s, f))
+        return query_db(
+            "SELECT * FROM changes WHERE portal=? AND timestamp>=? "
+            "ORDER BY timestamp DESC LIMIT 500",
+            (portal, s)
+        )
+    return query_db(
+        "SELECT * FROM changes WHERE timestamp>=? "
+        "ORDER BY timestamp DESC LIMIT 500",
+        (s,)
+    )
 
 @st.cache_data(ttl=30)
 def get_crawl_history(portal=None, limit=50):
@@ -800,6 +865,21 @@ all_portals    = get_all_portals()
 portal_options = ["All Portals"] + all_portals
 running_crawl  = is_crawl_running()
 waiting_login  = is_waiting_for_login()
+
+# If no crawl is running, but we think a manual crawl is running, check if it has actually exited
+if not running_crawl and st.session_state.get("crawler_manual_running"):
+    started_at_str = st.session_state.get("crawler_manual_started_at")
+    if started_at_str:
+        try:
+            started_at = datetime.fromisoformat(started_at_str)
+            elapsed = (datetime.now() - started_at).total_seconds()
+            if elapsed > 10:  # If more than 10 seconds elapsed and no crawl is running in DB/process, it must have finished or crashed
+                st.session_state.pop("crawler_manual_running", None)
+                st.session_state.pop("crawler_manual_started_at", None)
+                st.rerun()
+        except Exception:
+            st.session_state.pop("crawler_manual_running", None)
+
 
 @st.cache_data(ttl=60)
 def _get_global_counts():
@@ -1123,9 +1203,25 @@ if st.session_state.view == "overview":
 # ════════════════════════════════════════════════════════════════════════════════
 elif st.session_state.view == "changes":
     scope = f"Portal: **{st.session_state.portal}**" if portal_filter else "All portals"
-    st.markdown(f"<div class='page-title'>🚨 Latest Changes</div>"
-                f"<div class='page-subtitle'>Scope: {scope} · Most recent crawl run</div>",
-                unsafe_allow_html=True)
+
+    # --- resolve the crawl run timestamp to show in subtitle ---
+    _cl_row = query_db(
+        "SELECT started_at FROM crawl_log WHERE portal=? AND status NOT IN ('running') ORDER BY started_at DESC LIMIT 1",
+        (portal_filter,)
+    ) if portal_filter else query_db(
+        "SELECT started_at FROM crawl_log WHERE status NOT IN ('running') ORDER BY started_at DESC LIMIT 1"
+    )
+    _run_label = f"Crawl run: {_cl_row[0]['started_at'][:16]}" if _cl_row else "Most recent crawl run"
+
+    _title_col, _refresh_col = st.columns([8, 1])
+    with _title_col:
+        st.markdown(f"<div class='page-title'>🚨 Latest Changes</div>"
+                    f"<div class='page-subtitle'>Scope: {scope} · {_run_label}</div>",
+                    unsafe_allow_html=True)
+    with _refresh_col:
+        if st.button("🔄", help="Refresh changes", key="btn_refresh_changes"):
+            get_latest_crawl_changes.clear()
+            st.rerun()
 
     f1, f2, f3, f4 = st.columns([2, 2, 2, 3])
     with f1:
@@ -1138,6 +1234,9 @@ elif st.session_state.view == "changes":
         search_q    = st.text_input("🔍 Search page", placeholder="e.g. Home, SOP, Dashboard…", key="search_q")
 
     st.markdown("<hr style='margin:8px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
+
+    # Re-fetch with cleared cache if just refreshed
+    latest_changes = get_latest_crawl_changes(portal_filter)
 
     if not latest_changes:
         st.success("✅ No changes in the latest crawl.")
@@ -1160,6 +1259,8 @@ elif st.session_state.view == "changes":
         st.caption(f"Showing **{len(filtered)}** of {len(latest_changes)} change(s)")
         for change in filtered:
             render_change_expander(change)
+
+
 
 
 # ════════════════════════════════════════════════════════════════════════════════

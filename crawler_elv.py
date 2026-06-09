@@ -20,7 +20,7 @@ from playwright.async_api import async_playwright
 
 os.environ.setdefault("PWDEBUG", "0")
 
-from auth import handle_auth, ensure_logged_in, get_profile_dir, profile_exists, save_context_cookies
+from auth import handle_auth, ensure_logged_in, get_profile_dir, profile_exists, save_context_cookies, wait_for_user_to_close
 from diff_engine import run_all_diffs
 from storage import (
     init_db, update_baseline, get_baseline,
@@ -393,6 +393,11 @@ async def crawl_elv_portal(portal_config: dict):
         except Exception as e:
             logger.error("Login failed: %s", e)
             await persistent_ctx.close()
+            if "closed manually" in str(e) or "closed" in str(e).lower():
+                finish_crawl_log(crawl_id, pv, status="stopped")
+                logger.info("Exiting crawler due to manual browser closure.")
+                import sys
+                sys.exit(0)
             finish_crawl_log(crawl_id, pv, status="error")
             return
 
@@ -418,6 +423,12 @@ async def crawl_elv_portal(portal_config: dict):
                 await asyncio.sleep(2)
             except Exception as e:
                 logger.warning("Navigation failed for '%s': %s", label, e)
+                if "closed" in str(e).lower() or "detached" in str(e).lower():
+                    logger.info("Exiting crawler due to manual browser closure.")
+                    finish_crawl_log(crawl_id, pv, status="stopped")
+                    await persistent_ctx.close()
+                    import sys
+                    sys.exit(0)
                 continue
 
             if method == "scroll":
@@ -436,7 +447,7 @@ async def crawl_elv_portal(portal_config: dict):
         except Exception as e:
             logger.warning("Failed to save session cookies: %s", e)
 
-        await persistent_ctx.close()
+        await wait_for_user_to_close(persistent_ctx)
         logger.info("Persistent browser profile saved to %s", profile_dir)
 
     finish_crawl_log(crawl_id, pv, status="done")

@@ -10,7 +10,7 @@
         "capture_dropdowns": true
       },
       "login_url": "https://eprplastic.cpcb.gov.in/#/plastic/login",
-      "login_success_selector": "app-header .user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-root app-home-nav",
+      "login_success_selector": "app-header .user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), .logout-btn, a:has-text('Logout'), .profile-name",
       "login_timeout_seconds": 0,
       "browser_profile_dir": "browser_profiles/EPR_PLASTIC",
       "post_login_pages": [
@@ -43,6 +43,11 @@
           "label": "Transaction_History",
           "url": "https://eprplastic.cpcb.gov.in/#/plastic/transaction-history",
           "method": "scroll"
+        },
+        {
+          "label": "PIBO_Unregistered_Procurement",
+          "url": "https://eprplastic.cpcb.gov.in/#/plastic/pibo-unregistered-procurement",
+          "method": "pibo_unregistered"
         }
       ]
     },

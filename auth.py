@@ -58,8 +58,9 @@ def get_profile_dir(portal_config: dict) -> Path:
     return path
 
 
-async def save_context_cookies(context, portal_config: dict):
-    """Save the cookies of the browser context to cookies.json in the profile directory."""
+
+async def save_context_cookies(context: BrowserContext, portal_config: dict) -> None:
+    """Save session cookies to cookies.json in the portal profile directory."""
     try:
         cookies = await context.cookies()
         profile_dir = get_profile_dir(portal_config)
@@ -68,6 +69,49 @@ async def save_context_cookies(context, portal_config: dict):
         logger.info("Session cookies saved to %s", cookies_path)
     except Exception as e:
         logger.warning("Failed to save cookies: %s", e)
+
+
+
+async def monitor_browser(context: BrowserContext, closed_event: asyncio.Event) -> None:
+    """Monitor the persistent browser context. If the user closes all pages (or the context), set the closed_event.
+    This is used early in crawl_portal to abort if the browser is closed before navigation.
+    """
+    while not closed_event.is_set():
+        try:
+            # If there are no open pages, assume the user closed the browser.
+            open_pages = [p for p in context.pages if not p.is_closed()]
+            if not open_pages:
+                closed_event.set()
+                logger.info("User closed the persistent browser before navigation.")
+                break
+        except Exception as e:
+            logger.warning("Error while monitoring browser context: %s", e)
+        await asyncio.sleep(1)
+
+
+async def wait_for_user_to_close(context: BrowserContext) -> None:
+    """Wait until the user manually closes all browser pages, then close the context.
+    Called after all post-login pages have been crawled, so the user can review
+    the browser before it shuts down. Session cookies are saved BEFORE this call.
+    """
+    logger.info("=" * 60)
+    logger.info("CRAWL COMPLETE — Browser will stay open until you close it.")
+    logger.info("You can review the browser, then close it manually.")
+    logger.info("Session is already saved. Safe to close anytime.")
+    logger.info("=" * 60)
+    while True:
+        try:
+            open_pages = [p for p in context.pages if not p.is_closed()]
+            if not open_pages:
+                break
+        except Exception:
+            break
+        await asyncio.sleep(2)
+    try:
+        await context.close()
+    except Exception:
+        pass
+    logger.info("User closed the browser; context closed.")
 
 
 def profile_exists(portal_config: dict) -> bool:
@@ -237,13 +281,16 @@ async def wait_for_manual_login(page: Page, portal_config: dict) -> bool:
     login_clean = _clean(login_url) if login_url else ""
 
     while timeout_secs <= 0 or (time.time() - start < timeout_secs):
-        # Only check for manual browser close after 5s (avoids false positive
-        # during initial navigation/redirects when Playwright may briefly
-        # report page as closed)
-        if page.is_closed() and (time.time() - start) > 5:
+        # Only treat as closed if ALL pages in the context are gone (a single
+        # page may briefly report closed during Angular route changes).
+        open_pages = [p for p in page.context.pages if not p.is_closed()]
+        if not open_pages and (time.time() - start) > 3:
             logger.warning("Browser window was manually closed by the user. Aborting login.")
             _delete_login_flag()
             raise RuntimeError("Browser window closed manually by the user.")
+        if page.is_closed() and open_pages:
+            # Route change opened a new tab/page — switch to the latest one.
+            page = open_pages[-1]
 
         elapsed = int(time.time() - start)
 
@@ -332,7 +379,7 @@ async def wait_for_manual_login(page: Page, portal_config: dict) -> bool:
 # Main orchestrator called by crawler.py
 # ══════════════════════════════════════════════════════════════════════════════
 
-async def ensure_logged_in(page: Page, portal_config: dict) -> bool:
+async def ensure_logged_in(page: Page, portal_config: dict, *, force_manual: bool = False) -> bool:
     """
     Check if the current persistent-context session is valid.
     If yes  → log SESSION VALID and return immediately.
@@ -340,6 +387,13 @@ async def ensure_logged_in(page: Page, portal_config: dict) -> bool:
 
     Returns True on success, raises on timeout.
     """
+    if force_manual:
+        logger.info(
+            "First run for %s — opening browser for manual login (skipping session check)",
+            portal_config.get("name", ""),
+        )
+        return await wait_for_manual_login(page, portal_config)
+
     logger.info("Checking session validity for %s ...", portal_config.get("name", ""))
 
     if await is_logged_in(page, portal_config):
@@ -421,6 +475,35 @@ async def cookie_auth(page: Page, portal_config: dict):
     logger.info("Cookie auth — session loaded from %s", session_path)
     await page.goto(url, wait_until="networkidle", timeout=30000)
     logger.info("Cookie session applied successfully")
+
+
+async def launch_persistent_context(playwright, portal_config: dict) -> BrowserContext:
+    """Launch a persistent Chromium context using the portal's profile directory.
+    The context is headful (visible) to allow manual login when needed.
+    """
+    """Launch a persistent Chromium context using the portal's profile directory.
+    The context is headful (visible) to allow manual login when needed.
+    """
+    profile_dir = get_profile_dir(portal_config)
+    # Browser launch arguments – align with crawler's _browser_args()
+    args = ["--no-sandbox", "--disable-dev-shm-usage", "--disable-blink-features=AutomationControlled"]
+    # Viewport from config (fallback to defaults)
+    viewport_cfg = config.get("browser", {}).get("viewport", {})
+    viewport = {"width": viewport_cfg.get("width", 1280), "height": viewport_cfg.get("height", 900)}
+    # User agent fallback
+    user_agent = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36"
+    )
+    context = await playwright.chromium.launch_persistent_context(
+        user_data_dir=str(profile_dir),
+        headless=False,
+        args=args,
+        viewport=viewport,
+        user_agent=user_agent,
+        ignore_https_errors=True,
+    )
+    return context
 
 
 # ══════════════════════════════════════════════════════════════════════════════

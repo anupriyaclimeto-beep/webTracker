@@ -63,13 +63,18 @@ if USE_SUPABASE:
         f"sslmode=require"
     )
 
-    def get_conn():
-        """Return a fresh psycopg2 connection (Supabase)."""
-        return psycopg2.connect(_DSN, cursor_factory=RealDictCursor)
-else:
-    def get_conn():
-        """Return a fresh sqlite3 connection (local)."""
-        return sqlite3.connect(DB_PATH)
+def get_conn():
+    """
+    Return a fresh database connection.
+    Tries Supabase (PostgreSQL) first; if the connection fails, falls back to the local SQLite DB.
+    """
+    if USE_SUPABASE:
+        try:
+            return psycopg2.connect(_DSN, cursor_factory=RealDictCursor)
+        except Exception as e:
+            logger.warning("Supabase connection failed (%s). Falling back to local SQLite.", e)
+            globals()["USE_SUPABASE"] = False
+    return sqlite3.connect(DB_PATH)
 
 # ----------------------------------------------------------------------
 # Logging

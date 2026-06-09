@@ -1,119 +1,240 @@
-2026-06-08 12:42:01,527 [INFO] Database initialised at changes.db
-2026-06-08 12:42:01,528 [INFO] Skipping portal: EPR PLASTIC (filter=EPR EWASTE)
-2026-06-08 12:42:01,528 [INFO] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-2026-06-08 12:42:01,529 [INFO] Starting portal: EPR EWASTE
-2026-06-08 12:42:01,529 [INFO] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-2026-06-08 12:42:01,538 [INFO] ============================================================
-2026-06-08 12:42:01,538 [INFO] PHASE 1 - Headless public crawl
-2026-06-08 12:42:01,539 [INFO] ============================================================
-2026-06-08 12:42:13,545 [INFO] === STEP 1: Home page ===
-2026-06-08 12:42:28,653 [INFO]   scrollHeight=1376px viewport=900px
-2026-06-08 12:42:29,608 [INFO]   scrollY=0px piece=1
-2026-06-08 12:42:30,322 [INFO]   scrollY=668px piece=2
-2026-06-08 12:42:32,262 [INFO]   Stitched 1280x1376 from 2 pieces
-2026-06-08 12:42:32,817 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in\20260608_124232
-2026-06-08 12:42:32,828 [INFO] Failed to load baseline screenshot — skipping visual diff
-2026-06-08 12:42:32,830 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/ — any_changed=False
-2026-06-08 12:42:32,849 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/
-2026-06-08 12:42:32,855 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in\20260608_124232
-2026-06-08 12:42:32,856 [INFO] Home done | pages_visited=1
-2026-06-08 12:42:32,856 [INFO] === STEP 2: EPR dropdown ===
-2026-06-08 12:43:06,743 [INFO]   Clicked: 'EPR'
-2026-06-08 12:43:07,683 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_EPR\20260608_124307
-2026-06-08 12:43:07,691 [INFO] Failed to load baseline screenshot — skipping visual diff
-2026-06-08 12:43:07,693 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EPR — any_changed=False
-2026-06-08 12:43:07,739 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EPR
-2026-06-08 12:43:07,744 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_EPR\20260608_124307
-2026-06-08 12:43:08,285 [INFO]   EPR done \u2713
-2026-06-08 12:43:08,285 [INFO] === STEP 3: E-Waste Rules dropdown ===
-2026-06-08 12:43:11,946 [INFO]   Clicked: 'E-Waste Rules'
-2026-06-08 12:43:12,478 [INFO]   scrollHeight=1376px viewport=900px
-2026-06-08 12:43:13,288 [INFO]   scrollY=0px piece=1
-2026-06-08 12:43:13,999 [INFO]   scrollY=668px piece=2
-2026-06-08 12:43:15,865 [INFO]   Stitched 1280x1376 from 2 pieces
-2026-06-08 12:43:16,444 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_EWasteRules\20260608_124316
-2026-06-08 12:43:16,451 [INFO] Failed to load baseline screenshot — skipping visual diff
-2026-06-08 12:43:16,452 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EWasteRules — any_changed=False
-2026-06-08 12:43:16,471 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_EWasteRules
-2026-06-08 12:43:16,477 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_EWasteRules\20260608_124316
-2026-06-08 12:43:16,477 [INFO]   E-Waste Rules done | pages_visited=3
-2026-06-08 12:43:16,477 [INFO] === STEP 4: FAQ dropdown ===
-2026-06-08 12:43:20,099 [INFO]   Clicked: 'FAQ'
-2026-06-08 12:43:21,079 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_FAQ\20260608_124321
-2026-06-08 12:43:21,083 [INFO] Failed to load baseline screenshot — skipping visual diff
-2026-06-08 12:43:21,085 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_FAQ — any_changed=False
-2026-06-08 12:43:21,134 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_FAQ
-2026-06-08 12:43:21,139 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_FAQ\20260608_124321
-2026-06-08 12:43:21,663 [INFO]   FAQ done \u2713
-2026-06-08 12:43:21,663 [INFO] === STEP 5: SOP dropdown ===
-2026-06-08 12:43:25,306 [INFO]   Clicked: 'SOP'
-2026-06-08 12:43:26,246 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_SOP\20260608_124326
-2026-06-08 12:43:26,251 [INFO] Failed to load baseline screenshot — skipping visual diff
-2026-06-08 12:43:26,253 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_SOP — any_changed=False
-2026-06-08 12:43:26,298 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_SOP
-2026-06-08 12:43:26,304 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_SOP\20260608_124326
-2026-06-08 12:43:26,826 [INFO]   SOP done \u2713
-2026-06-08 12:43:26,827 [INFO] === STEP 6: Important Links dropdown ===
-2026-06-08 12:43:30,469 [INFO]   Clicked: 'Important Links'
-2026-06-08 12:43:31,460 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_ImportantLinks\20260608_124331
-2026-06-08 12:43:31,465 [INFO] Failed to load baseline screenshot — skipping visual diff
-2026-06-08 12:43:31,466 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_ImportantLinks — any_changed=False
-2026-06-08 12:43:31,487 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_ImportantLinks
-2026-06-08 12:43:31,492 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_ImportantLinks\20260608_124331
-2026-06-08 12:43:32,010 [INFO]   Important Links done \u2713
-2026-06-08 12:43:32,010 [INFO] === STEP 7: Downloads dropdown ===
-2026-06-08 12:43:35,617 [INFO]   Clicked: 'Downloads'
-2026-06-08 12:43:36,143 [INFO]   scrollHeight=1376px viewport=900px
-2026-06-08 12:43:37,011 [INFO]   scrollY=0px piece=1
-2026-06-08 12:43:37,679 [INFO]   scrollY=668px piece=2
-2026-06-08 12:43:39,542 [INFO]   Stitched 1280x1376 from 2 pieces
-2026-06-08 12:43:40,101 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_Downloads\20260608_124340
-2026-06-08 12:43:40,106 [INFO] Failed to load baseline screenshot — skipping visual diff
-2026-06-08 12:43:40,108 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__DROPDOWN_Downloads — any_changed=False
-2026-06-08 12:43:40,150 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__DROPDOWN_Downloads
-2026-06-08 12:43:40,158 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_DROPDOWN_Downloads\20260608_124340
-2026-06-08 12:43:40,159 [INFO]   Downloads done | pages_visited=7
-2026-06-08 12:43:40,159 [INFO] === STEP 8: Dashboards page ===
-2026-06-08 12:43:44,185 [INFO]   Clicked: 'Dashboard'
-2026-06-08 12:43:46,728 [INFO]   scrollHeight=1570px viewport=900px
-2026-06-08 12:43:47,629 [INFO]   scrollY=0px piece=1
-2026-06-08 12:43:48,291 [INFO]   scrollY=900px piece=2
-2026-06-08 12:43:50,198 [INFO]   Stitched 1280x1570 from 2 pieces
-2026-06-08 12:43:50,752 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_PAGE_Dashboards\20260608_124350
-2026-06-08 12:43:50,758 [INFO] Failed to load baseline screenshot — skipping visual diff
-2026-06-08 12:43:50,760 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__PAGE_Dashboards — any_changed=False
-2026-06-08 12:43:50,776 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__PAGE_Dashboards
-2026-06-08 12:43:50,781 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_PAGE_Dashboards\20260608_124350
-2026-06-08 12:43:50,781 [INFO]   Dashboards done | pages_visited=8
-2026-06-08 12:43:50,781 [INFO] === STEP 9: Lodge Complaint dropdown ===
-2026-06-08 12:43:52,895 [WARNING]   Could not find any of: ('Lodge Complaint',)
-2026-06-08 12:43:53,485 [INFO] PHASE 1 complete | pages_visited=8
-2026-06-08 12:43:53,486 [INFO] ============================================================
-2026-06-08 12:43:53,486 [INFO] PHASE 2 - Persistent context post-login crawl
-2026-06-08 12:43:53,486 [INFO] ============================================================
-2026-06-08 12:43:53,488 [INFO] Browser profile found at C:\web_projects\webtracker\browser_profiles\EPR_EWASTE - will attempt session restore
-2026-06-08 12:43:54,842 [INFO] Session cookies restored from C:\web_projects\webtracker\browser_profiles\EPR_EWASTE\cookies.json
-2026-06-08 12:43:54,909 [INFO] Checking session validity for EPR EWASTE ...
-2026-06-08 12:43:57,975 [INFO] SESSION VALID — not on login/public home page (https://eprewaste.cpcb.gov.in/#/404)
-2026-06-08 12:43:57,975 [INFO] SESSION VALID — skipping manual login, proceeding to post-login crawl
-2026-06-08 12:43:57,975 [INFO] === STEP 10: Dashboard (scroll) ===
-2026-06-08 12:44:08,596 [INFO]   scrollHeight=900px viewport=900px
-2026-06-08 12:44:09,171 [INFO]   scrollY=0px piece=1
-2026-06-08 12:44:10,730 [INFO]   Stitched 1280x900 from 1 pieces
-2026-06-08 12:44:16,275 [INFO] \u2713 Saved \u2192 archive\EPR EWASTE\eprewaste.cpcb.gov.in_LOGGEDIN_Dashboard\20260608_124416
-2026-06-08 12:44:16,279 [INFO] Failed to load baseline screenshot — skipping visual diff
-2026-06-08 12:44:16,280 [INFO] Diff complete for https://eprewaste.cpcb.gov.in/#/__LOGGEDIN_Dashboard — any_changed=False
-2026-06-08 12:44:16,293 [INFO] Baseline updated - portal=EPR EWASTE url=https://eprewaste.cpcb.gov.in/#/__LOGGEDIN_Dashboard
-2026-06-08 12:44:16,295 [INFO] \u2713 Cleaned up local archive archive\EPR EWASTE\eprewaste.cpcb.gov.in_LOGGEDIN_Dashboard\20260608_124416
-2026-06-08 12:44:16,296 [INFO]   'Dashboard' done | pages_visited=9
-2026-06-08 12:44:16,305 [INFO] Session cookies saved to C:\web_projects\webtracker\browser_profiles\EPR_EWASTE\cookies.json
-2026-06-08 12:44:16,962 [INFO] Persistent browser profile saved to C:\web_projects\webtracker\browser_profiles\EPR_EWASTE
-2026-06-08 12:44:17,015 [INFO] Crawl log finished - id=7 pages=9 status=done
-2026-06-08 12:44:17,015 [INFO] === EPR E-WASTE ALL DONE: 9 pages ===
-2026-06-08 12:44:17,015 [INFO] CRAWL_FINISHED: 9 pages
-2026-06-08 12:44:17,015 [INFO] ALL DONE - pages complete
-2026-06-08 12:44:17,015 [INFO] Portal EPR EWASTE finished \u2713
-2026-06-08 12:44:17,015 [INFO] Skipping portal: EPR BATTERY (filter=EPR EWASTE)
-2026-06-08 12:44:17,016 [INFO] Skipping portal: EPR TYRES (filter=EPR EWASTE)
-2026-06-08 12:44:17,016 [INFO] Skipping portal: EPR USEDOIL (filter=EPR EWASTE)
-2026-06-08 12:44:17,016 [INFO] Skipping portal: EPR ELV (filter=EPR EWASTE)
+2026-06-09 13:25:06,560 [INFO] Supabase detected - no local DB initialisation required.
+2026-06-09 13:25:06,561 [INFO] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+2026-06-09 13:25:06,561 [INFO] Starting portal: EPR PLASTIC
+2026-06-09 13:25:06,561 [INFO] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+2026-06-09 13:25:08,453 [INFO] Starting crawl for portal: EPR PLASTIC (crawl_id=88)
+2026-06-09 13:25:08,453 [INFO] \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+2026-06-09 13:25:08,453 [INFO] PHASE 1 ï¿½ Headless pre-login crawl (steps 1ï¿½8)
+2026-06-09 13:25:08,453 [INFO] \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+2026-06-09 13:25:09,388 [INFO] Persistent auth mode ï¿½ handled by crawl_portal()
+2026-06-09 13:25:09,388 [INFO] \u2550\u2550\u2550 STEP 1: Home page ï¿½ scroll & stitch \u2550\u2550\u2550
+2026-06-09 13:25:09,388 [INFO]   Navigating to [Home] (attempt 1/3) ...
+2026-06-09 13:25:24,422 [INFO]   Page scrollHeight=1683px  viewport=800px
+2026-06-09 13:25:25,328 [INFO]   scrollY=0px  piece 1 captured
+2026-06-09 13:25:26,014 [INFO]   scrollY=800px  piece 2 captured
+2026-06-09 13:25:26,613 [INFO]   scrollY=883px  piece 3 captured
+2026-06-09 13:25:28,515 [INFO]   Stitched: 1280x1683 px from 3 pieces
+2026-06-09 13:25:29,105 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home\20260609_132529
+2026-06-09 13:25:34,000 [INFO] HTML diff ï¿½ changed=True diff_lines=113 summary=Added: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½23 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½25 dated 13.11.2025", "\u2060How to create a ticket?" | Removed: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½\x80\x9325 dated 13.11.2025", "ï¿½\x81ï¿½How to create a ticket?"
+2026-06-09 13:25:36,938 [INFO] Visual diff ï¿½ changed_pixels=24152 ratio=0.0112 changed=False
+2026-06-09 13:25:37,104 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home ï¿½ any_changed=True
+2026-06-09 13:25:42,863 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home\20260609_132529\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1780991744/webtracker/v8uekclkpmbp3iru2cbm.png
+2026-06-09 13:25:43,789 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home\20260609_132529\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991745/webtracker/mvj0j43lzmqvniwbueno.html
+2026-06-09 13:25:43,789 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1780991744/webtracker/v8uekclkpmbp3iru2cbm.png
+2026-06-09 13:25:43,790 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991745/webtracker/mvj0j43lzmqvniwbueno.html
+2026-06-09 13:25:45,830 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home
+2026-06-09 13:25:52,393 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1780991744/webtracker/v8uekclkpmbp3iru2cbm.png
+2026-06-09 13:25:52,393 [INFO]   Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home | html
+2026-06-09 13:25:52,398 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home\20260609_132529
+2026-06-09 13:25:52,398 [INFO] Home page done \u2713 | pages_visited=1
+2026-06-09 13:25:52,400 [INFO] \u2550\u2550\u2550 STEP 2: Plastic Waste Management dropdown \u2550\u2550\u2550
+2026-06-09 13:25:54,622 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_PlasticWasteManagement\20260609_132554
+2026-06-09 13:25:58,811 [INFO] HTML diff ï¿½ changed=True diff_lines=113 summary=Added: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½23 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½25 dated 13.11.2025", "\u2060How to create a ticket?" | Removed: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½\x80\x9325 dated 13.11.2025", "ï¿½\x81ï¿½How to create a ticket?"
+2026-06-09 13:26:04,807 [INFO] Diff image generated ï¿½ changed_pixels=51097 (5.0%)
+2026-06-09 13:26:04,850 [INFO] Diff image saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_PlasticWasteManagement\20260609_132554\diff_highlight.png
+2026-06-09 13:26:04,850 [INFO] Visual diff ï¿½ changed_pixels=56367 ratio=0.0550 changed=True
+2026-06-09 13:26:04,932 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement ï¿½ any_changed=True
+2026-06-09 13:26:06,003 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_PlasticWasteManagement\20260609_132554\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1780991767/webtracker/gjfnl4jetxi4jm2rdylc.png
+2026-06-09 13:26:06,822 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_PlasticWasteManagement\20260609_132554\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991768/webtracker/fierpegwxls4i4kwwrhe.html
+2026-06-09 13:26:06,822 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1780991767/webtracker/gjfnl4jetxi4jm2rdylc.png
+2026-06-09 13:26:06,822 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991768/webtracker/fierpegwxls4i4kwwrhe.html
+2026-06-09 13:26:08,971 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement
+2026-06-09 13:26:11,020 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement type=visual screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1780991767/webtracker/gjfnl4jetxi4jm2rdylc.png
+2026-06-09 13:26:11,020 [INFO]   Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement | visual
+2026-06-09 13:26:14,090 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1780991767/webtracker/gjfnl4jetxi4jm2rdylc.png
+2026-06-09 13:26:14,091 [INFO]   Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement | html
+2026-06-09 13:26:14,098 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_PlasticWasteManagement\20260609_132554
+2026-06-09 13:26:14,636 [INFO]   Plastic Waste Management dropdown done \u2713 | pages_visited=2
+2026-06-09 13:26:14,637 [INFO] \u2550\u2550\u2550 STEP 3: About EPR dropdown \u2550\u2550\u2550
+2026-06-09 13:26:16,680 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_AboutEPR\20260609_132616
+2026-06-09 13:26:20,920 [INFO] HTML diff ï¿½ changed=True diff_lines=113 summary=Added: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½23 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½25 dated 13.11.2025", "\u2060How to create a ticket?" | Removed: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½\x80\x9325 dated 13.11.2025", "ï¿½\x81ï¿½How to create a ticket?"
+2026-06-09 13:26:28,462 [INFO] Diff image generated ï¿½ changed_pixels=108267 (10.6%)
+2026-06-09 13:26:28,523 [INFO] Diff image saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_AboutEPR\20260609_132616\diff_highlight.png
+2026-06-09 13:26:28,523 [INFO] Visual diff ï¿½ changed_pixels=113788 ratio=0.1111 changed=True
+2026-06-09 13:26:28,618 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR ï¿½ any_changed=True
+2026-06-09 13:26:30,392 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_AboutEPR\20260609_132616\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1780991792/webtracker/z65fcztogovhrgu7agbu.png
+2026-06-09 13:26:31,440 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_AboutEPR\20260609_132616\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991793/webtracker/ks34idxxwr6krpsihmld.html
+2026-06-09 13:26:31,440 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1780991792/webtracker/z65fcztogovhrgu7agbu.png
+2026-06-09 13:26:31,441 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991793/webtracker/ks34idxxwr6krpsihmld.html
+2026-06-09 13:26:34,758 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR
+2026-06-09 13:26:36,928 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR type=visual screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1780991792/webtracker/z65fcztogovhrgu7agbu.png
+2026-06-09 13:26:36,928 [INFO]   Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR | visual
+2026-06-09 13:26:39,897 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1780991792/webtracker/z65fcztogovhrgu7agbu.png
+2026-06-09 13:26:39,897 [INFO]   Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR | html
+2026-06-09 13:26:39,906 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_AboutEPR\20260609_132616
+2026-06-09 13:26:40,427 [INFO]   About EPR dropdown done \u2713 | pages_visited=3
+2026-06-09 13:26:40,428 [INFO] \u2550\u2550\u2550 STEP 4.1: Categories Of Plastic Waste \u2550\u2550\u2550
+2026-06-09 13:26:40,428 [INFO]   Navigating to [Categories Of Plastic Waste] (attempt 1/3) ...
+2026-06-09 13:26:49,235 [INFO]   Page scrollHeight=1234px  viewport=800px
+2026-06-09 13:26:49,957 [INFO]   scrollY=0px  piece 1 captured
+2026-06-09 13:26:50,737 [INFO]   scrollY=434px  piece 2 captured
+2026-06-09 13:26:52,572 [INFO]   Stitched: 1280x1234 px from 2 pieces
+2026-06-09 13:26:53,158 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_categoriesepr\20260609_132653
+2026-06-09 13:26:57,295 [INFO] HTML diff ï¿½ changed=True diff_lines=50 summary=Added: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½23 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½25 dated 13.11.2025", "\u2060How to create a ticket?" | Removed: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½\x80\x9325 dated 13.11.2025", "ï¿½\x81ï¿½How to create a ticket?"
+2026-06-09 13:27:00,145 [INFO] Visual diff ï¿½ changed_pixels=0 ratio=0.0000 changed=False
+2026-06-09 13:27:00,305 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home/categoriesepr ï¿½ any_changed=True
+2026-06-09 13:27:01,667 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_categoriesepr\20260609_132653\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1780991823/webtracker/zbm1ulsw1qdb43sugpur.png
+2026-06-09 13:27:02,529 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_categoriesepr\20260609_132653\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991824/webtracker/razb68tcfe3cinet40dj.html
+2026-06-09 13:27:02,529 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1780991823/webtracker/zbm1ulsw1qdb43sugpur.png
+2026-06-09 13:27:02,529 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991824/webtracker/razb68tcfe3cinet40dj.html
+2026-06-09 13:27:04,426 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/categoriesepr
+2026-06-09 13:27:06,623 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/categoriesepr type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1780991823/webtracker/zbm1ulsw1qdb43sugpur.png
+2026-06-09 13:27:06,623 [INFO]   Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home/categoriesepr | html
+2026-06-09 13:27:06,626 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_categoriesepr\20260609_132653
+2026-06-09 13:27:06,626 [INFO]   \u2713 'Categories Of Plastic Waste' saved | pages_visited=4
+2026-06-09 13:27:06,626 [INFO] \u2550\u2550\u2550 STEP 4.2: EPR Target \u2550\u2550\u2550
+2026-06-09 13:27:06,626 [INFO]   Navigating to [EPR Target] (attempt 1/3) ...
+2026-06-09 13:27:16,335 [INFO]   Page scrollHeight=986px  viewport=800px
+2026-06-09 13:27:16,936 [INFO]   scrollY=0px  piece 1 captured
+2026-06-09 13:27:17,522 [INFO]   scrollY=186px  piece 2 captured
+2026-06-09 13:27:19,193 [INFO]   Stitched: 1280x986 px from 2 pieces
+2026-06-09 13:27:19,784 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_eprtargets\20260609_132719
+2026-06-09 13:27:24,430 [INFO] HTML diff ï¿½ changed=True diff_lines=50 summary=Added: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½23 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½25 dated 13.11.2025", "\u2060How to create a ticket?" | Removed: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½\x80\x9325 dated 13.11.2025", "ï¿½\x81ï¿½How to create a ticket?"
+2026-06-09 13:27:25,661 [INFO] Visual diff ï¿½ changed_pixels=0 ratio=0.0000 changed=False
+2026-06-09 13:27:25,755 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home/eprtargets ï¿½ any_changed=True
+2026-06-09 13:27:26,797 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_eprtargets\20260609_132719\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1780991848/webtracker/ouezdtkmzahatflfrof0.png
+2026-06-09 13:27:27,614 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_eprtargets\20260609_132719\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991849/webtracker/ydoyqkcvyg9pa3l213qg.html
+2026-06-09 13:27:27,614 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1780991848/webtracker/ouezdtkmzahatflfrof0.png
+2026-06-09 13:27:27,615 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991849/webtracker/ydoyqkcvyg9pa3l213qg.html
+2026-06-09 13:27:29,665 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/eprtargets
+2026-06-09 13:27:31,713 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/eprtargets type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1780991848/webtracker/ouezdtkmzahatflfrof0.png
+2026-06-09 13:27:31,713 [INFO]   Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home/eprtargets | html
+2026-06-09 13:27:31,718 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_eprtargets\20260609_132719
+2026-06-09 13:27:31,722 [INFO]   \u2713 'EPR Target' saved | pages_visited=5
+2026-06-09 13:27:31,723 [INFO] \u2550\u2550\u2550 STEP 4.3: Responsibility Of PIBOs \u2550\u2550\u2550
+2026-06-09 13:27:31,724 [INFO]   Navigating to [Responsibility Of PIBOs] (attempt 1/3) ...
+2026-06-09 13:27:40,634 [INFO]   Page scrollHeight=986px  viewport=800px
+2026-06-09 13:27:41,224 [INFO]   scrollY=0px  piece 1 captured
+2026-06-09 13:27:41,815 [INFO]   scrollY=186px  piece 2 captured
+2026-06-09 13:27:43,480 [INFO]   Stitched: 1280x986 px from 2 pieces
+2026-06-09 13:27:44,022 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_pibopwp\20260609_132744
+2026-06-09 13:27:48,503 [INFO] HTML diff ï¿½ changed=True diff_lines=50 summary=Added: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½23 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½25 dated 13.11.2025", "\u2060How to create a ticket?" | Removed: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½\x80\x9325 dated 13.11.2025", "ï¿½\x81ï¿½How to create a ticket?"
+2026-06-09 13:27:50,385 [INFO] Visual diff ï¿½ changed_pixels=0 ratio=0.0000 changed=False
+2026-06-09 13:27:50,497 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home/pibopwp ï¿½ any_changed=True
+2026-06-09 13:27:51,272 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_pibopwp\20260609_132744\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1780991873/webtracker/tdqh973hhqpcziln34kz.png
+2026-06-09 13:27:51,885 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_pibopwp\20260609_132744\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991873/webtracker/ktz6sb6fxmpqdudl1upt.html
+2026-06-09 13:27:51,885 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1780991873/webtracker/tdqh973hhqpcziln34kz.png
+2026-06-09 13:27:51,886 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991873/webtracker/ktz6sb6fxmpqdudl1upt.html
+2026-06-09 13:27:54,137 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/pibopwp
+2026-06-09 13:27:56,389 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/pibopwp type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1780991873/webtracker/tdqh973hhqpcziln34kz.png
+2026-06-09 13:27:56,390 [INFO]   Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home/pibopwp | html
+2026-06-09 13:27:56,394 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_pibopwp\20260609_132744
+2026-06-09 13:27:56,394 [INFO]   \u2713 'Responsibility Of PIBOs' saved | pages_visited=6
+2026-06-09 13:27:56,394 [INFO] \u2550\u2550\u2550 STEP 4.4: Plastic Waste Processing \u2550\u2550\u2550
+2026-06-09 13:27:56,394 [INFO]   Navigating to [Plastic Waste Processing] (attempt 1/3) ...
+2026-06-09 13:28:06,517 [INFO]   Page scrollHeight=1255px  viewport=800px
+2026-06-09 13:28:07,395 [INFO]   scrollY=0px  piece 1 captured
+2026-06-09 13:28:08,284 [INFO]   scrollY=455px  piece 2 captured
+2026-06-09 13:28:10,224 [INFO]   Stitched: 1280x1255 px from 2 pieces
+2026-06-09 13:28:10,797 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_plasticwaste\20260609_132810
+2026-06-09 13:28:15,268 [INFO] HTML diff ï¿½ changed=True diff_lines=50 summary=Added: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½23 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½25 dated 13.11.2025", "\u2060How to create a ticket?" | Removed: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½\x80\x9325 dated 13.11.2025", "ï¿½\x81ï¿½How to create a ticket?"
+2026-06-09 13:28:18,857 [INFO] Visual diff ï¿½ changed_pixels=0 ratio=0.0000 changed=False
+2026-06-09 13:28:18,992 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home/plasticwaste ï¿½ any_changed=True
+2026-06-09 13:28:20,555 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_plasticwaste\20260609_132810\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1780991902/webtracker/hxu4aphebk6gg0dvlodb.png
+2026-06-09 13:28:21,276 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_plasticwaste\20260609_132810\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991903/webtracker/yprw6fdnw4lciilxk64t.html
+2026-06-09 13:28:21,276 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1780991902/webtracker/hxu4aphebk6gg0dvlodb.png
+2026-06-09 13:28:21,276 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991903/webtracker/yprw6fdnw4lciilxk64t.html
+2026-06-09 13:28:23,094 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/plasticwaste
+2026-06-09 13:28:25,369 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/plasticwaste type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1780991902/webtracker/hxu4aphebk6gg0dvlodb.png
+2026-06-09 13:28:25,369 [INFO]   Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home/plasticwaste | html
+2026-06-09 13:28:25,376 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_plasticwaste\20260609_132810
+2026-06-09 13:28:25,376 [INFO]   \u2713 'Plastic Waste Processing' saved | pages_visited=7
+2026-06-09 13:28:25,376 [INFO] \u2550\u2550\u2550 STEP 5: Important Documents dropdown \u2550\u2550\u2550
+2026-06-09 13:28:25,377 [INFO]   Navigating to [Important Documents] (attempt 1/3) ...
+2026-06-09 13:28:29,770 [INFO]   Page scrollHeight=2103px  viewport=800px
+2026-06-09 13:28:30,536 [INFO]   scrollY=0px  piece 1 captured
+2026-06-09 13:28:31,267 [INFO]   scrollY=800px  piece 2 captured
+2026-06-09 13:28:31,954 [INFO]   scrollY=1303px  piece 3 captured
+2026-06-09 13:28:33,921 [INFO]   Stitched: 1280x2103 px from 3 pieces
+2026-06-09 13:28:34,483 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_ImportantDocuments\20260609_132834
+2026-06-09 13:28:38,762 [INFO] HTML diff ï¿½ changed=True diff_lines=99 summary=Added: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½23 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½25 dated 13.11.2025", "\u2060How to create a ticket?" | Removed: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½\x80\x9325 dated 13.11.2025", "ï¿½\x81ï¿½How to create a ticket?"
+2026-06-09 13:28:43,151 [INFO] Visual diff ï¿½ changed_pixels=103726 ratio=0.0385 changed=False
+2026-06-09 13:28:43,337 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_ImportantDocuments ï¿½ any_changed=True
+2026-06-09 13:28:44,722 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_ImportantDocuments\20260609_132834\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1780991926/webtracker/jox57zb3cdzec6p0edff.png
+2026-06-09 13:28:45,543 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_ImportantDocuments\20260609_132834\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991927/webtracker/azb1zelmkjepakirunni.html
+2026-06-09 13:28:45,543 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1780991926/webtracker/jox57zb3cdzec6p0edff.png
+2026-06-09 13:28:45,543 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991927/webtracker/azb1zelmkjepakirunni.html
+2026-06-09 13:28:47,385 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_ImportantDocuments
+2026-06-09 13:28:50,458 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_ImportantDocuments type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1780991926/webtracker/jox57zb3cdzec6p0edff.png
+2026-06-09 13:28:50,458 [INFO]   Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_ImportantDocuments | html
+2026-06-09 13:28:50,465 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_ImportantDocuments\20260609_132834
+2026-06-09 13:28:50,465 [INFO]   Important Documents done \u2713 | pages_visited=8
+2026-06-09 13:28:50,465 [INFO] \u2550\u2550\u2550 STEP 6: Bulk Upload dropdown \u2550\u2550\u2550
+2026-06-09 13:28:50,466 [INFO]   Navigating to [Bulk Upload] (attempt 1/3) ...
+2026-06-09 13:28:55,139 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_BulkUpload\20260609_132855
+2026-06-09 13:28:59,638 [INFO] HTML diff ï¿½ changed=True diff_lines=99 summary=Added: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½23 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½25 dated 13.11.2025", "\u2060How to create a ticket?" | Removed: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½\x80\x9325 dated 13.11.2025", "ï¿½\x81ï¿½How to create a ticket?"
+2026-06-09 13:29:01,216 [INFO] Visual diff ï¿½ changed_pixels=16063 ratio=0.0157 changed=False
+2026-06-09 13:29:01,284 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_BulkUpload ï¿½ any_changed=True
+2026-06-09 13:29:02,261 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_BulkUpload\20260609_132855\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1780991944/webtracker/dtfncyoqqpcrsu9canot.png
+2026-06-09 13:29:03,007 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_BulkUpload\20260609_132855\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991945/webtracker/qahamrj0td8wuxexr9ol.html
+2026-06-09 13:29:03,008 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1780991944/webtracker/dtfncyoqqpcrsu9canot.png
+2026-06-09 13:29:03,008 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991945/webtracker/qahamrj0td8wuxexr9ol.html
+2026-06-09 13:29:05,100 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_BulkUpload
+2026-06-09 13:29:07,967 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_BulkUpload type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1780991944/webtracker/dtfncyoqqpcrsu9canot.png
+2026-06-09 13:29:07,968 [INFO]   Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_BulkUpload | html
+2026-06-09 13:29:07,977 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_BulkUpload\20260609_132855
+2026-06-09 13:29:07,978 [INFO]   Bulk Upload done \u2713 | pages_visited=9
+2026-06-09 13:29:07,980 [INFO] \u2550\u2550\u2550 STEP 7: Lodge Complaint dropdown \u2550\u2550\u2550
+2026-06-09 13:29:07,981 [INFO]   Navigating to [Lodge Complaint] (attempt 1/3) ...
+2026-06-09 13:29:12,595 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_LodgeComplaint\20260609_132912
+2026-06-09 13:29:16,530 [INFO] HTML diff ï¿½ changed=True diff_lines=99 summary=Added: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½23 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½25 dated 13.11.2025", "\u2060How to create a ticket?" | Removed: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½\x80\x9325 dated 13.11.2025", "ï¿½\x81ï¿½How to create a ticket?"
+2026-06-09 13:29:18,446 [INFO] Visual diff ï¿½ changed_pixels=15710 ratio=0.0153 changed=False
+2026-06-09 13:29:18,547 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_LodgeComplaint ï¿½ any_changed=True
+2026-06-09 13:29:19,540 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_LodgeComplaint\20260609_132912\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1780991961/webtracker/vm9rm6hvwqb71qkkf4zy.png
+2026-06-09 13:29:20,255 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_LodgeComplaint\20260609_132912\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991962/webtracker/hyjjheokqcf8lx2cboyp.html
+2026-06-09 13:29:20,255 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1780991961/webtracker/vm9rm6hvwqb71qkkf4zy.png
+2026-06-09 13:29:20,255 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991962/webtracker/hyjjheokqcf8lx2cboyp.html
+2026-06-09 13:29:22,258 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_LodgeComplaint
+2026-06-09 13:29:25,170 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_LodgeComplaint type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1780991961/webtracker/vm9rm6hvwqb71qkkf4zy.png
+2026-06-09 13:29:25,170 [INFO]   Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_LodgeComplaint | html
+2026-06-09 13:29:25,177 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_LodgeComplaint\20260609_132912
+2026-06-09 13:29:25,177 [INFO]   Lodge Complaint done \u2713 | pages_visited=10
+2026-06-09 13:29:25,177 [INFO] \u2550\u2550\u2550 STEP 8: SOP dropdown \u2550\u2550\u2550
+2026-06-09 13:29:25,178 [INFO]   Navigating to [SOP] (attempt 1/3) ...
+2026-06-09 13:29:29,822 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_SOP\20260609_132929
+2026-06-09 13:29:33,948 [INFO] HTML diff ï¿½ changed=True diff_lines=99 summary=Added: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½23 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½23 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½25 dated 13.11.2025", "\u2060How to create a ticket?" | Removed: "SCN to PIBOs for non-fulfilment of EPR Target for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to PIBOs for non-fulfilment of obligation and non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "SCN to Producers for non-submission of AR for FY 2022ï¿½\x80\x9323 dated 11.03.2026", "Notice for AR Filing by registered PIBOs and PWPs for FY 2024ï¿½\x80\x9325 dated 13.11.2025", "ï¿½\x81ï¿½How to create a ticket?"
+2026-06-09 13:29:35,610 [INFO] Visual diff ï¿½ changed_pixels=15792 ratio=0.0154 changed=False
+2026-06-09 13:29:35,713 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_SOP ï¿½ any_changed=True
+2026-06-09 13:29:36,956 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_SOP\20260609_132929\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1780991978/webtracker/ja78uqudx1w48z7hu0uu.png
+2026-06-09 13:29:38,687 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_SOP\20260609_132929\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991979/webtracker/zey0shhuihsokihfyom4.html
+2026-06-09 13:29:38,687 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1780991978/webtracker/ja78uqudx1w48z7hu0uu.png
+2026-06-09 13:29:38,687 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1780991979/webtracker/zey0shhuihsokihfyom4.html
+2026-06-09 13:29:40,735 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_SOP
+2026-06-09 13:29:44,115 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_SOP type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1780991978/webtracker/ja78uqudx1w48z7hu0uu.png
+2026-06-09 13:29:44,115 [INFO]   Change detected: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_SOP | html
+2026-06-09 13:29:44,122 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_SOP\20260609_132929
+2026-06-09 13:29:44,123 [INFO]   SOP done \u2713 | pages_visited=11
+2026-06-09 13:29:45,203 [INFO] PHASE 1 complete \u2713 | pages_visited=11
+2026-06-09 13:29:45,204 [INFO] \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+2026-06-09 13:29:45,204 [INFO] PHASE 2 ï¿½ Persistent context post-login crawl (steps 9+)
+2026-06-09 13:29:45,204 [INFO] \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+2026-06-09 13:29:45,206 [INFO] Browser profile found at C:\web_projects\webtracker\browser_profiles\EPR_PLASTIC ï¿½ will attempt session restore
+2026-06-09 13:29:46,565 [INFO] Checking session validity for EPR PLASTIC ...
+2026-06-09 13:29:49,519 [INFO] SESSION EXPIRED ï¿½ on login/home page for EPR PLASTIC (URL: https://eprplastic.cpcb.gov.in/#/plastic/home)
+2026-06-09 13:29:49,519 [INFO] SESSION EXPIRED or first run ï¿½ switching to manual login for EPR PLASTIC
+2026-06-09 13:29:49,524 [INFO] ============================================================
+2026-06-09 13:29:49,525 [INFO] WAITING FOR LOGIN ï¿½ browser window is open
+2026-06-09 13:29:49,525 [INFO]   Portal : EPR PLASTIC
+2026-06-09 13:29:49,526 [INFO]   URL    : https://eprplastic.cpcb.gov.in/#/plastic/login
+2026-06-09 13:29:49,526 [INFO]   Timeout: None (waiting indefinitely)
+2026-06-09 13:29:49,526 [INFO]   Complete login in the browser to continue crawling.
+2026-06-09 13:29:49,526 [INFO]   Session will be saved and reused on future runs.
+2026-06-09 13:29:49,526 [INFO] ============================================================
+2026-06-09 13:30:51,335 [INFO] WAITING FOR LOGIN ï¿½ 60s elapsed (waiting indefinitely) ...
+2026-06-09 13:32:24,403 [INFO] WAITING FOR LOGIN ï¿½ 150s elapsed (waiting indefinitely) ...
+2026-06-09 13:32:51,619 [INFO] WAITING FOR LOGIN ï¿½ 180s elapsed (waiting indefinitely) ...
+2026-06-09 13:33:20,963 [INFO] WAITING FOR LOGIN ï¿½ 210s elapsed (waiting indefinitely) ...
+2026-06-09 13:34:51,121 [INFO] WAITING FOR LOGIN ï¿½ 300s elapsed (waiting indefinitely) ...
+2026-06-09 13:36:21,117 [INFO] WAITING FOR LOGIN ï¿½ 390s elapsed (waiting indefinitely) ...
+2026-06-09 13:55:20,831 [INFO] WAITING FOR LOGIN ï¿½ 1530s elapsed (waiting indefinitely) ...
+2026-06-09 13:56:21,611 [INFO] WAITING FOR LOGIN ï¿½ 1590s elapsed (waiting indefinitely) ...
+2026-06-09 13:56:50,985 [INFO] WAITING FOR LOGIN ï¿½ 1620s elapsed (waiting indefinitely) ...
+2026-06-09 13:58:20,989 [INFO] WAITING FOR LOGIN ï¿½ 1710s elapsed (waiting indefinitely) ...
+2026-06-09 13:59:51,603 [INFO] WAITING FOR LOGIN ï¿½ 1800s elapsed (waiting indefinitely) ...
+2026-06-09 14:00:21,034 [INFO] WAITING FOR LOGIN ï¿½ 1830s elapsed (waiting indefinitely) ...
+2026-06-09 14:01:51,027 [INFO] WAITING FOR LOGIN ï¿½ 1920s elapsed (waiting indefinitely) ...
+2026-06-09 14:02:02,511 [INFO] User closed the persistent browser before navigation.
+2026-06-09 14:02:03,535 [WARNING] Browser window was manually closed by the user. Aborting login.
+2026-06-09 14:02:03,538 [ERROR] Login failed: Browser window closed manually by the user.
+2026-06-09 14:02:06,030 [INFO] Crawl log finished - id=88 pages=11 status=stopped
+2026-06-09 14:02:06,031 [INFO] Exiting crawler due to manual browser closure.
