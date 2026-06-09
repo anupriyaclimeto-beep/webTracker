@@ -343,6 +343,13 @@ def init_db():
             cur.execute(f"PRAGMA table_info({table})")
             if col not in {row[1] for row in cur.fetchall()}:
                 cur.execute(f"ALTER TABLE {table} ADD COLUMN {col} TEXT")
+    # UI-only hidden changes table (stores IDs of changes hidden from UI)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS hidden_changes (
+            change_id INTEGER PRIMARY KEY,
+            hidden_at TEXT NOT NULL
+        );
+    """)
     conn.commit(); conn.close()
 
 init_db()
@@ -694,36 +701,35 @@ def get_portal_stats(portal=None):
 @st.cache_data(ttl=15)
 def get_latest_crawl_changes(portal=None):
     """Return changes from the most recent crawl run (any finished status)."""
-    # Accept any status except 'running' so error/aborted/stopped crawls
-    # still show their captured changes in the UI.
+    # Pick the most recent crawl run regardless of status (running/stopped/done).
+    # If the run is still in progress, use current time as upper bound so partial
+    # results from the running crawl are visible immediately (useful when user
+    # clicks Stop during manual login).
     if portal:
         row = query_db(
-            "SELECT started_at,finished_at FROM crawl_log "
-            "WHERE portal=? AND status NOT IN ('running') "
-            "ORDER BY started_at DESC LIMIT 1",
+            "SELECT started_at, finished_at FROM crawl_log WHERE portal=? ORDER BY started_at DESC LIMIT 1",
             (portal,)
         )
     else:
         row = query_db(
-            "SELECT started_at,finished_at FROM crawl_log "
-            "WHERE status NOT IN ('running') "
-            "ORDER BY started_at DESC LIMIT 1"
+            "SELECT started_at, finished_at FROM crawl_log ORDER BY started_at DESC LIMIT 1"
         )
     if not row:
         return []
-    s = row[0]["started_at"]
-    # Add 5-minute buffer after finished_at to catch late-written records
-    f = row[0]["finished_at"] or datetime.now().isoformat()
+    s = row[0].get("started_at")
+    f = row[0].get("finished_at") or datetime.now().isoformat()
+    if not s:
+        return []
     if portal:
         return query_db(
-            "SELECT * FROM changes WHERE portal=? AND timestamp>=? "
+            "SELECT * FROM changes WHERE portal=? AND timestamp>=? AND timestamp<=? "
             "ORDER BY timestamp DESC LIMIT 500",
-            (portal, s)
+            (portal, s, f)
         )
     return query_db(
-        "SELECT * FROM changes WHERE timestamp>=? "
+        "SELECT * FROM changes WHERE timestamp>=? AND timestamp<=? "
         "ORDER BY timestamp DESC LIMIT 500",
-        (s,)
+        (s, f)
     )
 
 @st.cache_data(ttl=30)
@@ -821,6 +827,21 @@ def render_change_expander(change):
     icon, _    = DIFF_LABELS.get(change["diff_type"], ("❓", ""))
     label_str  = {"html": "Content", "visual": "Visual", "json": "Data", "har": "API"}.get(change["diff_type"], "?")
     sev_icon   = {"High": "🔴", "Medium": "🟡", "Low": "🟢"}.get(sev_label, "🟢")
+    # Confidence badge (if available)
+    confidence = None
+    try:
+        confidence = float(detail.get("confidence", 0))
+    except Exception:
+        confidence = None
+    if confidence is not None:
+        if confidence >= 0.75:
+            conf_icon = "🔴 High"
+        elif confidence >= 0.45:
+            conf_icon = "🟡 Medium"
+        else:
+            conf_icon = "🟢 Low"
+    else:
+        conf_icon = None
 
     with st.expander(f"{icon} [{change['portal']}]  {page_name} — {label_str} — {sev_icon} {sev_label} — {when}", expanded=False):
         c1, c2, c3 = st.columns(3)
@@ -833,6 +854,8 @@ def render_change_expander(change):
         with c3:
             ts = change.get("timestamp")
             st.markdown(f"**Detected:** {str(ts)[:16] if ts else 'N/A'}")
+            if conf_icon:
+                st.markdown(f"**Confidence:** {conf_icon}")
         st.markdown("---")
         if change["diff_type"] == "html":
             render_highlighted_html_diff(detail)
@@ -1232,6 +1255,10 @@ elif st.session_state.view == "changes":
         fp_local    = st.session_state.portal if portal_filter else st.selectbox("Portal", ["All Portals"] + all_portals, key="fp_local")
     with f4:
         search_q    = st.text_input("🔍 Search page", placeholder="e.g. Home, SOP, Dashboard…", key="search_q")
+    # Option to hide low-confidence / noisy changes
+    with f4:
+        hide_noisy = st.checkbox("Hide low-confidence (noisy) changes", value=True, key="hide_noisy")
+    show_hidden = st.checkbox("Show hidden changes (UI-only)", value=False, key="show_hidden")
 
     st.markdown("<hr style='margin:8px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 
@@ -1255,8 +1282,56 @@ elif st.session_state.view == "changes":
             filtered = [c for c in filtered if c["portal"] == fp_local]
         if search_q:
             filtered = [c for c in filtered if search_q.lower() in friendly_page_name(c["url"]).lower()]
+        # Hidden changes stored in DB (UI-only). Fetch hidden ids.
+        hidden_rows = query_db("SELECT change_id FROM hidden_changes")
+        hidden_ids = {r["change_id"] for r in hidden_rows} if hidden_rows else set()
 
-        st.caption(f"Showing **{len(filtered)}** of {len(latest_changes)} change(s)")
+        # Apply noisy-change hiding (default ON) and DB-hidden filter (unless show_hidden)
+        hidden_count = 0
+        visible = []
+        for c in filtered:
+            try:
+                cid = c.get("id")
+                detail = json.loads(c["diff_detail"])
+                is_noise = bool(detail.get("is_noise"))
+                # If change is already hidden in DB and user didn't request to see hidden, skip
+                if cid in hidden_ids and not show_hidden:
+                    hidden_count += 1
+                    continue
+                # If change is noise and hide_noisy enabled, mark for hiding (but not yet persisted)
+                if is_noise and (st.session_state.get("hide_noisy", True) or hide_noisy):
+                    hidden_count += 1
+                    # do not include in visible unless user requested show_hidden
+                    if not show_hidden:
+                        continue
+                visible.append(c)
+            except Exception:
+                visible.append(c)
+        filtered = visible
+
+        st.caption(f"Showing **{len(filtered)}** of {len(latest_changes)} change(s) — {hidden_count} hidden")
+
+        # Button: hide currently identified noisy changes from UI (persist as hidden_changes)
+        if st.button("Hide noisy changes from UI (persist)", key="hide_noisy_persist"):
+            to_hide = []
+            for c in latest_changes:
+                try:
+                    cid = c.get("id")
+                    detail = json.loads(c["diff_detail"])
+                    if detail.get("is_noise") and cid not in hidden_ids:
+                        to_hide.append(cid)
+                except Exception:
+                    continue
+            if to_hide:
+                for hid in to_hide:
+                    try:
+                        exec_db("INSERT OR IGNORE INTO hidden_changes (change_id, hidden_at) VALUES (?, datetime('now'))", (hid,))
+                    except Exception:
+                        pass
+                st.success(f"Hid {len(to_hide)} noisy change(s) from UI.")
+                st.cache_data.clear()
+                time.sleep(0.5)
+                st.experimental_rerun()
         for change in filtered:
             render_change_expander(change)
 
@@ -1469,6 +1544,47 @@ elif st.session_state.view == "console":
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "rb") as f:
             st.download_button("⬇ Download full log", f, file_name="crawler.log", mime="text/plain")
+
+    # ---------------- Change Audit Tool ----------------
+    st.markdown("---")
+    st.markdown("### Change Audit (last 20)")
+    audit_rows = query_db("SELECT id, portal, url, diff_type, diff_detail, timestamp FROM changes ORDER BY timestamp DESC LIMIT 20")
+    if not audit_rows:
+        st.info("No recent changes to audit.")
+    else:
+        for row in audit_rows:
+            cid = row.get("id")
+            portal = row.get("portal")
+            url = row.get("url")
+            ctype = row.get("diff_type")
+            ts = row.get("timestamp")
+            try:
+                detail = json.loads(row.get("diff_detail") or "{}")
+            except Exception:
+                detail = {}
+            conf = detail.get("confidence")
+            is_noise = detail.get("is_noise", False)
+            col1, col2, col3 = st.columns([6, 2, 2])
+            with col1:
+                st.markdown(f"**[{portal}]** `{friendly_page_name(url)}` — {ctype} — {str(ts)[:16]}")
+                if conf is not None:
+                    st.caption(f"Confidence: {conf} — {'Noise' if is_noise else 'Likely real'}")
+            with col2:
+                if st.button("Mark Noise", key=f"mark_noise_{cid}"):
+                    try:
+                        exec_db("INSERT INTO hidden_changes (change_id, hidden_at) VALUES (?, datetime('now'))", (cid,))
+                    except Exception:
+                        pass
+                    st.success("Marked hidden in UI.")
+                    st.experimental_rerun()
+            with col3:
+                if st.button("Mark Real (unhide)", key=f"mark_real_{cid}"):
+                    try:
+                        exec_db("DELETE FROM hidden_changes WHERE change_id = ?", (cid,))
+                    except Exception:
+                        pass
+                    st.success("Unhidden.")
+                    st.experimental_rerun()
 
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────

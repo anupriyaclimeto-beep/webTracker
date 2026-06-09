@@ -167,7 +167,16 @@
     "html": true,
     "json": true,
     "har": true,
-    "pixel_threshold": 0.05
+    "pixel_threshold": 0.05,
+    "ignore_selectors": [".timestamp", ".updated-at", ".ads", ".cookie-banner", ".spinner", ".skeleton", ".promo"],
+    "ignore_attribute_patterns": ["^data-v-", "^ng-", "^_nghost", "^_ngcontent", "^aria-"],
+    "text_change_min_words": 5,
+    "text_change_min_ratio": 0.01,
+    "text_line_min_changes": 3,
+    "visual_change_min_ratio": 0.05,
+    "visual_mask_top_px": 80,
+    "visual_mask_bottom_px": 80,
+    "har_ignore_endpoints": ["ping","heartbeat","keepalive"]
   },
   "storage": {
     "db": "changes.db",

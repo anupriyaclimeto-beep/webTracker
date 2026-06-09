@@ -72,8 +72,10 @@ def get_conn():
         try:
             return psycopg2.connect(_DSN, cursor_factory=RealDictCursor)
         except Exception as e:
-            logger.warning("Supabase connection failed (%s). Falling back to local SQLite.", e)
-            globals()["USE_SUPABASE"] = False
+            logger.error("Supabase connection failed: %s", e)
+            # Do NOT silently fall back to SQLite — require Supabase when configured.
+            raise
+    # If not configured to use Supabase, use local sqlite
     return sqlite3.connect(DB_PATH)
 
 # ----------------------------------------------------------------------
@@ -132,7 +134,61 @@ def upload_to_cloudinary(local_path, resource_type="image"):
 
 def init_db():
     if USE_SUPABASE:
-        logger.info("Supabase detected - no local DB initialisation required.")
+        logger.info("Supabase detected - ensuring required tables exist in remote DB.")
+        conn = get_conn()
+        with conn.cursor() as cur:
+            # changes table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS public.changes (
+                    id BIGSERIAL PRIMARY KEY,
+                    portal TEXT NOT NULL,
+                    url TEXT NOT NULL,
+                    diff_type TEXT NOT NULL,
+                    diff_detail JSONB,
+                    ai_summary TEXT,
+                    screenshot_url TEXT,
+                    html_url TEXT,
+                    timestamp TIMESTAMPTZ NOT NULL
+                )
+            """)
+            # baselines table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS public.baselines (
+                    id BIGSERIAL PRIMARY KEY,
+                    portal TEXT NOT NULL,
+                    url TEXT NOT NULL,
+                    html_path TEXT,
+                    screenshot_path TEXT,
+                    har_path TEXT,
+                    screenshot_url TEXT,
+                    html_url TEXT,
+                    updated_at TIMESTAMPTZ NOT NULL
+                )
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_baselines_portal_url ON public.baselines (portal, url)
+            """)
+            # crawl_log table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS public.crawl_log (
+                    id BIGSERIAL PRIMARY KEY,
+                    portal TEXT NOT NULL,
+                    started_at TIMESTAMPTZ NOT NULL,
+                    finished_at TIMESTAMPTZ,
+                    pages_visited INTEGER DEFAULT 0,
+                    status TEXT DEFAULT 'running'
+                )
+            """)
+            # hidden_changes helper
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS public.hidden_changes (
+                    change_id BIGINT PRIMARY KEY,
+                    hidden_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+            """)
+            conn.commit()
+        conn.close()
+        logger.info("Supabase tables ensured.")
         return
 
     os.makedirs(ARCHIVE_DIR, exist_ok=True)
