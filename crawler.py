@@ -875,7 +875,7 @@ async def crawl_portal(portal_config: dict):
         logger.info("Browser profile found at %s — will attempt session restore", profile_dir)
 
     async with async_playwright() as p:
-        from auth import launch_persistent_context, monitor_browser, profile_exists
+        from auth import launch_persistent_context, monitor_browser
         # In CI we skip post-login pages when no profile exists (cannot perform manual login)
         if CI_MODE and not profile_exists(portal_config):
             logger.warning("CI mode — no profile found for %s; skipping post-login pages.", portal_name)

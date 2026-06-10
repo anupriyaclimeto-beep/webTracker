@@ -107,7 +107,10 @@ st.set_page_config(
 def _check_credentials(username: str, password: str) -> bool:
     valid_user = _secret("LOGIN_USER", os.getenv("LOGIN_USER", "webtracker@test.com"))
     valid_pass = _secret("LOGIN_PASS",  os.getenv("LOGIN_PASS",  "12345"))
-    return username.strip() == valid_user and password == valid_pass
+    try:
+        return username.strip() == (valid_user or "").strip() and str(password).strip() == str(valid_pass or "").strip()
+    except Exception:
+        return False
 
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
