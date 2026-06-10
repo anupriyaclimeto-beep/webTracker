@@ -1,0 +1,90 @@
+name: "Test Crawler - Manual"
+
+on:
+  workflow_dispatch:
+    inputs:
+      portal:
+        description: 'Portal to crawl'
+        required: false
+        default: 'EPR PLASTIC'
+
+jobs:
+  test:
+    name: Test crawler - ${{ github.event.inputs.portal || 'EPR PLASTIC' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgbm-dev libnss3 libatk-bridge2.0-0 libdrm2 libxkbcommon0 libglib2.0-0 libgtk-3-0 libx11-xcb1
+
+      - name: Install Python packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Playwright browsers and deps
+        run: |
+          python -m playwright install chromium
+          python -m playwright install-deps chromium
+
+      - name: Create .env from secrets
+        run: |
+          cat > .env <<'ENV'
+          SUPABASE_HOST=${{ secrets.SUPABASE_HOST }}
+          SUPABASE_PORT=${{ secrets.SUPABASE_PORT }}
+          SUPABASE_DB=${{ secrets.SUPABASE_DB }}
+          SUPABASE_USER=${{ secrets.SUPABASE_USER }}
+          SUPABASE_PASSWORD=${{ secrets.SUPABASE_PASSWORD }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LOGIN_USER=${{ secrets.LOGIN_USER }}
+          LOGIN_PASS=${{ secrets.LOGIN_PASS }}
+          ENV
+
+      - name: Run crawler (manual test)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+          CI: "true"
+          SUPABASE_HOST: ${{ secrets.SUPABASE_HOST }}
+          SUPABASE_PORT: ${{ secrets.SUPABASE_PORT }}
+          SUPABASE_DB: ${{ secrets.SUPABASE_DB }}
+          SUPABASE_USER: ${{ secrets.SUPABASE_USER }}
+          SUPABASE_PASSWORD: ${{ secrets.SUPABASE_PASSWORD }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LOGIN_USER: ${{ secrets.LOGIN_USER }}
+          LOGIN_PASS: ${{ secrets.LOGIN_PASS }}
+        run: |
+          python crawler.py --once --portal "${{ github.event.inputs.portal || 'EPR PLASTIC' }}"
+
+      - name: Upload artifacts (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crawl-results-${{ github.run_number }}
+          path: |
+            crawler.log
+            archive/
+          retention-days: 7
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "Portal: ${{ github.event.inputs.portal || 'EPR PLASTIC' }}" >> $GITHUB_STEP_SUMMARY
+          echo "Run: ${{ github.run_number }} (commit: ${{ github.sha }})" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" = "success" ]; then echo "Status: SUCCESS" >> $GITHUB_STEP_SUMMARY; else echo "Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY; fi
+

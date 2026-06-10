@@ -53,6 +53,10 @@ import re
 import shutil
 from datetime import datetime
 from pathlib import Path
+import sys
+
+# CI mode detection - force headless / skip login pages in CI
+CI_MODE = os.getenv("CI", "false").lower() == "true"
 
 from PIL import Image
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
@@ -573,7 +577,9 @@ async def crawl_portal(portal_config: dict):
     logger.info("━" * 60)
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, args=_browser_args())
+        # Force headless in CI, otherwise use configured headless flag
+        browser_headless = True if CI_MODE else config.get("browser", {}).get("headless", True)
+        browser = await p.chromium.launch(headless=browser_headless, args=_browser_args())
         context = await browser.new_context(
             viewport=_viewport(),
             record_har_path=har_path,
@@ -865,7 +871,13 @@ async def crawl_portal(portal_config: dict):
         logger.info("Browser profile found at %s — will attempt session restore", profile_dir)
 
     async with async_playwright() as p:
-        from auth import launch_persistent_context, monitor_browser
+        from auth import launch_persistent_context, monitor_browser, profile_exists
+        # In CI we skip post-login pages when no profile exists (cannot perform manual login)
+        if CI_MODE and not profile_exists(portal_config):
+            logger.warning("CI mode — no profile found for %s; skipping post-login pages.", portal_name)
+            finish_crawl_log(crawl_id, pages_visited, status="done")
+            logger.info("═══ EPR PLASTIC ALL DONE: %d pages crawled (CI skip) ═══", pages_visited)
+            return
         persistent_ctx = await launch_persistent_context(p, portal_config)
         browser_closed_event = asyncio.Event()
         monitor_task = asyncio.create_task(monitor_browser(persistent_ctx, browser_closed_event))
@@ -936,6 +948,51 @@ async def crawl_portal(portal_config: dict):
                     len(final_pages), len(post_login_pages), len(final_pages) - len(post_login_pages))
 
         # ── Steps 9+: crawl each post-login page ──────────────────────────
+        # target post-login pages that should trigger special interactions and then stop
+        target_pages = {
+            "https://eprplastic.cpcb.gov.in/#/epr/pibo-operations/material",
+            "https://eprplastic.cpcb.gov.in/#/epr/pibo-operations/sales",
+        }
+        visited_targets = set()
+
+        async def try_select_unregistered(page) -> bool:
+            """Try to open a registration-type select and choose 'Unregistered'."""
+            # common selectors for mat-select or native select near label text
+            select_selectors = [
+                "mat-select[placeholder*='Registration Type']:not([disabled])",
+                "mat-select:near(:text('Registration Type'), 100)",
+                "select:near(:text('Registration Type'), 100)",
+                "[class*='select']:near(:text('Registration Type'), 100)",
+            ]
+            option_selectors = [
+                "mat-option:has-text('Unregistered')",
+                ".mat-option:has-text('Unregistered')",
+                "[role='option']:has-text('Unregistered')",
+                ".dropdown-item:has-text('Unregistered')",
+            ]
+            try:
+                for s in select_selectors:
+                    try:
+                        el = page.locator(s).first
+                        if await el.is_visible(timeout=2000):
+                            await el.click()
+                            await asyncio.sleep(0.8)
+                            # select option
+                            for opt in option_selectors:
+                                try:
+                                    oel = page.locator(opt).first
+                                    if await oel.is_visible(timeout=2000):
+                                        await oel.click()
+                                        await asyncio.sleep(0.8)
+                                        return True
+                                except Exception:
+                                    continue
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+            return False
+
         for step_idx, page_cfg in enumerate(final_pages, start=9):
             label    = page_cfg.get("label", f"PostLogin_{step_idx}")
             url      = page_cfg.get("url", "")
@@ -985,6 +1042,15 @@ async def crawl_portal(portal_config: dict):
                 screenshot_bytes = await scroll_and_stitch(page)
             else:
                 screenshot_bytes = await page.screenshot(full_page=False, type="png")
+            # If this is one of the target PIBO pages, try to select 'Unregistered'
+            try:
+                if url in target_pages:
+                    ok = await try_select_unregistered(page)
+                    if ok:
+                        logger.info("Selected 'Unregistered' on %s", url)
+                    visited_targets.add(url)
+            except Exception as e:
+                logger.warning("Failed special interaction on %s: %s", url, e)
 
             snap = await save_snapshot(page, portal_name, page_key, screenshot_bytes)
             await diff_and_store(portal_name, page_key, snap, har_path)
@@ -995,6 +1061,13 @@ async def crawl_portal(portal_config: dict):
             except Exception as e:
                 logger.warning("Failed to update crawl progress: %s", e)
             logger.info("  '%s' done | pages_visited=%d", label, pages_visited)
+
+            # If we've visited all configured targets, finish crawl and exit
+            if visited_targets >= target_pages:
+                logger.info("All target post-login pages visited — finishing crawl.")
+                finish_crawl_log(crawl_id, pages_visited, status="done")
+                logger.info("═══ EPR PLASTIC ALL DONE: %d pages crawled (targets complete) ═══", pages_visited)
+                return
 
         # Save cookies at the end of crawl
         try:

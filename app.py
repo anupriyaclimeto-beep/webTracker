@@ -110,10 +110,7 @@ def _check_credentials(username: str, password: str) -> bool:
     return username.strip() == valid_user and password == valid_pass
 
 if "authenticated" not in st.session_state:
-    try:
-        st.session_state["authenticated"] = os.path.exists(AUTH_FLAG)
-    except Exception:
-        st.session_state["authenticated"] = False
+    st.session_state["authenticated"] = False
 
 if not st.session_state["authenticated"]:
     st.markdown("""
