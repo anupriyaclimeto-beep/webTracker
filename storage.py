@@ -491,6 +491,28 @@ def finish_crawl_log(crawl_id, pages_visited, status="done"):
     )
 
 
+def update_crawl_progress(crawl_id, pages_visited):
+    """Update pages_visited for a running crawl immediately."""
+    try:
+        conn = get_conn()
+        if USE_SUPABASE:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE public.crawl_log SET pages_visited=%s WHERE id=%s",
+                    (pages_visited, crawl_id)
+                )
+                conn.commit()
+            conn.close()
+        else:
+            cur = conn.cursor()
+            cur.execute("UPDATE crawl_log SET pages_visited=? WHERE id=?", (pages_visited, crawl_id))
+            conn.commit()
+            conn.close()
+        logger.info("Updated crawl progress - id=%s pages=%s", crawl_id, pages_visited)
+    except Exception as e:
+        logger.warning("Failed to update crawl progress: %s", e)
+
+
 def get_all_changes():
     """Return all change records ordered by newest first."""
     conn = get_conn()

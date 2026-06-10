@@ -3,6 +3,9 @@ import re
 import sqlite3
 import json
 import os
+import requests
+from difflib import unified_diff
+import html as _html
 import subprocess
 import sys
 import time
@@ -50,6 +53,7 @@ ARCHIVE_DIR = config["storage"]["archive_dir"]
 # ── ENVIRONMENT / CLOUD DETECTION ─────────────────────────────────────────────
 load_dotenv(dotenv_path=Path(__file__).parent / ".env", override=True)
 IS_CLOUD = os.getenv("STREAMLIT_SHARING_MODE") is not None or os.path.exists("/mount/src")
+AUTH_FLAG = os.path.join(Path(__file__).parent, ".user_logged_in")
 
 def _secret(key, default=None):
     try:
@@ -106,97 +110,67 @@ def _check_credentials(username: str, password: str) -> bool:
     return username.strip() == valid_user and password == valid_pass
 
 if "authenticated" not in st.session_state:
-    st.session_state["authenticated"] = False
+    try:
+        st.session_state["authenticated"] = os.path.exists(AUTH_FLAG)
+    except Exception:
+        st.session_state["authenticated"] = False
 
 if not st.session_state["authenticated"]:
     st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
-    background: #05070f !important; font-family: 'Inter', sans-serif !important; min-height: 100vh !important;
-}
-[data-testid="stToolbar"],[data-testid="stHeader"],[data-testid="stDecoration"],
-[data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"],
-#MainMenu,header,footer { display:none !important; }
-.main .block-container { padding:0 !important; max-width:100% !important; min-height:100vh; }
-[data-testid="stAppViewContainer"]::before {
-    content:''; position:fixed; inset:0; z-index:0;
-    background-image: linear-gradient(rgba(30,58,138,0.08) 1px,transparent 1px),
-                      linear-gradient(90deg,rgba(30,58,138,0.08) 1px,transparent 1px);
-    background-size:48px 48px; animation:gridMove 20s linear infinite;
-}
-@keyframes gridMove { 0%{background-position:0 0} 100%{background-position:48px 48px} }
-.login-outer { position:relative;z-index:1;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;min-height:100vh;padding:40px 16px; }
-.login-card { width:100%;max-width:440px;
-    background:linear-gradient(160deg,rgba(13,18,30,0.95) 0%,rgba(10,14,25,0.98) 100%);
-    border:1px solid rgba(59,130,246,0.18);border-radius:24px;padding:52px 44px 44px;
-    box-shadow:0 0 0 1px rgba(255,255,255,0.03),0 32px 80px rgba(0,0,0,0.7),0 0 80px rgba(37,99,235,0.08);
-    backdrop-filter:blur(24px);animation:cardIn 0.5s cubic-bezier(.16,1,.3,1) both; }
-@keyframes cardIn { from{opacity:0;transform:translateY(24px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
-.login-badge { display:inline-flex;align-items:center;gap:7px;background:rgba(37,99,235,0.12);
-    border:1px solid rgba(59,130,246,0.25);border-radius:100px;padding:5px 14px 5px 10px;
-    font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:0.14em;
-    color:#60a5fa;text-transform:uppercase;margin-bottom:28px; }
-.login-badge .dot { width:6px;height:6px;border-radius:50%;background:#3b82f6;
-    box-shadow:0 0 6px #3b82f6;animation:pulse 2s ease-in-out infinite; }
-@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
-.login-title { font-size:30px;font-weight:800;color:#f1f5f9;letter-spacing:-0.02em;line-height:1.15;margin-bottom:8px; }
-.login-title span { color:#3b82f6; }
-.login-sub { font-size:13.5px;color:#475569;line-height:1.5;margin-bottom:40px; }
-.login-divider { height:1px;background:linear-gradient(90deg,transparent,rgba(59,130,246,0.2),transparent);margin-bottom:32px; }
-.field-label { font-size:11px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:#64748b;
-    margin-bottom:7px;margin-top:20px;display:block; }
-.field-label:first-of-type { margin-top:0; }
-[data-testid="stTextInput"]>div>div { background:rgba(8,13,26,0.8)!important;border:1px solid rgba(51,65,85,0.8)!important;
-    border-radius:12px!important;transition:border-color 0.25s,box-shadow 0.25s!important; }
-[data-testid="stTextInput"]>div>div:focus-within { border-color:#3b82f6!important;box-shadow:0 0 0 3px rgba(59,130,246,0.16)!important; }
-[data-testid="stTextInput"] input { background:transparent!important;color:#e2e8f0!important;
-    font-family:'Inter',sans-serif!important;font-size:14.5px!important;padding:13px 16px!important;
-    border:none!important;outline:none!important;box-shadow:none!important; }
-[data-testid="stTextInput"] input::placeholder { color:#334155!important; }
-div[data-testid="stButton"]>button { background:linear-gradient(135deg,#1e40af 0%,#2563eb 50%,#3b82f6 100%)!important;
-    color:#fff!important;border:none!important;border-radius:12px!important;
-    font-family:'Inter',sans-serif!important;font-size:15px!important;font-weight:600!important;
-    padding:14px 0!important;width:100%!important;margin-top:24px!important;
-    box-shadow:0 4px 20px rgba(37,99,235,0.35)!important; }
-[data-testid="stAlert"] { background:rgba(239,68,68,0.08)!important;border:1px solid rgba(239,68,68,0.25)!important;
-    border-radius:10px!important;margin-top:14px!important;color:#f87171!important; }
-.login-footer { font-size:11px;color:#1e293b;text-align:center;margin-top:32px;
-    letter-spacing:0.05em;font-family:'IBM Plex Mono',monospace; }
+/* Simple, compact dark login card */
+html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] { background: #04050a !important; }
+.login-outer { display:flex; align-items:center; justify-content:center; min-height:70vh; padding:20px; }
+.login-card { width:100%; max-width:420px; background:linear-gradient(180deg,#071022 0%, #06101a 100%); border:1px solid rgba(255,255,255,0.03);
+    border-radius:12px; padding:28px; box-shadow:0 12px 40px rgba(0,0,0,0.6); }
+.login-head { display:flex; gap:12px; align-items:center; margin-bottom:14px; }
+.logo { width:46px; height:46px; border-radius:10px; background:linear-gradient(90deg,#2dd4bf,#60a5fa); display:flex; align-items:center; justify-content:center; color:#041022; font-weight:800; font-family:monospace; }
+.login-title{ font-size:18px; font-weight:700; color:#e6eef8; margin:0; }
+.login-sub{ font-size:13px; color:#9fb1c9; margin-top:2px; }
+[data-testid="stTextInput"]>div>div { background:#041221!important; border:1px solid #0f2a3f!important; border-radius:8px!important; }
+[data-testid="stTextInput"] input{ color:#e6eef8!important; padding:10px 12px!important; height:38px!important; }
+[data-testid="stButton"] button{ border-radius:8px!important; padding:8px 12px!important; }
+.helper { font-size:12px; color:#7f95ad; margin-top:8px; text-align:center; }
 </style>
 <div class="login-outer">
   <div class="login-card">
-    <div class="login-badge"><span class="dot"></span>CPCB EPR · Web Tracker</div>
-    <div class="login-title">Welcome <span>Back</span></div>
-    <div class="login-sub">Sign in to access the portal change monitoring dashboard.</div>
-    <div class="login-divider"></div>
+    <div class="login-head">
+      <div class="logo">PC</div>
+      <div>
+        <div class="login-title">Portal Change Monitor</div>
+        <div class="login-sub">CPCB EPR · internal dashboard</div>
+      </div>
+    </div>
   </div>
 </div>
 """, unsafe_allow_html=True)
-
-    _, mid, _ = st.columns([1, 1.05, 1])
-    with mid:
-        st.markdown("<div style='margin-top:-245px; padding-bottom:52px'>", unsafe_allow_html=True)
-        st.markdown("<span class='field-label'>Username</span>", unsafe_allow_html=True)
-        username = st.text_input("u", placeholder="e.g. admin", label_visibility="collapsed", key="login_user")
-        st.markdown("<span class='field-label' style='display:block;margin-top:16px'>Password</span>", unsafe_allow_html=True)
-        password = st.text_input("p", placeholder="••••••••", type="password", label_visibility="collapsed", key="login_pass")
-        if st.button("Sign In →", key="login_submit", use_container_width=True):
+    col1, col2, col3 = st.columns([1, 1.2, 1])
+    with col2:
+        username = st.text_input("Username", placeholder="admin", label_visibility="collapsed", key="login_user")
+        password = st.text_input("Password", placeholder="••••••••", type="password", label_visibility="collapsed", key="login_pass")
+        if st.button("Sign in", key="login_submit", use_container_width=True):
             if _check_credentials(username, password):
+                try:
+                    with open(AUTH_FLAG, "w", encoding="utf-8") as _f:
+                        _f.write(username or "user")
+                except Exception:
+                    pass
                 st.session_state["authenticated"] = True
                 st.rerun()
             else:
-                st.error("Incorrect username or password. Please try again.")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='login-footer'>CPCB Portal Change Monitor &nbsp;·&nbsp; Internal Use Only</div>", unsafe_allow_html=True)
+                st.error("Incorrect username or password.")
+        st.markdown('<div class="helper">You will remain logged in until you click Logout.</div>', unsafe_allow_html=True)
     st.stop()
 
 
 def logout():
     st.session_state["authenticated"] = False
+    # remove persisted auth flag so user stays logged out across refreshes
+    try:
+        if os.path.exists(AUTH_FLAG):
+            os.remove(AUTH_FLAG)
+    except Exception:
+        pass
     st.rerun()
 
 
@@ -223,7 +197,7 @@ button[aria-label="Collapse sidebar"]{display:none!important;visibility:hidden!i
 html,body,[data-testid="stAppViewContainer"]{font-family:'IBM Plex Sans',sans-serif!important;background:#080b10!important;}
 .main .block-container{padding:0!important;max-width:100%!important;}
 [data-testid="stButton"] button{font-family:'IBM Plex Sans',sans-serif!important;font-size:12px!important;
-    font-weight:500!important;padding:5px 12px!important;height:32px!important;border-radius:6px!important;
+    font-weight:500!important;padding:6px 10px!important;height:34px!important;border-radius:8px!important;
     white-space:nowrap!important;line-height:1!important;letter-spacing:0.02em!important;min-width:0!important;}
 [data-testid="stButton"] button[kind="primary"]{background:#1d4ed8!important;border:1px solid #2563eb!important;color:#fff!important;}
 [data-testid="stButton"] button[kind="primary"]:hover{background:#2563eb!important;}
@@ -285,10 +259,15 @@ del.word{background:#450a0a;color:#fca5a5;border-radius:3px;padding:1px 5px;font
     padding:2px 8px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;}
 
 /* ── Banners ── */
-.running-banner{background:#091a10;border:1px solid #0f3320;border-radius:8px;padding:14px 20px;
-    font-size:14px;color:#34d399;font-weight:600;display:flex;align-items:center;gap:14px;
-    margin-bottom:16px;font-family:'IBM Plex Mono',monospace;
-    box-shadow:0 0 0 1px rgba(52,211,153,0.08),0 4px 20px rgba(0,0,0,0.3);}
+.running-banner{background:linear-gradient(90deg,#052115,#08331f);border:1px solid rgba(52,211,153,0.18);
+    border-radius:10px;padding:12px 18px;font-size:15px;color:#34d399;font-weight:700;display:flex;
+    align-items:center;gap:14px;margin-bottom:18px;font-family:'IBM Plex Mono',monospace;
+    box-shadow:0 6px 24px rgba(6,95,70,0.14);justify-content:space-between;}
+.running-banner .left {display:flex;align-items:center;gap:12px;}
+.running-banner .title{font-size:15px;font-weight:800;color:#bbf7d0;}
+.running-banner .meta{font-size:12px;color:#a7f3d0;font-weight:500;}
+.running-banner .progress{height:8px;border-radius:6px;background:rgba(255,255,255,0.06);overflow:hidden;width:220px}
+.running-banner .progress > i{display:block;height:100%;background:linear-gradient(90deg,#34d399,#60a5fa);width:0%;transition:width:600ms ease;}
 .login-wait-banner{background:#1a1200;border:1px solid #3a2800;border-radius:8px;padding:14px 20px;
     font-size:14px;color:#fbbf24;font-weight:600;display:flex;align-items:center;gap:14px;
     margin-bottom:16px;font-family:'IBM Plex Mono',monospace;
@@ -375,8 +354,10 @@ def query_db(query, args=()):
                     rows = cur.fetchall()
                     return [dict(r) for r in rows]
             except (psycopg2.OperationalError, psycopg2.InterfaceError):
-                try: pool.putconn(conn, close=True)
-                except Exception: pass
+                try:
+                    pool.putconn(conn, close=True)
+                except Exception:
+                    pass
                 returned = True
                 conn = pool.getconn(); returned = False
                 with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -384,18 +365,21 @@ def query_db(query, args=()):
                     return [dict(r) for r in cur.fetchall()]
             finally:
                 if not returned:
-                    try: pool.putconn(conn)
-                    except Exception: pass
+                    try:
+                        pool.putconn(conn)
+                    except Exception:
+                        pass
         else:
             conn = sqlite3.connect(DB_PATH)
             conn.row_factory = sqlite3.Row
-            cur  = conn.cursor()
+            cur = conn.cursor()
             cur.execute(query, args)
             rows = cur.fetchall()
             conn.close()
             return [dict(r) for r in rows]
     except Exception as e:
-        st.error(f"DB error: {e}"); return []
+        st.error(f"DB error: {e}")
+        return []
 
 def exec_db(query, args=()):
     try:
@@ -698,39 +682,119 @@ def get_portal_stats(portal=None):
             merged.append(s)
     return merged
 
-@st.cache_data(ttl=15)
+@st.cache_data(ttl=300)
 def get_latest_crawl_changes(portal=None):
-    """Return changes from the most recent crawl run (any finished status)."""
-    # Pick the most recent crawl run regardless of status (running/stopped/done).
-    # If the run is still in progress, use current time as upper bound so partial
-    # results from the running crawl are visible immediately (useful when user
-    # clicks Stop during manual login).
+    """Return recent changes for the portal (last N minutes) to avoid timezone/run-window issues."""
+    recent_minutes = 180  # last 3 hours; adjust if you need longer window
+    # Fetch rows (same logic for portal and global)
     if portal:
-        row = query_db(
-            "SELECT started_at, finished_at FROM crawl_log WHERE portal=? ORDER BY started_at DESC LIMIT 1",
-            (portal,)
-        )
+        if USE_SUPABASE:
+            rows = query_db(
+                "SELECT * FROM public.changes WHERE portal=%s AND timestamp >= NOW() - INTERVAL '%s minutes' ORDER BY timestamp DESC LIMIT 500",
+                (portal, recent_minutes)
+            )
+        else:
+            rows = query_db(
+                "SELECT * FROM changes WHERE portal=? AND timestamp>=datetime('now','-%d minutes') ORDER BY timestamp DESC LIMIT 500" % recent_minutes,
+                (portal,)
+            )
     else:
-        row = query_db(
-            "SELECT started_at, finished_at FROM crawl_log ORDER BY started_at DESC LIMIT 1"
-        )
-    if not row:
-        return []
-    s = row[0].get("started_at")
-    f = row[0].get("finished_at") or datetime.now().isoformat()
-    if not s:
-        return []
-    if portal:
-        return query_db(
-            "SELECT * FROM changes WHERE portal=? AND timestamp>=? AND timestamp<=? "
-            "ORDER BY timestamp DESC LIMIT 500",
-            (portal, s, f)
-        )
-    return query_db(
-        "SELECT * FROM changes WHERE timestamp>=? AND timestamp<=? "
-        "ORDER BY timestamp DESC LIMIT 500",
-        (s, f)
-    )
+        if USE_SUPABASE:
+            rows = query_db(
+                "SELECT * FROM public.changes WHERE timestamp >= NOW() - INTERVAL '%s minutes' ORDER BY timestamp DESC LIMIT 500",
+                (recent_minutes,)
+            )
+        else:
+            rows = query_db(
+                "SELECT * FROM changes WHERE timestamp>=datetime('now','-%d minutes') ORDER BY timestamp DESC LIMIT 500" % recent_minutes,
+                ()
+            )
+
+    # Filter out noisy/low-confidence changes and trivial visual diffs
+    try:
+        threshold = float(config.get("diff", {}).get("noise_confidence_threshold", 0.6))
+    except Exception:
+        threshold = 0.6
+    visual_min = float(config.get("diff", {}).get("visual_change_min_ratio", config.get("diff", {}).get("pixel_threshold", 0.05)))
+    filtered = []
+    for r in rows:
+        try:
+            detail = r.get("diff_detail") or {}
+            if isinstance(detail, str):
+                detail = json.loads(detail or "{}")
+        except Exception:
+            detail = {}
+        is_noise = bool(detail.get("is_noise"))
+        conf = detail.get("confidence")
+        try:
+            conf = float(conf) if conf is not None else None
+        except Exception:
+            conf = None
+        # Skip if explicitly marked noise or low confidence
+        if is_noise:
+            continue
+        if conf is not None and conf < threshold:
+            continue
+        # For visual diffs, skip trivial/zero-pixel changes or below visual_min
+        if r.get("diff_type") == "visual":
+            try:
+                ratio = float(detail.get("change_ratio") or 0.0)
+            except Exception:
+                ratio = 0.0
+            changed_pixels = int(detail.get("changed_pixels") or 0)
+            if changed_pixels == 0 or ratio <= visual_min:
+                continue
+        filtered.append(r)
+    # Further restrict to only pages with a visible/meaningful change.
+    visible = []
+    text_min_words = int(config.get("diff", {}).get("text_change_min_words", 5) or 5)
+    text_min_lines = int(config.get("diff", {}).get("text_line_min_changes", 3) or 3)
+    for r in filtered:
+        try:
+            dtype = r.get("diff_type")
+            detail = r.get("diff_detail") or {}
+            if isinstance(detail, str):
+                detail = json.loads(detail or "{}")
+        except Exception:
+            detail = {}
+            dtype = r.get("diff_type")
+        visible_flag = False
+        if dtype == "visual":
+            try:
+                pixels = int(detail.get("changed_pixels") or 0)
+                ratio = float(detail.get("change_ratio") or 0.0)
+            except Exception:
+                pixels = 0; ratio = 0.0
+            if pixels > 0 and ratio > visual_min:
+                visible_flag = True
+        elif dtype == "html":
+            try:
+                words = int(detail.get("words_changed") or 0)
+                lines = int(detail.get("diff_lines") or 0)
+            except Exception:
+                words = 0; lines = 0
+            highlighted = detail.get("highlighted_lines") or []
+            # Only consider HTML changes visible if there are actual visible text differences:
+            # - word count changed above threshold, OR
+            # - line changes above threshold, OR
+            # - explicit highlighted lines (word-level highlights)
+            # Do NOT treat structural-only changes (e.g., added empty <tr> or attribute changes) as visible.
+            if words >= text_min_words or lines >= text_min_lines or (highlighted and len(highlighted) > 0):
+                visible_flag = True
+        elif dtype in ("json", "har"):
+            # treat API/data/har changes as visible if there are added/removed entries
+            if detail:
+                if dtype == "har":
+                    new_ep = detail.get("new_endpoints") or []
+                    rem_ep = detail.get("removed_endpoints") or []
+                    if new_ep or rem_ep:
+                        visible_flag = True
+                else:
+                    # json/data diffs: consider non-empty diff_detail as visible
+                    visible_flag = True
+        if visible_flag:
+            visible.append(r)
+    return visible
 
 @st.cache_data(ttl=30)
 def get_crawl_history(portal=None, limit=50):
@@ -815,22 +879,26 @@ def render_visual_diff(detail, change, baseline_path=None, current_path=None):
 
 def render_change_expander(change):
     page_name = friendly_page_name(change["url"])
-    when      = time_ago(change["timestamp"])
-    try:
-        detail    = json.loads(change["diff_detail"])
-        diff_lines = detail.get("diff_lines", 0)
-        sev, sev_label = severity_badge(diff_lines)
-        summary   = detail.get("summary", "")
-    except Exception:
-        detail = {}; sev = "🟢 Low"; sev_label = "Low"; summary = ""
+    when = time_ago(change.get("timestamp"))
 
-    icon, _    = DIFF_LABELS.get(change["diff_type"], ("❓", ""))
-    label_str  = {"html": "Content", "visual": "Visual", "json": "Data", "har": "API"}.get(change["diff_type"], "?")
-    sev_icon   = {"High": "🔴", "Medium": "🟡", "Low": "🟢"}.get(sev_label, "🟢")
-    # Confidence badge (if available)
-    confidence = None
     try:
-        confidence = float(detail.get("confidence", 0))
+        detail = json.loads(change.get("diff_detail") or "{}")
+        diff_lines = int(detail.get("diff_lines", 0) or 0)
+        sev, sev_label = severity_badge(diff_lines)
+        summary = detail.get("summary", "")
+    except Exception:
+        detail = {}
+        diff_lines = 0
+        sev, sev_label = "🟢 Low", "Low"
+        summary = ""
+
+    icon, _ = DIFF_LABELS.get(change.get("diff_type"), ("❓", ""))
+    label_str = {"html": "Content", "visual": "Visual", "json": "Data", "har": "API"}.get(change.get("diff_type"), "?")
+    sev_icon = {"High": "🔴", "Medium": "🟡", "Low": "🟢"}.get(sev_label, "🟢")
+
+    # Confidence badge (if available)
+    try:
+        confidence = float(detail.get("confidence")) if detail.get("confidence") is not None else None
     except Exception:
         confidence = None
     if confidence is not None:
@@ -843,10 +911,19 @@ def render_change_expander(change):
     else:
         conf_icon = None
 
-    with st.expander(f"{icon} [{change['portal']}]  {page_name} — {label_str} — {sev_icon} {sev_label} — {when}", expanded=False):
+    # expand by default if this is the most recent change
+    try:
+        most_recent = query_db("SELECT id FROM changes ORDER BY timestamp DESC LIMIT 1")
+        most_recent_id = most_recent[0]["id"] if most_recent else None
+    except Exception:
+        most_recent_id = None
+    expanded_by_default = True if most_recent_id and change.get("id") == most_recent_id else False
+
+    title_label = (summary[:80] + "...") if summary else label_str
+    with st.expander(f"{icon} [{change.get('portal')}]  {page_name} — {title_label} — {sev_icon} {sev_label} — {when}", expanded=expanded_by_default):
         c1, c2, c3 = st.columns(3)
         with c1:
-            st.markdown(f"**Portal:** `{change['portal']}`")
+            st.markdown(f"**Portal:** `{change.get('portal')}`")
             st.markdown(f"**Page:** {page_name}")
         with c2:
             st.markdown(f"**Severity:** {sev_label}")
@@ -856,23 +933,88 @@ def render_change_expander(change):
             st.markdown(f"**Detected:** {str(ts)[:16] if ts else 'N/A'}")
             if conf_icon:
                 st.markdown(f"**Confidence:** {conf_icon}")
+
         st.markdown("---")
-        if change["diff_type"] == "html":
-            render_highlighted_html_diff(detail)
-        elif change["diff_type"] == "visual":
-            baseline_rows = query_db("SELECT screenshot_path, screenshot_url FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2", (change["url"],))
+
+        dtype = change.get("diff_type")
+        if dtype == "html":
+            added_texts = detail.get("added_texts") or []
+            removed_texts = detail.get("removed_texts") or []
+            words_changed = int(detail.get("words_changed") or 0)
+            lines_changed = int(detail.get("lines_changed") or 0)
+            changes_sel = detail.get("changes_with_selectors") or []
+            summary_text = detail.get("summary") or ""
+
+            # Plain-English "What changed" header
+            if added_texts and removed_texts:
+                what_changed = f"Text changed from {removed_texts[0]} to {added_texts[0]}"
+            elif added_texts:
+                what_changed = f"New text appeared: {', '.join(added_texts[:5])}"
+            elif removed_texts:
+                what_changed = f"Text removed: {', '.join(removed_texts[:5])}"
+            elif words_changed > 0:
+                what_changed = f"~{words_changed} words changed (structural/attribute update)"
+            else:
+                what_changed = "Page structure changed — no visible text difference found"
+
+            st.markdown(f"**What changed:** {what_changed}")
+            st.markdown("---")
+
+            highlighted = detail.get("highlighted_lines") or []
+            if highlighted:
+                render_highlighted_html_diff(detail)
+            else:
+                card_lines = []
+                if summary_text:
+                    card_lines.append(f"<div style='font-weight:700;margin-bottom:6px'>📄 {_html.escape(summary_text)}</div>")
+                card_lines.append(f"<div style='color:#94a3b8;margin-bottom:6px'>{words_changed} words changed · {lines_changed} lines changed</div>")
+                if added_texts:
+                    card_lines.append("<div style='margin-top:6px'><strong>Added:</strong><ul style='margin-top:6px;margin-bottom:6px'>")
+                    for a in added_texts[:10]:
+                        card_lines.append(f"<li style='color:#86efac'>{_html.escape(a)}</li>")
+                    card_lines.append("</ul></div>")
+                if removed_texts:
+                    card_lines.append("<div style='margin-top:6px'><strong>Removed:</strong><ul style='margin-top:6px;margin-bottom:6px'>")
+                    for r in removed_texts[:10]:
+                        card_lines.append(f"<li style='color:#fca5a5'>{_html.escape(r)}</li>")
+                    card_lines.append("</ul></div>")
+                if changes_sel:
+                    table_html = [
+                        "<div style='margin-top:8px'><strong>Locations:</strong>",
+                        "<table style='width:100%;border-collapse:collapse;margin-top:8px'>",
+                        "<thead><tr><th style='text-align:left;padding:6px;border-bottom:1px solid #1a1f2e'>Type</th>"
+                        "<th style='text-align:left;padding:6px;border-bottom:1px solid #1a1f2e'>Text</th>"
+                        "<th style='text-align:left;padding:6px;border-bottom:1px solid #1a1f2e'>Location (selector)</th></tr></thead><tbody>"
+                    ]
+                    for item in changes_sel[:50]:
+                        t = _html.escape(str(item.get("type") or ""))
+                        txt = _html.escape(str(item.get("text") or "")) or "(no text)"
+                        sel = _html.escape(str(item.get("selector") or "unknown"))
+                        table_html.append(f"<tr><td style='padding:6px;border-bottom:1px solid #0f1724'>{t}</td>"
+                                          f"<td style='padding:6px;border-bottom:1px solid #0f1724'>{txt}</td>"
+                                          f"<td style='padding:6px;border-bottom:1px solid #0f1724;font-family:monospace'>{sel}</td></tr>")
+                    table_html.append("</tbody></table></div>")
+                    card_lines.extend(table_html)
+                st.markdown("<div style='background:#05070a;border:1px solid #1a1f2e;border-radius:8px;padding:12px;margin-bottom:8px'>"
+                            + "".join(card_lines) + "</div>", unsafe_allow_html=True)
+
+        elif dtype == "visual":
+            baseline_rows = query_db("SELECT screenshot_path, screenshot_url FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2", (change.get("url"),))
             baseline_path = (baseline_rows[1].get("screenshot_url") or baseline_rows[1].get("screenshot_path")) if len(baseline_rows) > 1 else None
-            current_path  = (baseline_rows[0].get("screenshot_url") or baseline_rows[0].get("screenshot_path")) if len(baseline_rows) > 0 else None
+            current_path = (baseline_rows[0].get("screenshot_url") or baseline_rows[0].get("screenshot_path")) if len(baseline_rows) > 0 else None
             render_visual_diff(detail, change, baseline_path, current_path)
-        elif change["diff_type"] == "har":
-            new_ep  = detail.get("new_endpoints",     [])
-            rem_ep  = detail.get("removed_endpoints", [])
+
+        elif dtype == "har":
+            new_ep = detail.get("new_endpoints", []) or []
+            rem_ep = detail.get("removed_endpoints", []) or []
             if new_ep:
                 st.markdown(f"🟢 **{len(new_ep)} new endpoint(s)**")
-                for ep in new_ep[:5]: st.code(ep)
+                for ep in new_ep[:5]:
+                    st.code(ep)
             if rem_ep:
                 st.markdown(f"🔴 **{len(rem_ep)} removed endpoint(s)**")
-                for ep in rem_ep[:5]: st.code(ep)
+                for ep in rem_ep[:5]:
+                    st.code(ep)
 
 
 # ── STARTUP CLEANUP ───────────────────────────────────────────────────────────
@@ -929,11 +1071,17 @@ try:
                 row = query_db("SELECT id FROM crawl_log WHERE status='running' ORDER BY started_at DESC LIMIT 1")
                 if row:
                     exec_db("UPDATE crawl_log SET status='done', finished_at=datetime('now') WHERE id=?", (row[0]["id"],))
-            except Exception: pass
+            except Exception:
+                pass
             try:
-                if os.path.exists(PID_FILE): os.remove(PID_FILE)
-            except Exception: pass
-            st.cache_data.clear()
+                if os.path.exists(PID_FILE):
+                    os.remove(PID_FILE)
+            except Exception:
+                pass
+            try:
+                get_latest_crawl_changes.clear()
+            except Exception:
+                pass
             st.success("Crawl finished (detected in logs). Showing changes.")
             st.markdown("<script>setTimeout(()=>window.location.reload(),900)</script>", unsafe_allow_html=True)
 except Exception:
@@ -944,8 +1092,6 @@ except Exception:
 nav_views = [
     ("overview",    "🏠", "Overview"),
     ("changes",     "🚨", "Changes"),
-    ("screenshots", "📸", "Screenshots"),
-    ("history",     "📅", "History"),
     ("console",     "🖥️", "Console"),
 ]
 
@@ -1003,23 +1149,29 @@ with st.container(border=True):
                     "text-transform:uppercase;margin-bottom:6px;letter-spacing:0.04em'>🤖 Crawler</div>",
                     unsafe_allow_html=True)
         manual_running = st.session_state.get("crawler_manual_running", False)
-        if running_crawl or manual_running:
-            if st.button("⏹ Stop", use_container_width=True, type="primary", key="stop_btn"):
-                stop_crawl()
-                st.session_state.pop("crawler_manual_running", None)
-                st.session_state.pop("crawler_manual_started_at", None)
-                st.cache_data.clear()
-                time.sleep(1); st.rerun()
-        else:
-            if st.button("▶ Run", use_container_width=True, type="primary", key="run_btn"):
-                if portal_filter is None:
-                    st.session_state["run_warning"] = True
-                    time.sleep(0.1); st.rerun()
-                st.session_state["crawler_manual_running"]   = True
-                st.session_state["crawler_manual_started_at"] = datetime.now().isoformat()
-                launch_crawl(portal_filter)
-                st.cache_data.clear()
-                time.sleep(1); st.rerun()
+    if running_crawl or manual_running:
+        if st.button("⏹ Stop", use_container_width=False, type="primary", key="stop_btn"):
+            stop_crawl()
+            st.session_state.pop("crawler_manual_running", None)
+            st.session_state.pop("crawler_manual_started_at", None)
+            try:
+                get_latest_crawl_changes.clear()
+            except Exception:
+                pass
+            time.sleep(1); st.rerun()
+    else:
+        # smaller centered run button
+        st.markdown("<div style='text-align:center'>", unsafe_allow_html=True)
+        if st.button("▶ Run", use_container_width=False, type="primary", key="run_btn"):
+            if portal_filter is None:
+                st.session_state["run_warning"] = True
+                time.sleep(0.1); st.rerun()
+            # Mark manual run started and launch crawler in background.
+            st.session_state["crawler_manual_running"]   = True
+            st.session_state["crawler_manual_started_at"] = datetime.now().isoformat()
+            launch_crawl(portal_filter)
+            # Do not clear global caches or force a rerun here to avoid layout shifts / loaders.
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with cc3:
         # ── Session status — for all persistent-auth portals ──────────────
@@ -1236,29 +1388,22 @@ elif st.session_state.view == "changes":
     )
     _run_label = f"Crawl run: {_cl_row[0]['started_at'][:16]}" if _cl_row else "Most recent crawl run"
 
-    _title_col, _refresh_col = st.columns([8, 1])
+    _title_col, _ = st.columns([8, 1])
     with _title_col:
         st.markdown(f"<div class='page-title'>🚨 Latest Changes</div>"
                     f"<div class='page-subtitle'>Scope: {scope} · {_run_label}</div>",
                     unsafe_allow_html=True)
-    with _refresh_col:
-        if st.button("🔄", help="Refresh changes", key="btn_refresh_changes"):
-            get_latest_crawl_changes.clear()
-            st.rerun()
 
-    f1, f2, f3, f4 = st.columns([2, 2, 2, 3])
+    f1, _, f3 = st.columns([2, 0.25, 3])
     with f1:
-        filter_type = st.selectbox("Type",     ["All Types", "📄 Content", "🖼️ Visual", "📊 Data", "🔌 API"], key="filter_type")
-    with f2:
-        filter_sev  = st.selectbox("Severity", ["All Severities", "🔴 High", "🟡 Medium", "🟢 Low"],          key="filter_sev")
-    with f3:
-        fp_local    = st.session_state.portal if portal_filter else st.selectbox("Portal", ["All Portals"] + all_portals, key="fp_local")
-    with f4:
-        search_q    = st.text_input("🔍 Search page", placeholder="e.g. Home, SOP, Dashboard…", key="search_q")
-    # Option to hide low-confidence / noisy changes
-    with f4:
-        hide_noisy = st.checkbox("Hide low-confidence (noisy) changes", value=True, key="hide_noisy")
-    show_hidden = st.checkbox("Show hidden changes (UI-only)", value=False, key="show_hidden")
+        fp_local = st.session_state.portal if portal_filter else st.selectbox("Portal", ["All Portals"] + all_portals, key="fp_local")
+    # We always hide low-confidence/noisy changes in the UI and do not show DB-hidden rows.
+    hide_noisy = True
+    show_hidden = False
+    # Compact single-date filter (shows changes on selected date)
+    date_col, _ = st.columns([2, 6])
+    with date_col:
+        filter_date = st.date_input("Date", value=datetime.now().date(), key="filter_date")
 
     st.markdown("<hr style='margin:8px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 
@@ -1268,197 +1413,79 @@ elif st.session_state.view == "changes":
     if not latest_changes:
         st.success("✅ No changes in the latest crawl.")
     else:
-        type_map = {"📄 Content": "html", "🖼️ Visual": "visual", "📊 Data": "json", "🔌 API": "har"}
         filtered = latest_changes[:]
-        if filter_type != "All Types":
-            filtered = [c for c in filtered if c["diff_type"] == type_map.get(filter_type)]
-        if filter_sev != "All Severities":
-            sl = filter_sev.split(" ", 1)[1]
-            def sev_of(c):
-                try: _, s = severity_badge(json.loads(c["diff_detail"]).get("diff_lines", 0)); return s
-                except: return "Low"
-            filtered = [c for c in filtered if sev_of(c) == sl]
+        # severity filter removed — only show meaningful changes (severity derived in expander)
         if fp_local != "All Portals":
             filtered = [c for c in filtered if c["portal"] == fp_local]
-        if search_q:
-            filtered = [c for c in filtered if search_q.lower() in friendly_page_name(c["url"]).lower()]
-        # Hidden changes stored in DB (UI-only). Fetch hidden ids.
-        hidden_rows = query_db("SELECT change_id FROM hidden_changes")
-        hidden_ids = {r["change_id"] for r in hidden_rows} if hidden_rows else set()
-
-        # Apply noisy-change hiding (default ON) and DB-hidden filter (unless show_hidden)
+        # Apply single-date filter if set
+        try:
+            sel_date = st.session_state.get("filter_date", None)
+            if sel_date:
+                def match_date(c):
+                    try:
+                        ts = c.get("timestamp")
+                        if not ts:
+                            return False
+                        t = ts if isinstance(ts, datetime) else datetime.fromisoformat(str(ts))
+                        return t.date() == sel_date
+                    except Exception:
+                        return False
+                filtered = [c for c in filtered if match_date(c)]
+        except Exception:
+            pass
+        # Apply noisy-change hiding (always enabled). Do NOT consult or persist hidden_changes table here.
         hidden_count = 0
         visible = []
         for c in filtered:
             try:
-                cid = c.get("id")
-                detail = json.loads(c["diff_detail"])
+                detail = json.loads(c.get("diff_detail") or "{}")
                 is_noise = bool(detail.get("is_noise"))
-                # If change is already hidden in DB and user didn't request to see hidden, skip
-                if cid in hidden_ids and not show_hidden:
+                # If change is noise and hide_noisy enabled, skip it.
+                if is_noise and hide_noisy:
                     hidden_count += 1
                     continue
-                # If change is noise and hide_noisy enabled, mark for hiding (but not yet persisted)
-                if is_noise and (st.session_state.get("hide_noisy", True) or hide_noisy):
-                    hidden_count += 1
-                    # do not include in visible unless user requested show_hidden
-                    if not show_hidden:
-                        continue
                 visible.append(c)
             except Exception:
                 visible.append(c)
         filtered = visible
 
-        st.caption(f"Showing **{len(filtered)}** of {len(latest_changes)} change(s) — {hidden_count} hidden")
-
-        # Button: hide currently identified noisy changes from UI (persist as hidden_changes)
-        if st.button("Hide noisy changes from UI (persist)", key="hide_noisy_persist"):
-            to_hide = []
-            for c in latest_changes:
-                try:
-                    cid = c.get("id")
-                    detail = json.loads(c["diff_detail"])
-                    if detail.get("is_noise") and cid not in hidden_ids:
-                        to_hide.append(cid)
-                except Exception:
-                    continue
-            if to_hide:
-                for hid in to_hide:
-                    try:
-                        exec_db("INSERT OR IGNORE INTO hidden_changes (change_id, hidden_at) VALUES (?, datetime('now'))", (hid,))
-                    except Exception:
-                        pass
-                st.success(f"Hid {len(to_hide)} noisy change(s) from UI.")
-                st.cache_data.clear()
-                time.sleep(0.5)
-                st.experimental_rerun()
-        for change in filtered:
-            render_change_expander(change)
-
-
-
-
-# ════════════════════════════════════════════════════════════════════════════════
-# VIEW: SCREENSHOTS
-# ════════════════════════════════════════════════════════════════════════════════
-elif st.session_state.view == "screenshots":
-    st.markdown("<div class='page-title'>📸 Changed Pages</div>"
-                "<div class='page-subtitle'>Before / after screenshots with highlighted differences</div>",
-                unsafe_allow_html=True)
-
-    if not latest_changes:
-        st.success("✅ No changed pages in the latest crawl.")
-    else:
-        changed_urls = list({c["url"] for c in latest_changes})
-        def url_label(url):
-            chg = next((c for c in latest_changes if c["url"] == url), {})
-            p   = chg.get("portal", "")
-            return f"[{p}] {friendly_page_name(url)}" if p else friendly_page_name(url)
-        labels       = [url_label(u) for u in changed_urls]
-        sel_label    = st.selectbox(f"Select page ({len(changed_urls)} changed)", labels)
-        selected_url = changed_urls[labels.index(sel_label)]
-        st.markdown("<hr style='margin:8px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
-
-        @st.cache_data(ttl=60)
-        def _get_baseline_rows(url):
-            return query_db("SELECT * FROM baselines WHERE url=? ORDER BY updated_at DESC LIMIT 2", (url,))
-        @st.cache_data(ttl=60)
-        def _get_page_changes(url):
-            return query_db("SELECT * FROM changes WHERE url=? ORDER BY timestamp DESC LIMIT 100", (url,))
-
-        baseline_rows = _get_baseline_rows(selected_url)
-        page_changes  = _get_page_changes(selected_url)
-        latest_b      = baseline_rows[0] if len(baseline_rows) > 0 else None
-        prev_b        = baseline_rows[1] if len(baseline_rows) > 1 else None
-        chg_portal    = page_changes[0]["portal"] if page_changes else "—"
-
-        st.markdown(
-            f"<div class='page-title' style='font-size:17px'>{friendly_page_name(selected_url)}"
-            f" <span style='font-size:12px;color:#a78bfa;font-weight:500'>[{chg_portal}]</span></div>",
-            unsafe_allow_html=True
-        )
-        visual_change = next((c for c in page_changes if c["diff_type"] == "visual"), None)
-        if visual_change:
+        # Additional strict visible-change filter: only show cards when there is an actual visible change.
+        def has_visible_change(change):
             try:
-                detail        = json.loads(visual_change["diff_detail"])
-                diff_img_path = detail.get("diff_image_path")
-                if diff_img_path and os.path.exists(diff_img_path):
-                    st.markdown("### 🔴 Highlighted Diff")
-                    st.image(diff_img_path, use_container_width=True)
-            except Exception: pass
+                detail = json.loads(change.get("diff_detail") or "{}")
+                if change.get("diff_type") == "html":
+                    words = int(detail.get("words_changed") or 0)
+                    lines = int(detail.get("diff_lines") or 0)
+                    summary = (detail.get("summary") or "")
+                    if words == 0 and lines == 0:
+                        return False
+                    if "no visible text" in summary.lower():
+                        return False
+                elif change.get("diff_type") == "visual":
+                    ratio = float(detail.get("change_ratio") or 0)
+                    pixels = int(detail.get("changed_pixels") or 0)
+                    if pixels == 0 or ratio < 0.05:
+                        return False
+            except Exception:
+                return False
+            return True
 
-        st.markdown("### Before / After")
-        sc1, sc2 = st.columns(2)
-        with sc1:
-            st.markdown("**⬅️ Previous snapshot**")
-            p = (prev_b.get("screenshot_url") or prev_b.get("screenshot_path")) if prev_b else None
-            st.image(p, use_container_width=True) if p and (p.startswith("http") or os.path.exists(p)) else st.info("No previous snapshot")
-        with sc2:
-            st.markdown("**➡️ Latest snapshot**")
-            p = (latest_b.get("screenshot_url") or latest_b.get("screenshot_path")) if latest_b else None
-            st.image(p, use_container_width=True) if p and (p.startswith("http") or os.path.exists(p)) else st.info("No latest snapshot")
+        filtered = [c for c in filtered if has_visible_change(c)]
 
-        st.markdown("---")
-        for change in page_changes[:5]:
-            icon, label = DIFF_LABELS.get(change["diff_type"], ("❓", "?"))
-            with st.expander(f"{icon} {label} change — {time_ago(change['timestamp'])}", expanded=True):
-                try:
-                    detail = json.loads(change["diff_detail"])
-                    if change["diff_type"] == "html":
-                        render_highlighted_html_diff(detail)
-                    elif change["diff_type"] == "visual":
-                        render_visual_diff(detail, change,
-                            prev_b.get("screenshot_url") or prev_b.get("screenshot_path") if prev_b else None,
-                            latest_b.get("screenshot_url") or latest_b.get("screenshot_path") if latest_b else None)
-                except Exception:
-                    st.info("Details unavailable.")
+        if not filtered:
+            st.success("✅ No visible changes found — structural or noise-only changes were filtered out.")
+        else:
+            st.caption(f"Showing **{len(filtered)}** of {len(latest_changes)} change(s) — {hidden_count} hidden (noise filtered)")
+            for change in filtered:
+                render_change_expander(change)
 
 
-# ════════════════════════════════════════════════════════════════════════════════
-# VIEW: HISTORY
-# ════════════════════════════════════════════════════════════════════════════════
-elif st.session_state.view == "history":
-    scope = f"Portal: **{st.session_state.portal}**" if portal_filter else "All portals"
-    st.markdown(f"<div class='page-title'>📅 Crawl History</div>"
-                f"<div class='page-subtitle'>Scope: {scope}</div>", unsafe_allow_html=True)
-    h1, _ = st.columns([2, 5])
-    with h1:
-        hist_filter = st.selectbox("Filter", ["All Crawls", "✅ With Changes", "🟢 No Changes"], key="hist_filter")
-    crawl_logs = get_crawl_history(portal_filter)
-    if not crawl_logs:
-        st.info("No crawls recorded yet.")
-    else:
-        st.markdown("<hr style='margin:8px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
-        for log in crawl_logs:
-            count_row = query_db(
-                "SELECT COUNT(*) as c FROM changes WHERE portal=? AND timestamp>=? AND timestamp<=?",
-                (log["portal"], log["started_at"], log["finished_at"] or datetime.now().isoformat())
-            )
-            count = count_row[0]["c"] if count_row else 0
-            if hist_filter == "✅ With Changes" and count == 0: continue
-            if hist_filter == "🟢 No Changes"  and count > 0:  continue
-            started  = str(log["started_at"])[:16]
-            finished = str(log["finished_at"])[:16] if log["finished_at"] else "—"
-            done     = log["status"] == "done"
-            with st.expander(
-                f"{'✅' if done else '🔄' if log['status']=='running' else '❌'} "
-                f"[{log['portal']}]  {started}  |  "
-                f"{'⚠️ ' + str(count) + ' change(s)' if count > 0 else '✅ No changes'}  |  "
-                f"{log['pages_visited']} pages", expanded=False
-            ):
-                dc1, dc2, dc3, dc4 = st.columns(4)
-                dc1.metric("Pages",    log["pages_visited"]); dc2.metric("Changes", count)
-                dc3.markdown(f"**Started:** {started}"); dc4.markdown(f"**Finished:** {finished}")
-                st.markdown(f"**Portal:** `{log['portal']}`  **Status:** `{log['status']}`")
-                if count > 0:
-                    st.markdown("---"); st.markdown("**Pages that changed:**")
-                    for p_row in query_db(
-                        "SELECT DISTINCT url,diff_type FROM changes WHERE portal=? AND timestamp>=? AND timestamp<=?",
-                        (log["portal"], log["started_at"], log["finished_at"] or datetime.now().isoformat())
-                    )[:10]:
-                        icon, lbl = DIFF_LABELS.get(p_row["diff_type"], ("❓", "?"))
-                        st.markdown(f"&nbsp;&nbsp;{icon} `{friendly_page_name(p_row['url'])}` — {lbl}")
 
+
+# VIEW: SCREENSHOTS removed per user request — functionality has been deleted from the UI.
+
+
+# History view removed per user request.
 
 # ════════════════════════════════════════════════════════════════════════════════
 # VIEW: CONSOLE
@@ -1472,38 +1499,24 @@ elif st.session_state.view == "console":
         if st.button("⏹ Stop crawler", use_container_width=True, key="console_stop"):
             stopped = stop_crawl()
             st.success("Stop signal sent.") if stopped else st.warning("Could not send stop (no PID file?).")
-            st.cache_data.clear(); time.sleep(0.8); st.rerun()
+            try:
+                get_latest_crawl_changes.clear()
+            except Exception:
+                pass
+            time.sleep(0.8); st.rerun()
     with cc2:
         if st.button("↺ Refresh", use_container_width=True, key="console_refresh_btn"):
-            st.cache_data.clear(); st.rerun()
+            try:
+                get_latest_crawl_changes.clear()
+            except Exception:
+                pass
+            st.rerun()
 
     log_lines = read_log(tail=60)
 
-    if waiting_login:
-        st.markdown(
-            "<div class='login-wait-banner'>"
-            "  <div class='spinner-ring-amber'></div>"
-            "  <div class='banner-text'>"
-            "    <span class='banner-title' style='color:#fbbf24'>Waiting for manual login</span>"
-            "    <span class='banner-sub' style='color:#92681a'>Complete login in the browser window to continue</span>"
-            "  </div>"
-            "</div>",
-            unsafe_allow_html=True
-        )
-    elif running_crawl:
-        st.markdown(
-            "<div class='running-banner'>"
-            "  <div class='spinner-ring'></div>"
-            "  <div class='banner-text'>"
-            "    <span class='banner-title'>Active crawl log stream</span>"
-            "    <span class='banner-sub' style='color:#1f6b47'>Auto-refreshing every 3 seconds</span>"
-            "  </div>"
-            "</div>",
-            unsafe_allow_html=True
-        )
-    else:
-        st.markdown("<div class='idle-banner'>⏸ Crawler idle — click ▶ Run to start</div>",
-                    unsafe_allow_html=True)
+    # Console view will not render a separate running/waiting banner to avoid duplication.
+    if not (running_crawl or waiting_login):
+        st.markdown("<div class='idle-banner'>⏸ Crawler idle — click ▶ Run to start</div>", unsafe_allow_html=True)
 
     def colorize(line):
         if "ScriptRunContext" in line or not line.strip(): return ""
@@ -1530,16 +1543,7 @@ elif st.session_state.view == "console":
         unsafe_allow_html=True
     )
 
-    if running_crawl or waiting_login:
-        refresh_ms = 5000 if waiting_login else 3000
-        st.markdown(
-            f"<script>"
-            f"const logBox = document.querySelector('[style*=\"max-height:520px\"]');"
-            f"if (logBox) logBox.scrollTop = logBox.scrollHeight;"
-            f"setTimeout(() => window.parent.location.reload(), {refresh_ms});"
-            f"</script>",
-            unsafe_allow_html=True
-        )
+    # Console will not auto-refresh the whole page; user can use Refresh button to update logs.
 
     if os.path.exists(LOG_FILE):
         with open(LOG_FILE, "rb") as f:
@@ -1570,21 +1574,9 @@ elif st.session_state.view == "console":
                 if conf is not None:
                     st.caption(f"Confidence: {conf} — {'Noise' if is_noise else 'Likely real'}")
             with col2:
-                if st.button("Mark Noise", key=f"mark_noise_{cid}"):
-                    try:
-                        exec_db("INSERT INTO hidden_changes (change_id, hidden_at) VALUES (?, datetime('now'))", (cid,))
-                    except Exception:
-                        pass
-                    st.success("Marked hidden in UI.")
-                    st.experimental_rerun()
+                st.markdown("<div style='color:#94a3b8'>Mark Noise / Unhide removed</div>", unsafe_allow_html=True)
             with col3:
-                if st.button("Mark Real (unhide)", key=f"mark_real_{cid}"):
-                    try:
-                        exec_db("DELETE FROM hidden_changes WHERE change_id = ?", (cid,))
-                    except Exception:
-                        pass
-                    st.success("Unhidden.")
-                    st.experimental_rerun()
+                st.markdown("<div style='color:#94a3b8'>Use admin tools to manage hidden changes</div>", unsafe_allow_html=True)
 
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────

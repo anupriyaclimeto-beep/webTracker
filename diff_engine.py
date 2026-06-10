@@ -76,18 +76,9 @@ def clean_html(html: str) -> str:
                 # Remove inline styles entirely
                 if al == "style":
                     attrs_to_remove.append(attr); continue
-                # Normalize class list: sort classes alphabetically
-                if al == "class":
-                    try:
-                        if isinstance(value, list):
-                            classes = sorted([v for v in value if v and not v.startswith("ng-star-inserted")])
-                            attrs_to_set[attr] = classes
-                        elif isinstance(value, str):
-                            parts = [p for p in value.split() if p and "ng-star-inserted" not in p]
-                            attrs_to_set[attr] = " ".join(sorted(parts))
-                    except Exception:
-                        pass
-                    continue
+                # Remove class/id and other noisy attributes entirely (we don't want attribute-level noise to mask structural changes)
+                if al in ("class", "id") or al.startswith("data-") or al.startswith("ng-") or al.startswith("_nghost") or al.startswith("_ngcontent"):
+                    attrs_to_remove.append(attr); continue
                 # Remove ids that look random (app-12345, abc-1a2b3c)
                 if al == "id":
                     if re.match(r"^(app-|[a-z]+-[0-9a-f]{5,})", str(value or ""), re.I):
@@ -380,6 +371,7 @@ def visual_diff(baseline_path, current_bytes, diff_image_save_path=None):
 
 def html_diff(baseline_path, current_html):
     try:
+        changed = False
         if not baseline_path:
             return {"changed": False, "reason": "no baseline"}
 
@@ -394,7 +386,28 @@ def html_diff(baseline_path, current_html):
         current_lines  = current_clean.splitlines()
 
         diff = list(unified_diff(baseline_lines, current_lines, lineterm="", n=2))
-        changed = len(diff) > 0
+        raw_diff_lines_count = len(diff)
+        raw_changed = raw_diff_lines_count > 0
+
+        # Detect structural additions that should always be considered meaningful:
+        # new table rows/cells, new links, or heading changes; also detect keywords inside <td>
+        structural_addition = False
+        td_keywords = ["circular", "notice", "deadline", "dated", "download"]
+        for line in diff:
+            if not line.startswith("+") or line.startswith("+++"):
+                continue
+            ln = line[1:]
+            # If a table row/cell, link or heading is added, mark as structural
+            if re.search(r"<\s*(tr|td|a|h[1-3])\b", ln, re.I):
+                structural_addition = True
+                break
+            # Check for keywords inside added <td> content
+            m = re.search(r"<\s*td[^>]*>(.*?)</td>", ln, re.I | re.S)
+            if m:
+                inner = re.sub(r"<[^>]+>", "", m.group(1) or "").lower()
+                if any(k in inner for k in td_keywords):
+                    structural_addition = True
+                    break
 
         added_texts, removed_texts = extract_text_changes(diff)
         summary = summarize_changes(added_texts, removed_texts) if changed else "No changes"
@@ -426,7 +439,9 @@ def html_diff(baseline_path, current_html):
                 if line.startswith("+++") or line.startswith("---") or line.startswith("@@"):
                     continue
                 content = line[1:].strip() if len(line) > 1 else ""
-                if any(p.search(content) for p in noise_line_patterns):
+                # strip HTML tags before noise matching
+                content_text = re.sub(r"<[^>]+>", "", content)
+                if any(p.search(content_text) for p in noise_line_patterns):
                     continue
                 if content:
                     meaningful_lines += 1
@@ -438,6 +453,9 @@ def html_diff(baseline_path, current_html):
         text_change_min_words = config.get("diff", {}).get("text_change_min_words", 5)
         text_line_min_changes = config.get("diff", {}).get("text_line_min_changes", 3)
         meaningful_html_change = (words_changed >= text_change_min_words) or (meaningful_lines >= text_line_min_changes)
+        # If structural additions detected (table rows, links, headings, keyword-bearing td), always treat as meaningful
+        if 'structural_addition' in locals() and structural_addition:
+            meaningful_html_change = True
 
         changes_with_selectors = []
         for item in added_texts:
@@ -522,11 +540,17 @@ def html_diff(baseline_path, current_html):
         except Exception:
             html_snippet = None
 
-        logger.info("HTML diff — changed=%s diff_lines=%s summary=%s", changed, len(diff), summary)
+        # Use meaningful_html_change as the effective 'changed' result so noise-only diffs are ignored.
+        effective_changed = bool(meaningful_html_change)
+        logger.info(
+            "HTML diff — raw_changed=%s raw_diff_lines=%d effective_changed=%s summary=%s",
+            raw_changed, raw_diff_lines_count, effective_changed, summary
+        )
 
         return {
-            "changed":               changed,
-            "diff_lines":            len(diff),
+            "changed":               effective_changed,
+            "raw_changed":           raw_changed,
+            "diff_lines":            raw_diff_lines_count,
             "diff_sample":           diff[:50],
             "summary":               summary,
             "added_texts":           [i.get("text") for i in added_texts[:10]],

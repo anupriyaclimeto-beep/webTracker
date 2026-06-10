@@ -56,6 +56,7 @@ from pathlib import Path
 
 from PIL import Image
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
+import signal
 
 from auth import (
     handle_auth,
@@ -69,6 +70,7 @@ from storage import (
     save_diff, start_crawl_log, finish_crawl_log,
     upload_to_cloudinary,
 )
+from storage import update_crawl_progress
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -80,6 +82,36 @@ from storage import ARCHIVE_DIR
 HOME_URL = "https://eprplastic.cpcb.gov.in/#/plastic/home"
 BASE_URL = "https://eprplastic.cpcb.gov.in/"
 
+# Globals for signal handling / progress updates
+CURRENT_CRAWL_ID = None
+CURRENT_PAGES_VISITED = 0
+
+def _handle_stop_signal(signum, frame):
+    try:
+        logger.info("Received stop signal (%s). Flushing crawl progress.", signum)
+        if CURRENT_CRAWL_ID is not None:
+            try:
+                update_crawl_progress(CURRENT_CRAWL_ID, CURRENT_PAGES_VISITED)
+            except Exception as e:
+                logger.warning("Failed to update progress on signal: %s", e)
+            try:
+                finish_crawl_log(CURRENT_CRAWL_ID, CURRENT_PAGES_VISITED, status="stopped")
+            except Exception as e:
+                logger.warning("Failed to finish crawl log on signal: %s", e)
+    finally:
+        try:
+            import sys
+            sys.exit(0)
+        except Exception:
+            pass
+
+# Register handlers
+signal.signal(signal.SIGINT, _handle_stop_signal)
+try:
+    signal.signal(signal.SIGTERM, _handle_stop_signal)
+except Exception:
+    # SIGTERM may not be available on Windows
+    pass
 
 # ── Helpers ────────────────------------------------------------------------───
 
@@ -324,7 +356,28 @@ async def diff_and_store(portal_name: str, url: str, snap: dict, har_path: str):
         baseline=baseline,
         diff_image_save_path=_diff_img_path,
     )
+    # If HTML diff errored, do not upload or update baseline — log and skip
+    try:
+        html_res = diff_result.get("results", {}).get("html", {}) if diff_result and diff_result.get("results") else {}
+        if html_res.get("error"):
+            logger.error("HTML diff failed — baseline NOT updated for %s: %s", url, html_res.get("error"))
+            # Cleanup local archive folder and skip uploads/updates
+            try:
+                shutil.rmtree(_snap_dir)
+                logger.info("✓ Cleaned up local archive %s", _snap_dir)
+            except Exception as e:
+                logger.warning("Cleanup failed for %s: %s", snap.get("screenshot_path", ""), e)
+            return
+    except Exception:
+        # defensive: if diff_result is None or unexpected structure, avoid uploading/updating
+        logger.error("HTML diff result missing or malformed — baseline NOT updated for %s", url)
+        try:
+            shutil.rmtree(_snap_dir)
+        except Exception:
+            pass
+        return
 
+    # Upload to Cloudinary (only if html diff succeeded)
     screenshot_url = upload_to_cloudinary(snap["screenshot_path"], resource_type="image")
     html_url       = upload_to_cloudinary(snap["html_path"],        resource_type="raw")
     if screenshot_url:
@@ -332,25 +385,107 @@ async def diff_and_store(portal_name: str, url: str, snap: dict, har_path: str):
     if html_url:
         logger.info("  Cloudinary HTML:       %s", html_url)
 
-    update_baseline(
-        portal=portal_name, url=url,
-        html_path=snap["html_path"],
-        screenshot_path=snap["screenshot_path"],
-        har_path=har_path,
-        screenshot_url=screenshot_url,
-        html_url=html_url,
-    )
+    # If there was no previous baseline, create the initial baseline now
+    # (we do not create a 'change' record for first snapshot).
+    if not baseline:
+        try:
+            update_baseline(
+                portal=portal_name, url=url,
+                html_path=snap["html_path"],
+                screenshot_path=snap["screenshot_path"],
+                har_path=har_path,
+                screenshot_url=screenshot_url,
+                html_url=html_url,
+            )
+            logger.info("  Initial baseline created for %s", url)
+        except Exception as e:
+            logger.warning("  Failed to create initial baseline for %s: %s", url, e)
+        try:
+            shutil.rmtree(_snap_dir)
+            logger.info("✓ Cleaned up local archive %s", _snap_dir)
+        except Exception:
+            pass
+        return
 
-    if diff_result and diff_result.get("any_changed"):
+    # --- Decide whether to persist each diff based on stricter rules ---
+    saved_any = False
+    if diff_result and diff_result.get("results"):
+        from storage import get_conn, USE_SUPABASE
         for diff_type, diff_data in diff_result["results"].items():
             if diff_type == "har":
                 continue
-            if diff_data.get("changed"):
-                save_diff(portal=portal_name, url=url,
-                          diff_type=diff_type, diff_detail=diff_data,
-                          screenshot_url=screenshot_url, html_url=html_url)
-                logger.info("  Change detected: %s | %s", url, diff_type)
+            try:
+                should_save = False
+                if diff_type == "visual":
+                    ratio = float(diff_data.get("change_ratio") or 0.0)
+                    pixels = int(diff_data.get("changed_pixels") or 0)
+                    # RULE 1: Only save if ratio > 0.05 and pixels > 0
+                    if ratio > config.get("diff", {}).get("visual_change_min_ratio", 0.05) and pixels > 0:
+                        should_save = True
+                    else:
+                        # delete any previously inserted trivial visual rows for this url
+                        try:
+                            if USE_SUPABASE:
+                                conn = get_conn()
+                                with conn.cursor() as cur:
+                                    cur.execute(
+                                        "DELETE FROM public.changes WHERE portal=%s AND url=%s AND diff_type='visual' AND (COALESCE((diff_detail->>'change_ratio')::float, 0) < %s OR COALESCE((diff_detail->>'changed_pixels')::int,0) = 0)",
+                                        (portal_name, url, config.get("diff", {}).get("visual_change_min_ratio", 0.05))
+                                    )
+                                    conn.commit()
+                                conn.close()
+                        except Exception:
+                            pass
+                elif diff_type == "html":
+                    # RULE 2: Only save if >=10 real words changed OR diff_lines >=3
+                    words_changed = int(diff_data.get("words_changed") or 0) if diff_data.get("words_changed") is not None else 0
+                    diff_lines = int(diff_data.get("diff_lines") or 0)
+                    meaningful = diff_data.get("meaningful_html_change", False)
+                    if words_changed >= 10 or diff_lines >= 3 or meaningful:
+                        should_save = True
+                    else:
+                        # delete trivial html changes if present (only for Supabase)
+                        try:
+                            if USE_SUPABASE:
+                                conn = get_conn()
+                                with conn.cursor() as cur:
+                                    cur.execute(
+                                        "DELETE FROM public.changes WHERE portal=%s AND url=%s AND diff_type='html' AND (COALESCE((diff_detail->>'diff_lines')::int,0) < %s AND COALESCE((diff_detail->>'words_changed')::int,0) < %s)",
+                                        (portal_name, url, 3, 10)
+                                    )
+                                    conn.commit()
+                                conn.close()
+                        except Exception:
+                            pass
+                # persist if decided
+                if should_save:
+                    try:
+                        save_diff(portal=portal_name, url=url,
+                                  diff_type=diff_type, diff_detail=diff_data,
+                                  screenshot_url=screenshot_url, html_url=html_url)
+                        saved_any = True
+                        logger.info("  Change detected and saved: %s | %s", url, diff_type)
+                    except Exception as e:
+                        logger.error("Failed to save diff for %s %s: %s", url, diff_type, e)
+                else:
+                    logger.info("  Trivial/noise change ignored for %s | %s", url, diff_type)
+            except Exception as e:
+                logger.error("Error deciding save for diff_type=%s url=%s: %s", diff_type, url, e)
 
+    # If we saved any diffs, update the baseline now (last)
+    try:
+        if saved_any:
+            update_baseline(
+                portal=portal_name, url=url,
+                html_path=snap["html_path"],
+                screenshot_path=snap["screenshot_path"],
+                har_path=har_path,
+                screenshot_url=screenshot_url,
+                html_url=html_url,
+            )
+            logger.info("  Baseline updated after saving changes: %s", url)
+    except Exception as e:
+        logger.warning("Failed to update baseline after saving diffs for %s: %s", url, e)
     # Cleanup local archive folder
     try:
         shutil.rmtree(_snap_dir)
@@ -423,7 +558,11 @@ async def crawl_portal(portal_config: dict):
     har_path    = str(har_dir / f"{portal_name}_network.har")
 
     crawl_id      = start_crawl_log(portal_name)
+    # register for signal-safe updates
+    global CURRENT_CRAWL_ID, CURRENT_PAGES_VISITED
+    CURRENT_CRAWL_ID = crawl_id
     pages_visited = 0
+    CURRENT_PAGES_VISITED = pages_visited
     logger.info("Starting crawl for portal: %s (crawl_id=%s)", portal_name, crawl_id)
 
     # ══════════════════════════════════════════════════════════════════════════
@@ -448,7 +587,10 @@ async def crawl_portal(portal_config: dict):
             await handle_auth(page, portal_config)
         except Exception as e:
             logger.error("Auth failed: %s", e)
-            await browser.close()
+            try:
+                await browser.close()
+            except Exception:
+                pass
             finish_crawl_log(crawl_id, 0, status="error")
             return
 
@@ -459,6 +601,11 @@ async def crawl_portal(portal_config: dict):
                                    await scroll_and_stitch(page))
         await diff_and_store(portal_name, HOME_URL, snap, har_path)
         pages_visited += 1
+        CURRENT_PAGES_VISITED = pages_visited
+        try:
+            update_crawl_progress(crawl_id, pages_visited)
+        except Exception as e:
+            logger.warning("Failed to update crawl progress: %s", e)
         logger.info("Home page done ✓ | pages_visited=%d", pages_visited)
 
         # ── STEP 2: Plastic Waste Management dropdown ──────────────────────
@@ -484,6 +631,11 @@ async def crawl_portal(portal_config: dict):
                                         await page.screenshot(full_page=False, type="png"))
             await diff_and_store(portal_name, dropdown_key, snap2, har_path)
             pages_visited += 1
+            CURRENT_PAGES_VISITED = pages_visited
+            try:
+                update_crawl_progress(crawl_id, pages_visited)
+            except Exception as e:
+                logger.warning("Failed to update crawl progress: %s", e)
             await page.keyboard.press("Escape")
             await asyncio.sleep(0.5)
             logger.info("  Plastic Waste Management dropdown done ✓ | pages_visited=%d", pages_visited)
@@ -515,6 +667,11 @@ async def crawl_portal(portal_config: dict):
                                         await page.screenshot(full_page=False, type="png"))
             await diff_and_store(portal_name, about_epr_key, snap3, har_path)
             pages_visited += 1
+            CURRENT_PAGES_VISITED = pages_visited
+            try:
+                update_crawl_progress(crawl_id, pages_visited)
+            except Exception as e:
+                logger.warning("Failed to update crawl progress: %s", e)
             await page.keyboard.press("Escape")
             await asyncio.sleep(0.5)
             logger.info("  About EPR dropdown done ✓ | pages_visited=%d", pages_visited)
@@ -538,6 +695,11 @@ async def crawl_portal(portal_config: dict):
                                             await scroll_and_stitch(page))
             await diff_and_store(portal_name, item_url, item_snap, har_path)
             pages_visited += 1
+            CURRENT_PAGES_VISITED = pages_visited
+            try:
+                update_crawl_progress(crawl_id, pages_visited)
+            except Exception as e:
+                logger.warning("Failed to update crawl progress: %s", e)
             logger.info("  ✓ '%s' saved | pages_visited=%d", label, pages_visited)
 
         # ── STEP 5: Important Documents ───────────────────────────────────
@@ -564,6 +726,11 @@ async def crawl_portal(portal_config: dict):
                                         await scroll_and_stitch(page))
             await diff_and_store(portal_name, imp_docs_key, snap5, har_path)
             pages_visited += 1
+            CURRENT_PAGES_VISITED = pages_visited
+            try:
+                update_crawl_progress(crawl_id, pages_visited)
+            except Exception as e:
+                logger.warning("Failed to update crawl progress: %s", e)
             logger.info("  Important Documents done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'Important Documents' link")
@@ -592,6 +759,11 @@ async def crawl_portal(portal_config: dict):
                                         await page.screenshot(full_page=False, type="png"))
             await diff_and_store(portal_name, bulk_upload_key, snap6, har_path)
             pages_visited += 1
+            CURRENT_PAGES_VISITED = pages_visited
+            try:
+                update_crawl_progress(crawl_id, pages_visited)
+            except Exception as e:
+                logger.warning("Failed to update crawl progress: %s", e)
             logger.info("  Bulk Upload done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'Bulk Upload' link")
@@ -620,6 +792,11 @@ async def crawl_portal(portal_config: dict):
                                         await page.screenshot(full_page=False, type="png"))
             await diff_and_store(portal_name, lodge_key, snap7, har_path)
             pages_visited += 1
+            CURRENT_PAGES_VISITED = pages_visited
+            try:
+                update_crawl_progress(crawl_id, pages_visited)
+            except Exception as e:
+                logger.warning("Failed to update crawl progress: %s", e)
             logger.info("  Lodge Complaint done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'Lodge Complaint' link")
@@ -648,6 +825,11 @@ async def crawl_portal(portal_config: dict):
                                         await page.screenshot(full_page=False, type="png"))
             await diff_and_store(portal_name, sop_key, snap8, har_path)
             pages_visited += 1
+            CURRENT_PAGES_VISITED = pages_visited
+            try:
+                update_crawl_progress(crawl_id, pages_visited)
+            except Exception as e:
+                logger.warning("Failed to update crawl progress: %s", e)
             logger.info("  SOP done ✓ | pages_visited=%d", pages_visited)
         else:
             logger.warning("  Could not find 'SOP' link")
@@ -705,7 +887,10 @@ async def crawl_portal(portal_config: dict):
             return
         except Exception as e:
             logger.error("Login failed: %s", e)
-            await persistent_ctx.close()
+            try:
+                await persistent_ctx.close()
+            except Exception:
+                pass
             if "closed manually" in str(e) or browser_closed_event.is_set():
                 finish_crawl_log(crawl_id, pages_visited, status="stopped")
                 logger.info("Exiting crawler due to manual browser closure.")
@@ -786,6 +971,11 @@ async def crawl_portal(portal_config: dict):
                     save_snapshot, diff_and_store, scroll_and_stitch, safe_goto, HOME_URL
                 )
                 pages_visited += sub_count
+                CURRENT_PAGES_VISITED = pages_visited
+                try:
+                    update_crawl_progress(crawl_id, pages_visited)
+                except Exception as e:
+                    logger.warning("Failed to update crawl progress: %s", e)
                 logger.info("  PIBO Unregistered done | pages_visited=%d", pages_visited)
                 continue
 
@@ -799,6 +989,11 @@ async def crawl_portal(portal_config: dict):
             snap = await save_snapshot(page, portal_name, page_key, screenshot_bytes)
             await diff_and_store(portal_name, page_key, snap, har_path)
             pages_visited += 1
+            CURRENT_PAGES_VISITED = pages_visited
+            try:
+                update_crawl_progress(crawl_id, pages_visited)
+            except Exception as e:
+                logger.warning("Failed to update crawl progress: %s", e)
             logger.info("  '%s' done | pages_visited=%d", label, pages_visited)
 
         # Save cookies at the end of crawl

@@ -94,14 +94,7 @@ async def diff_and_store(url: str, snap: dict, har_path: str):
     if html_url:
         logger.info("  Cloudinary HTML: %s", html_url)
 
-    update_baseline(
-        portal=PORTAL_NAME, url=url,
-        html_path=snap["html_path"],
-        screenshot_path=snap["screenshot_path"],
-        har_path=har_path,
-        screenshot_url=screenshot_url,
-        html_url=html_url,
-    )
+    saved_any = False
     if diff_result and diff_result.get("any_changed"):
         for diff_type, diff_data in diff_result["results"].items():
             if diff_type == "har":
@@ -110,7 +103,22 @@ async def diff_and_store(url: str, snap: dict, har_path: str):
                 save_diff(portal=PORTAL_NAME, url=url,
                           diff_type=diff_type, diff_detail=diff_data,
                           screenshot_url=screenshot_url, html_url=html_url)
+                saved_any = True
                 logger.info("  Change: %s | %s", url, diff_type)
+
+    # Update baseline only after saving changes
+    if saved_any:
+        try:
+            update_baseline(
+                portal=PORTAL_NAME, url=url,
+                html_path=snap["html_path"],
+                screenshot_path=snap["screenshot_path"],
+                har_path=har_path,
+                screenshot_url=screenshot_url,
+                html_url=html_url,
+            )
+        except Exception as e:
+            logger.warning("Failed to update baseline for %s: %s", url, e)
     # Cleanup local archive folder
     try:
         _snap_dir = Path(snap["screenshot_path"]).parent
