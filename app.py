@@ -659,6 +659,17 @@ del.word{background:#fee2e2;color:#b91c1c;border-radius:3px;padding:1px 4px;font
 @media(max-width:768px){[data-testid="column"]{min-width:180px!important;flex:1 1 auto!important;}}
 .logout-col [data-testid="stButton"]{display:flex;justify-content:flex-end;}
 .logout-col [data-testid="stButton"] button{white-space:nowrap;padding:6px 20px!important;font-size:13px!important;}
+.hdr-title {
+    padding:8px 0 6px;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:15px;
+    font-weight:600;
+    letter-spacing:0.02em;
+    color:#000000 !important;
+    display:flex;
+    align-items:center;
+    gap:4px;
+}
 
 /* Navigation pill tab styles (oval shape like the first image) */
 [data-testid="stHorizontalBlock"] div:has(>button[key^="nav_"]) {
@@ -1474,29 +1485,26 @@ def on_portal_change():
     if "top_portal_select" in st.session_state:
         st.session_state.portal = st.session_state.top_portal_select
 
-hdr_left, hdr_mid, hdr_logout = st.columns([1.2, 2.4, 0.7])
+hdr_left, hdr_nav = st.columns([1.3, 4])
 
 with hdr_left:
-    st.markdown(
-        "<div style='padding:8px 0 6px;font-family:\"IBM Plex Mono\",monospace;"
-        "font-size:15px;font-weight:600;color:#e2e8f0;letter-spacing:0.02em'>"
-        "🔍 Change Monitor</div>", unsafe_allow_html=True
-    )
+    st.markdown("<div class='hdr-title'>🔍 Change Monitor</div>", unsafe_allow_html=True)
 
-with hdr_mid:
-    tab_cols = st.columns(len(nav_views))
-    for col, (view_id, icon, label) in zip(tab_cols, nav_views):
+with hdr_nav:
+    nav_weights = [1] * len(nav_views) + [0.6]
+    nav_cols = st.columns(nav_weights)
+    for col, (view_id, icon, label) in zip(nav_cols[:-1], nav_views):
         with col:
             is_active = st.session_state.view == view_id
             if st.button(f"{icon} {label}", key=f"nav_{view_id}", use_container_width=True,
                          type="primary" if is_active else "secondary"):
-                st.session_state.view = view_id; st.rerun()
+                st.session_state.view = view_id
+                st.rerun()
 
-with hdr_logout:
-    st.markdown("<div class='logout-col'>", unsafe_allow_html=True)
-    if st.button("⎋ Logout", key="logout_btn"):
-        logout()
-    st.markdown("</div>", unsafe_allow_html=True)
+    with nav_cols[-1]:
+        if st.button("⎋ Logout", key="logout_btn", use_container_width=True):
+            logout()
+        st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<hr style='margin:4px 0 16px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 

@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "D:\climeto projects\webTracker\crawler.py", line 36, in <module>
-    async def monitor_browser(context: BrowserContext, closed_event: asyncio.Event) -> None:
-                                       ^^^^^^^^^^^^^^
-NameError: name 'BrowserContext' is not defined
