@@ -14,40 +14,23 @@
       "login_timeout_seconds": 0,
       "browser_profile_dir": "browser_profiles/EPR_PLASTIC",
       "post_login_pages": [
-        {
-          "label": "Dashboard",
-          "url": "https://eprplastic.cpcb.gov.in/#/plastic/dashboard",
-          "method": "scroll"
-        },
-        {
-          "label": "Annual_Return",
-          "url": "https://eprplastic.cpcb.gov.in/#/plastic/annual-return",
-          "method": "scroll"
-        },
-        {
-          "label": "EPR_Certificate",
-          "url": "https://eprplastic.cpcb.gov.in/#/plastic/epr-certificate",
-          "method": "viewport"
-        },
-        {
-          "label": "Compliance_Report",
-          "url": "https://eprplastic.cpcb.gov.in/#/plastic/compliance-report",
-          "method": "scroll"
-        },
-        {
-          "label": "Profile",
-          "url": "https://eprplastic.cpcb.gov.in/#/plastic/profile",
-          "method": "scroll"
-        },
-        {
-          "label": "Transaction_History",
-          "url": "https://eprplastic.cpcb.gov.in/#/plastic/transaction-history",
-          "method": "scroll"
-        },
+ 
+       
         {
           "label": "PIBO_Unregistered_Procurement",
           "url": "https://eprplastic.cpcb.gov.in/#/plastic/pibo-unregistered-procurement",
           "method": "pibo_unregistered"
+        }
+        ,
+        {
+          "label": "PIBO_Material",
+          "url": "https://eprplastic.cpcb.gov.in/#/epr/pibo-operations/material",
+          "method": "scroll"
+        },
+        {
+          "label": "PIBO_Sales",
+          "url": "https://eprplastic.cpcb.gov.in/#/epr/pibo-operations/sales",
+          "method": "scroll"
         }
       ]
     },
