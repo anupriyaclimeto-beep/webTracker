@@ -63,14 +63,20 @@ if USE_SUPABASE:
         f"sslmode=require"
     )
 
-    def get_conn():
-        """Return a fresh psycopg2 connection (Supabase)."""
-        return psycopg2.connect(_DSN, cursor_factory=RealDictCursor)
-else:
-    # Fallback to the original SQLite file‑based DB
-    def get_conn():
-        """Return a fresh sqlite3 connection (local)."""
-        return sqlite3.connect(DB_PATH)
+def get_conn():
+    """
+    Return a fresh database connection.
+    Tries Supabase (PostgreSQL) first; if the connection fails, raises an error.
+    """
+    if USE_SUPABASE:
+        try:
+            return psycopg2.connect(_DSN, cursor_factory=RealDictCursor)
+        except Exception as e:
+            logger.error("Supabase connection failed: %s", e)
+            # Do NOT silently fall back to SQLite — require Supabase when configured.
+            raise
+    # If not configured to use Supabase, use local sqlite
+    return sqlite3.connect(DB_PATH)
 
 # ----------------------------------------------------------------------
 # Logging
@@ -133,7 +139,61 @@ def init_db():
     • If SQLite is used (local dev) we run the original schema‑creation logic.
     """
     if USE_SUPABASE:
-        logger.info("Supabase detected – no local DB initialisation required.")
+        logger.info("Supabase detected - ensuring required tables exist in remote DB.")
+        conn = get_conn()
+        with conn.cursor() as cur:
+            # changes table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS public.changes (
+                    id BIGSERIAL PRIMARY KEY,
+                    portal TEXT NOT NULL,
+                    url TEXT NOT NULL,
+                    diff_type TEXT NOT NULL,
+                    diff_detail JSONB,
+                    ai_summary TEXT,
+                    screenshot_url TEXT,
+                    html_url TEXT,
+                    timestamp TIMESTAMPTZ NOT NULL
+                )
+            """)
+            # baselines table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS public.baselines (
+                    id BIGSERIAL PRIMARY KEY,
+                    portal TEXT NOT NULL,
+                    url TEXT NOT NULL,
+                    html_path TEXT,
+                    screenshot_path TEXT,
+                    har_path TEXT,
+                    screenshot_url TEXT,
+                    html_url TEXT,
+                    updated_at TIMESTAMPTZ NOT NULL
+                )
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_baselines_portal_url ON public.baselines (portal, url)
+            """)
+            # crawl_log table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS public.crawl_log (
+                    id BIGSERIAL PRIMARY KEY,
+                    portal TEXT NOT NULL,
+                    started_at TIMESTAMPTZ NOT NULL,
+                    finished_at TIMESTAMPTZ,
+                    pages_visited INTEGER DEFAULT 0,
+                    status TEXT DEFAULT 'running'
+                )
+            """)
+            # hidden_changes helper
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS public.hidden_changes (
+                    change_id BIGINT PRIMARY KEY,
+                    hidden_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+            """)
+            conn.commit()
+        conn.close()
+        logger.info("Supabase tables ensured.")
         return
 
     # ----- SQLite initialisation (unchanged) -----
@@ -365,13 +425,19 @@ def upload_to_cloudinary(local_path, resource_type="image"):
     """Upload a local file to Cloudinary and return the secure URL.
     Returns None if Cloudinary is not configured or upload fails.
     """
-    if not (CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET):
+    if not USE_CLOUDINARY:
         return None
     try:
-        result = cloudinary.uploader.upload(local_path, resource_type=resource_type, folder="webtracker")
-        return result.get("secure_url")
+        result = cloudinary.uploader.upload(
+            local_path,
+            resource_type=resource_type,
+            folder="webtracker",
+        )
+        url = result.get("secure_url")
+        logger.info("Cloudinary upload OK: %s -> %s", local_path, url)
+        return url
     except Exception as e:
-        logger.error(f"Cloudinary upload failed for {local_path}: {e}")
+        logger.error("Cloudinary upload FAILED for %s: %s", local_path, e)
         return None
 
 
@@ -456,6 +522,28 @@ def finish_crawl_log(crawl_id, pages_visited, status="done"):
         "Crawl log finished - id=%s pages=%s status=%s",
         crawl_id, pages_visited, status
     )
+
+
+def update_crawl_progress(crawl_id, pages_visited):
+    """Update pages_visited for a running crawl immediately."""
+    try:
+        conn = get_conn()
+        if USE_SUPABASE:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE public.crawl_log SET pages_visited=%s WHERE id=%s",
+                    (pages_visited, crawl_id)
+                )
+                conn.commit()
+            conn.close()
+        else:
+            cur = conn.cursor()
+            cur.execute("UPDATE crawl_log SET pages_visited=? WHERE id=?", (pages_visited, crawl_id))
+            conn.commit()
+            conn.close()
+        logger.info("Updated crawl progress - id=%s pages=%s", crawl_id, pages_visited)
+    except Exception as e:
+        logger.warning("Failed to update crawl progress: %s", e)
 
 
 def get_all_changes():

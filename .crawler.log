@@ -1,4 +1,270 @@
-Traceback (most recent call last):
-  File "C:\web_projects\webtracker\crawler.py", line 34, in <module>
-    from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
-ModuleNotFoundError: No module named 'playwright'
+2026-06-10 11:30:59,674 [INFO] Supabase detected - ensuring required tables exist in remote DB.
+2026-06-10 11:31:01,564 [INFO] Supabase tables ensured.
+2026-06-10 11:31:01,567 [INFO] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+2026-06-10 11:31:01,570 [INFO] Starting portal: EPR PLASTIC
+2026-06-10 11:31:01,570 [INFO] \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
+2026-06-10 11:31:03,154 [INFO] Starting crawl for portal: EPR PLASTIC (crawl_id=158)
+2026-06-10 11:31:03,154 [INFO] \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+2026-06-10 11:31:03,154 [INFO] PHASE 1 � Headless pre-login crawl (steps 1�8)
+2026-06-10 11:31:03,154 [INFO] \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+2026-06-10 11:31:10,984 [INFO] Persistent auth mode � handled by crawl_portal()
+2026-06-10 11:31:10,984 [INFO] \u2550\u2550\u2550 STEP 1: Home page � scroll & stitch \u2550\u2550\u2550
+2026-06-10 11:31:10,984 [INFO]   Navigating to [Home] (attempt 1/3) ...
+2026-06-10 11:31:22,386 [INFO]   Page scrollHeight=1683px  viewport=800px
+2026-06-10 11:31:23,041 [INFO]   scrollY=0px  piece 1 captured
+2026-06-10 11:31:23,567 [INFO]   scrollY=800px  piece 2 captured
+2026-06-10 11:31:24,117 [INFO]   scrollY=883px  piece 3 captured
+2026-06-10 11:31:25,822 [INFO]   Stitched: 1280x1683 px from 3 pieces
+2026-06-10 11:31:26,357 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home\20260610_113126
+2026-06-10 11:31:29,172 [INFO] HTML diff � raw_changed=True raw_diff_lines=99 effective_changed=True summary=No changes
+2026-06-10 11:31:30,665 [INFO] Visual diff � changed_pixels=19435 ratio=0.0100 changed=False
+2026-06-10 11:31:30,756 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home � any_changed=True overall_confidence=0.60 text_changes=18 visual_ratio=0.0100
+2026-06-10 11:31:34,885 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home\20260610_113126\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1781071295/webtracker/aqmrubdwmrf1cqy0deph.png
+2026-06-10 11:31:35,509 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home\20260610_113126\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071297/webtracker/kqypfbpgkniuae6uz3li.html
+2026-06-10 11:31:35,510 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1781071295/webtracker/aqmrubdwmrf1cqy0deph.png
+2026-06-10 11:31:35,511 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071297/webtracker/kqypfbpgkniuae6uz3li.html
+2026-06-10 11:31:36,856 [INFO]   Trivial/noise change ignored for https://eprplastic.cpcb.gov.in/#/plastic/home | visual
+2026-06-10 11:31:38,638 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1781071295/webtracker/aqmrubdwmrf1cqy0deph.png
+2026-06-10 11:31:38,638 [INFO]   Change detected and saved: https://eprplastic.cpcb.gov.in/#/plastic/home | html
+2026-06-10 11:31:40,043 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home
+2026-06-10 11:31:40,044 [INFO]   Baseline updated after saving changes: https://eprplastic.cpcb.gov.in/#/plastic/home
+2026-06-10 11:31:40,046 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home\20260610_113126
+2026-06-10 11:31:41,368 [INFO] Updated crawl progress - id=158 pages=1
+2026-06-10 11:31:41,369 [INFO] Home page done \u2713 | pages_visited=1
+2026-06-10 11:31:41,369 [INFO] \u2550\u2550\u2550 STEP 2: Plastic Waste Management dropdown \u2550\u2550\u2550
+2026-06-10 11:31:43,250 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_PlasticWasteManagement\20260610_113143
+2026-06-10 11:31:45,972 [INFO] HTML diff � raw_changed=True raw_diff_lines=99 effective_changed=True summary=No changes
+2026-06-10 11:31:46,598 [INFO] Visual diff � changed_pixels=16802 ratio=0.0205 changed=False
+2026-06-10 11:31:46,632 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement � any_changed=True overall_confidence=0.60 text_changes=18 visual_ratio=0.0205
+2026-06-10 11:31:47,572 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_PlasticWasteManagement\20260610_113143\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1781071308/webtracker/wsrozhn8qjocvvjshzrt.png
+2026-06-10 11:31:48,166 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_PlasticWasteManagement\20260610_113143\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071309/webtracker/bvclii1qogv7hvy9myjp.html
+2026-06-10 11:31:48,166 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1781071308/webtracker/wsrozhn8qjocvvjshzrt.png
+2026-06-10 11:31:48,166 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071309/webtracker/bvclii1qogv7hvy9myjp.html
+2026-06-10 11:31:49,406 [INFO]   Trivial/noise change ignored for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement | visual
+2026-06-10 11:31:51,339 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1781071308/webtracker/wsrozhn8qjocvvjshzrt.png
+2026-06-10 11:31:51,339 [INFO]   Change detected and saved: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement | html
+2026-06-10 11:31:52,573 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement
+2026-06-10 11:31:52,573 [INFO]   Baseline updated after saving changes: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_PlasticWasteManagement
+2026-06-10 11:31:52,578 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_PlasticWasteManagement\20260610_113143
+2026-06-10 11:31:53,917 [INFO] Updated crawl progress - id=158 pages=2
+2026-06-10 11:31:54,443 [INFO]   Plastic Waste Management dropdown done \u2713 | pages_visited=2
+2026-06-10 11:31:54,444 [INFO] \u2550\u2550\u2550 STEP 3: About EPR dropdown \u2550\u2550\u2550
+2026-06-10 11:31:56,284 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_AboutEPR\20260610_113156
+2026-06-10 11:31:59,334 [INFO] HTML diff � raw_changed=True raw_diff_lines=99 effective_changed=True summary=No changes
+2026-06-10 11:32:02,155 [INFO] Diff image generated � changed_pixels=110154 (10.8%)
+2026-06-10 11:32:02,164 [INFO] Diff image saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_AboutEPR\20260610_113156\diff_highlight.png
+2026-06-10 11:32:02,164 [INFO] Visual diff � changed_pixels=115336 ratio=0.1408 changed=True
+2026-06-10 11:32:02,204 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR � any_changed=True overall_confidence=1.00 text_changes=18 visual_ratio=0.1408
+2026-06-10 11:32:03,095 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_AboutEPR\20260610_113156\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1781071324/webtracker/itoqdzhpuntxo3lxszwc.png
+2026-06-10 11:32:03,868 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_AboutEPR\20260610_113156\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071325/webtracker/isvm2ee5fkar2fklnmed.html
+2026-06-10 11:32:03,869 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1781071324/webtracker/itoqdzhpuntxo3lxszwc.png
+2026-06-10 11:32:03,869 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071325/webtracker/isvm2ee5fkar2fklnmed.html
+2026-06-10 11:32:05,131 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR type=visual screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1781071324/webtracker/itoqdzhpuntxo3lxszwc.png
+2026-06-10 11:32:05,131 [INFO]   Change detected and saved: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR | visual
+2026-06-10 11:32:07,036 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1781071324/webtracker/itoqdzhpuntxo3lxszwc.png
+2026-06-10 11:32:07,037 [INFO]   Change detected and saved: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR | html
+2026-06-10 11:32:08,410 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR
+2026-06-10 11:32:08,411 [INFO]   Baseline updated after saving changes: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_AboutEPR
+2026-06-10 11:32:08,418 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_AboutEPR\20260610_113156
+2026-06-10 11:32:09,628 [INFO] Updated crawl progress - id=158 pages=3
+2026-06-10 11:32:10,139 [INFO]   About EPR dropdown done \u2713 | pages_visited=3
+2026-06-10 11:32:10,139 [INFO] \u2550\u2550\u2550 STEP 4.1: Categories Of Plastic Waste \u2550\u2550\u2550
+2026-06-10 11:32:10,139 [INFO]   Navigating to [Categories Of Plastic Waste] (attempt 1/3) ...
+2026-06-10 11:32:18,512 [INFO]   Page scrollHeight=1234px  viewport=800px
+2026-06-10 11:32:19,095 [INFO]   scrollY=0px  piece 1 captured
+2026-06-10 11:32:19,708 [INFO]   scrollY=434px  piece 2 captured
+2026-06-10 11:32:21,384 [INFO]   Stitched: 1280x1234 px from 2 pieces
+2026-06-10 11:32:21,939 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_categoriesepr\20260610_113221
+2026-06-10 11:32:24,688 [INFO] HTML diff � raw_changed=True raw_diff_lines=50 effective_changed=True summary=No changes
+2026-06-10 11:32:26,122 [INFO] Visual diff � changed_pixels=0 ratio=0.0000 changed=False
+2026-06-10 11:32:26,189 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home/categoriesepr � any_changed=True overall_confidence=0.60 text_changes=12 visual_ratio=0.0000
+2026-06-10 11:32:27,115 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_categoriesepr\20260610_113221\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1781071348/webtracker/fgn2lbv0hhnxv4ovi5ad.png
+2026-06-10 11:32:27,786 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_categoriesepr\20260610_113221\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071349/webtracker/oln5n1vr7cisjfnwyefn.html
+2026-06-10 11:32:27,786 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1781071348/webtracker/fgn2lbv0hhnxv4ovi5ad.png
+2026-06-10 11:32:27,786 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071349/webtracker/oln5n1vr7cisjfnwyefn.html
+2026-06-10 11:32:29,037 [INFO]   Trivial/noise change ignored for https://eprplastic.cpcb.gov.in/#/plastic/home/categoriesepr | visual
+2026-06-10 11:32:30,551 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/categoriesepr type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1781071348/webtracker/fgn2lbv0hhnxv4ovi5ad.png
+2026-06-10 11:32:30,551 [INFO]   Change detected and saved: https://eprplastic.cpcb.gov.in/#/plastic/home/categoriesepr | html
+2026-06-10 11:32:31,875 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/categoriesepr
+2026-06-10 11:32:31,876 [INFO]   Baseline updated after saving changes: https://eprplastic.cpcb.gov.in/#/plastic/home/categoriesepr
+2026-06-10 11:32:31,879 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_categoriesepr\20260610_113221
+2026-06-10 11:32:33,191 [INFO] Updated crawl progress - id=158 pages=4
+2026-06-10 11:32:33,191 [INFO]   \u2713 'Categories Of Plastic Waste' saved | pages_visited=4
+2026-06-10 11:32:33,191 [INFO] \u2550\u2550\u2550 STEP 4.2: EPR Target \u2550\u2550\u2550
+2026-06-10 11:32:33,191 [INFO]   Navigating to [EPR Target] (attempt 1/3) ...
+2026-06-10 11:32:41,482 [INFO]   Page scrollHeight=986px  viewport=800px
+2026-06-10 11:32:41,999 [INFO]   scrollY=0px  piece 1 captured
+2026-06-10 11:32:42,544 [INFO]   scrollY=186px  piece 2 captured
+2026-06-10 11:32:44,139 [INFO]   Stitched: 1280x986 px from 2 pieces
+2026-06-10 11:32:44,695 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_eprtargets\20260610_113244
+2026-06-10 11:32:47,333 [INFO] HTML diff � raw_changed=True raw_diff_lines=50 effective_changed=True summary=No changes
+2026-06-10 11:32:48,522 [INFO] Visual diff � changed_pixels=0 ratio=0.0000 changed=False
+2026-06-10 11:32:48,569 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home/eprtargets � any_changed=True overall_confidence=0.60 text_changes=12 visual_ratio=0.0000
+2026-06-10 11:32:49,309 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_eprtargets\20260610_113244\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1781071370/webtracker/zn8a1vzqpvcavtixtd9x.png
+2026-06-10 11:32:49,965 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_eprtargets\20260610_113244\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071371/webtracker/m5iainmokngsicny2amb.html
+2026-06-10 11:32:49,965 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1781071370/webtracker/zn8a1vzqpvcavtixtd9x.png
+2026-06-10 11:32:49,966 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071371/webtracker/m5iainmokngsicny2amb.html
+2026-06-10 11:32:51,240 [INFO]   Trivial/noise change ignored for https://eprplastic.cpcb.gov.in/#/plastic/home/eprtargets | visual
+2026-06-10 11:32:52,709 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/eprtargets type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1781071370/webtracker/zn8a1vzqpvcavtixtd9x.png
+2026-06-10 11:32:52,709 [INFO]   Change detected and saved: https://eprplastic.cpcb.gov.in/#/plastic/home/eprtargets | html
+2026-06-10 11:32:54,021 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/eprtargets
+2026-06-10 11:32:54,021 [INFO]   Baseline updated after saving changes: https://eprplastic.cpcb.gov.in/#/plastic/home/eprtargets
+2026-06-10 11:32:54,025 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_eprtargets\20260610_113244
+2026-06-10 11:32:55,413 [INFO] Updated crawl progress - id=158 pages=5
+2026-06-10 11:32:55,413 [INFO]   \u2713 'EPR Target' saved | pages_visited=5
+2026-06-10 11:32:55,413 [INFO] \u2550\u2550\u2550 STEP 4.3: Responsibility Of PIBOs \u2550\u2550\u2550
+2026-06-10 11:32:55,414 [INFO]   Navigating to [Responsibility Of PIBOs] (attempt 1/3) ...
+2026-06-10 11:33:03,913 [INFO]   Page scrollHeight=986px  viewport=800px
+2026-06-10 11:33:04,435 [INFO]   scrollY=0px  piece 1 captured
+2026-06-10 11:33:04,955 [INFO]   scrollY=186px  piece 2 captured
+2026-06-10 11:33:06,573 [INFO]   Stitched: 1280x986 px from 2 pieces
+2026-06-10 11:33:07,131 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_pibopwp\20260610_113307
+2026-06-10 11:33:10,081 [INFO] HTML diff � raw_changed=True raw_diff_lines=50 effective_changed=True summary=No changes
+2026-06-10 11:33:11,303 [INFO] Visual diff � changed_pixels=0 ratio=0.0000 changed=False
+2026-06-10 11:33:11,353 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home/pibopwp � any_changed=True overall_confidence=0.60 text_changes=12 visual_ratio=0.0000
+2026-06-10 11:33:12,433 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_pibopwp\20260610_113307\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1781071393/webtracker/qzd86ksal2zgyzfr2ik6.png
+2026-06-10 11:33:13,061 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_pibopwp\20260610_113307\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071394/webtracker/vuv29cu1k0qhkfpmnz3s.html
+2026-06-10 11:33:13,061 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1781071393/webtracker/qzd86ksal2zgyzfr2ik6.png
+2026-06-10 11:33:13,061 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071394/webtracker/vuv29cu1k0qhkfpmnz3s.html
+2026-06-10 11:33:14,720 [INFO]   Trivial/noise change ignored for https://eprplastic.cpcb.gov.in/#/plastic/home/pibopwp | visual
+2026-06-10 11:33:16,086 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/pibopwp type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1781071393/webtracker/qzd86ksal2zgyzfr2ik6.png
+2026-06-10 11:33:16,086 [INFO]   Change detected and saved: https://eprplastic.cpcb.gov.in/#/plastic/home/pibopwp | html
+2026-06-10 11:33:17,313 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/pibopwp
+2026-06-10 11:33:17,313 [INFO]   Baseline updated after saving changes: https://eprplastic.cpcb.gov.in/#/plastic/home/pibopwp
+2026-06-10 11:33:17,315 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_pibopwp\20260610_113307
+2026-06-10 11:33:18,543 [INFO] Updated crawl progress - id=158 pages=6
+2026-06-10 11:33:18,543 [INFO]   \u2713 'Responsibility Of PIBOs' saved | pages_visited=6
+2026-06-10 11:33:18,543 [INFO] \u2550\u2550\u2550 STEP 4.4: Plastic Waste Processing \u2550\u2550\u2550
+2026-06-10 11:33:18,544 [INFO]   Navigating to [Plastic Waste Processing] (attempt 1/3) ...
+2026-06-10 11:33:26,810 [INFO]   Page scrollHeight=1255px  viewport=800px
+2026-06-10 11:33:27,464 [INFO]   scrollY=0px  piece 1 captured
+2026-06-10 11:33:28,150 [INFO]   scrollY=455px  piece 2 captured
+2026-06-10 11:33:29,863 [INFO]   Stitched: 1280x1255 px from 2 pieces
+2026-06-10 11:33:30,428 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_plasticwaste\20260610_113330
+2026-06-10 11:33:33,028 [INFO] HTML diff � raw_changed=True raw_diff_lines=50 effective_changed=True summary=No changes
+2026-06-10 11:33:34,223 [INFO] Visual diff � changed_pixels=0 ratio=0.0000 changed=False
+2026-06-10 11:33:34,285 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home/plasticwaste � any_changed=True overall_confidence=0.60 text_changes=12 visual_ratio=0.0000
+2026-06-10 11:33:35,111 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_plasticwaste\20260610_113330\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1781071416/webtracker/w7odpkhg4nkza7ga0j6t.png
+2026-06-10 11:33:36,271 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_plasticwaste\20260610_113330\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071417/webtracker/dxfjpvvxvmqaqheaybvb.html
+2026-06-10 11:33:36,272 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1781071416/webtracker/w7odpkhg4nkza7ga0j6t.png
+2026-06-10 11:33:36,272 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071417/webtracker/dxfjpvvxvmqaqheaybvb.html
+2026-06-10 11:33:37,773 [INFO]   Trivial/noise change ignored for https://eprplastic.cpcb.gov.in/#/plastic/home/plasticwaste | visual
+2026-06-10 11:33:39,222 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/plasticwaste type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1781071416/webtracker/w7odpkhg4nkza7ga0j6t.png
+2026-06-10 11:33:39,222 [INFO]   Change detected and saved: https://eprplastic.cpcb.gov.in/#/plastic/home/plasticwaste | html
+2026-06-10 11:33:40,439 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home/plasticwaste
+2026-06-10 11:33:40,440 [INFO]   Baseline updated after saving changes: https://eprplastic.cpcb.gov.in/#/plastic/home/plasticwaste
+2026-06-10 11:33:40,443 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_plasticwaste\20260610_113330
+2026-06-10 11:33:41,696 [INFO] Updated crawl progress - id=158 pages=7
+2026-06-10 11:33:41,697 [INFO]   \u2713 'Plastic Waste Processing' saved | pages_visited=7
+2026-06-10 11:33:41,697 [INFO] \u2550\u2550\u2550 STEP 5: Important Documents dropdown \u2550\u2550\u2550
+2026-06-10 11:33:41,697 [INFO]   Navigating to [Important Documents] (attempt 1/3) ...
+2026-06-10 11:33:45,902 [INFO]   Page scrollHeight=2103px  viewport=800px
+2026-06-10 11:33:46,505 [INFO]   scrollY=0px  piece 1 captured
+2026-06-10 11:33:47,072 [INFO]   scrollY=800px  piece 2 captured
+2026-06-10 11:33:47,625 [INFO]   scrollY=1303px  piece 3 captured
+2026-06-10 11:33:49,393 [INFO]   Stitched: 1280x2103 px from 3 pieces
+2026-06-10 11:33:49,939 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_ImportantDocuments\20260610_113349
+2026-06-10 11:33:53,058 [INFO] HTML diff � raw_changed=True raw_diff_lines=99 effective_changed=True summary=No changes
+2026-06-10 11:33:54,989 [INFO] Visual diff � changed_pixels=0 ratio=0.0000 changed=False
+2026-06-10 11:33:55,115 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_ImportantDocuments � any_changed=True overall_confidence=0.60 text_changes=18 visual_ratio=0.0000
+2026-06-10 11:33:56,024 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_ImportantDocuments\20260610_113349\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1781071437/webtracker/brcsntq7pvndmtao53sc.png
+2026-06-10 11:33:58,014 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_ImportantDocuments\20260610_113349\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071438/webtracker/s5jzssjexeatvgg0y6nn.html
+2026-06-10 11:33:58,015 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1781071437/webtracker/brcsntq7pvndmtao53sc.png
+2026-06-10 11:33:58,015 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071438/webtracker/s5jzssjexeatvgg0y6nn.html
+2026-06-10 11:33:59,262 [INFO]   Trivial/noise change ignored for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_ImportantDocuments | visual
+2026-06-10 11:34:01,173 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_ImportantDocuments type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1781071437/webtracker/brcsntq7pvndmtao53sc.png
+2026-06-10 11:34:01,173 [INFO]   Change detected and saved: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_ImportantDocuments | html
+2026-06-10 11:34:02,386 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_ImportantDocuments
+2026-06-10 11:34:02,386 [INFO]   Baseline updated after saving changes: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_ImportantDocuments
+2026-06-10 11:34:02,392 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_ImportantDocuments\20260610_113349
+2026-06-10 11:34:03,650 [INFO] Updated crawl progress - id=158 pages=8
+2026-06-10 11:34:03,651 [INFO]   Important Documents done \u2713 | pages_visited=8
+2026-06-10 11:34:03,651 [INFO] \u2550\u2550\u2550 STEP 6: Bulk Upload dropdown \u2550\u2550\u2550
+2026-06-10 11:34:03,651 [INFO]   Navigating to [Bulk Upload] (attempt 1/3) ...
+2026-06-10 11:34:08,033 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_BulkUpload\20260610_113408
+2026-06-10 11:34:10,911 [INFO] HTML diff � raw_changed=True raw_diff_lines=99 effective_changed=True summary=No changes
+2026-06-10 11:34:11,662 [INFO] Visual diff � changed_pixels=14626 ratio=0.0179 changed=False
+2026-06-10 11:34:11,701 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_BulkUpload � any_changed=True overall_confidence=0.60 text_changes=18 visual_ratio=0.0179
+2026-06-10 11:34:12,513 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_BulkUpload\20260610_113408\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1781071453/webtracker/qcwx9jmfrrotkywsqa2e.png
+2026-06-10 11:34:13,134 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_BulkUpload\20260610_113408\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071454/webtracker/dqk99ubsn9x36scorbx5.html
+2026-06-10 11:34:13,134 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1781071453/webtracker/qcwx9jmfrrotkywsqa2e.png
+2026-06-10 11:34:13,134 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071454/webtracker/dqk99ubsn9x36scorbx5.html
+2026-06-10 11:34:14,563 [INFO]   Trivial/noise change ignored for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_BulkUpload | visual
+2026-06-10 11:34:16,501 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_BulkUpload type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1781071453/webtracker/qcwx9jmfrrotkywsqa2e.png
+2026-06-10 11:34:16,501 [INFO]   Change detected and saved: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_BulkUpload | html
+2026-06-10 11:34:17,829 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_BulkUpload
+2026-06-10 11:34:17,829 [INFO]   Baseline updated after saving changes: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_BulkUpload
+2026-06-10 11:34:17,833 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_BulkUpload\20260610_113408
+2026-06-10 11:34:19,075 [INFO] Updated crawl progress - id=158 pages=9
+2026-06-10 11:34:19,076 [INFO]   Bulk Upload done \u2713 | pages_visited=9
+2026-06-10 11:34:19,076 [INFO] \u2550\u2550\u2550 STEP 7: Lodge Complaint dropdown \u2550\u2550\u2550
+2026-06-10 11:34:19,076 [INFO]   Navigating to [Lodge Complaint] (attempt 1/3) ...
+2026-06-10 11:34:23,473 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_LodgeComplaint\20260610_113423
+2026-06-10 11:34:26,248 [INFO] HTML diff � raw_changed=True raw_diff_lines=99 effective_changed=True summary=No changes
+2026-06-10 11:34:27,315 [INFO] Visual diff � changed_pixels=14675 ratio=0.0179 changed=False
+2026-06-10 11:34:27,355 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_LodgeComplaint � any_changed=True overall_confidence=0.60 text_changes=18 visual_ratio=0.0179
+2026-06-10 11:34:28,895 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_LodgeComplaint\20260610_113423\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1781071469/webtracker/wj6xperfskdbgqpbfjjt.png
+2026-06-10 11:34:29,521 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_LodgeComplaint\20260610_113423\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071471/webtracker/sxgqp44owbmlaassrv9s.html
+2026-06-10 11:34:29,522 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1781071469/webtracker/wj6xperfskdbgqpbfjjt.png
+2026-06-10 11:34:29,522 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071471/webtracker/sxgqp44owbmlaassrv9s.html
+2026-06-10 11:34:30,917 [INFO]   Trivial/noise change ignored for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_LodgeComplaint | visual
+2026-06-10 11:34:33,127 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_LodgeComplaint type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1781071469/webtracker/wj6xperfskdbgqpbfjjt.png
+2026-06-10 11:34:33,127 [INFO]   Change detected and saved: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_LodgeComplaint | html
+2026-06-10 11:34:34,428 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_LodgeComplaint
+2026-06-10 11:34:34,429 [INFO]   Baseline updated after saving changes: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_LodgeComplaint
+2026-06-10 11:34:34,433 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_LodgeComplaint\20260610_113423
+2026-06-10 11:34:35,782 [INFO] Updated crawl progress - id=158 pages=10
+2026-06-10 11:34:35,782 [INFO]   Lodge Complaint done \u2713 | pages_visited=10
+2026-06-10 11:34:35,783 [INFO] \u2550\u2550\u2550 STEP 8: SOP dropdown \u2550\u2550\u2550
+2026-06-10 11:34:35,783 [INFO]   Navigating to [SOP] (attempt 1/3) ...
+2026-06-10 11:34:40,116 [INFO] \u2713 Saved \u2192 archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_SOP\20260610_113440
+2026-06-10 11:34:42,994 [INFO] HTML diff � raw_changed=True raw_diff_lines=99 effective_changed=True summary=No changes
+2026-06-10 11:34:43,594 [INFO] Visual diff � changed_pixels=14483 ratio=0.0177 changed=False
+2026-06-10 11:34:43,641 [INFO] Diff complete for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_SOP � any_changed=True overall_confidence=0.60 text_changes=18 visual_ratio=0.0177
+2026-06-10 11:34:44,525 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_SOP\20260610_113440\screenshot.png -> https://res.cloudinary.com/day3dgjd9/image/upload/v1781071485/webtracker/jnpqlxusewh8apbyjg2q.png
+2026-06-10 11:34:45,156 [INFO] Cloudinary upload OK: archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_SOP\20260610_113440\snapshot.html -> https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071486/webtracker/bluicoyvhc4yymzybjjl.html
+2026-06-10 11:34:45,157 [INFO]   Cloudinary screenshot: https://res.cloudinary.com/day3dgjd9/image/upload/v1781071485/webtracker/jnpqlxusewh8apbyjg2q.png
+2026-06-10 11:34:45,157 [INFO]   Cloudinary HTML:       https://res.cloudinary.com/day3dgjd9/raw/upload/v1781071486/webtracker/bluicoyvhc4yymzybjjl.html
+2026-06-10 11:34:46,526 [INFO]   Trivial/noise change ignored for https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_SOP | visual
+2026-06-10 11:34:48,572 [INFO] Diff saved - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_SOP type=html screenshot=https://res.cloudinary.com/day3dgjd9/image/upload/v1781071485/webtracker/jnpqlxusewh8apbyjg2q.png
+2026-06-10 11:34:48,573 [INFO]   Change detected and saved: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_SOP | html
+2026-06-10 11:34:49,871 [INFO] Baseline updated - portal=EPR PLASTIC url=https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_SOP
+2026-06-10 11:34:49,871 [INFO]   Baseline updated after saving changes: https://eprplastic.cpcb.gov.in/#/plastic/home__DROPDOWN_SOP
+2026-06-10 11:34:49,875 [INFO] \u2713 Cleaned up local archive archive\EPR PLASTIC\eprplastic.cpcb.gov.in_plastic_home_DROPDOWN_SOP\20260610_113440
+2026-06-10 11:34:51,205 [INFO] Updated crawl progress - id=158 pages=11
+2026-06-10 11:34:51,205 [INFO]   SOP done \u2713 | pages_visited=11
+2026-06-10 11:34:51,837 [INFO] PHASE 1 complete \u2713 | pages_visited=11
+2026-06-10 11:34:51,837 [INFO] \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+2026-06-10 11:34:51,838 [INFO] PHASE 2 � Persistent context post-login crawl (steps 9+)
+2026-06-10 11:34:51,838 [INFO] \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+2026-06-10 11:34:51,839 [INFO] Browser profile found at C:\web_projects\webtracker\browser_profiles\EPR_PLASTIC � will attempt session restore
+2026-06-10 11:34:58,620 [INFO] Checking session validity for EPR PLASTIC ...
+2026-06-10 11:35:01,396 [INFO] SESSION EXPIRED � on login/home page for EPR PLASTIC (URL: https://eprplastic.cpcb.gov.in/#/plastic/home)
+2026-06-10 11:35:01,396 [INFO] SESSION EXPIRED or first run � switching to manual login for EPR PLASTIC
+2026-06-10 11:35:01,399 [INFO] ============================================================
+2026-06-10 11:35:01,399 [INFO] WAITING FOR LOGIN � browser window is open
+2026-06-10 11:35:01,399 [INFO]   Portal : EPR PLASTIC
+2026-06-10 11:35:01,399 [INFO]   URL    : https://eprplastic.cpcb.gov.in/#/plastic/login
+2026-06-10 11:35:01,399 [INFO]   Timeout: None (waiting indefinitely)
+2026-06-10 11:35:01,400 [INFO]   Complete login in the browser to continue crawling.
+2026-06-10 11:35:01,400 [INFO]   Session will be saved and reused on future runs.
+2026-06-10 11:35:01,400 [INFO] ============================================================
+2026-06-10 11:36:02,691 [INFO] WAITING FOR LOGIN � 60s elapsed (waiting indefinitely) ...
+2026-06-10 11:37:02,733 [INFO] WAITING FOR LOGIN � 120s elapsed (waiting indefinitely) ...
+2026-06-10 11:38:02,600 [INFO] WAITING FOR LOGIN � 180s elapsed (waiting indefinitely) ...
+2026-06-10 11:39:33,470 [INFO] WAITING FOR LOGIN � 270s elapsed (waiting indefinitely) ...
+2026-06-10 11:40:33,473 [INFO] WAITING FOR LOGIN � 330s elapsed (waiting indefinitely) ...
+2026-06-10 11:42:02,515 [INFO] WAITING FOR LOGIN � 420s elapsed (waiting indefinitely) ...
+2026-06-10 11:43:33,086 [INFO] WAITING FOR LOGIN � 510s elapsed (waiting indefinitely) ...
+2026-06-10 11:44:32,612 [INFO] WAITING FOR LOGIN � 570s elapsed (waiting indefinitely) ...
+2026-06-10 11:46:03,460 [INFO] WAITING FOR LOGIN � 660s elapsed (waiting indefinitely) ...
+2026-06-10 11:46:32,595 [INFO] WAITING FOR LOGIN � 690s elapsed (waiting indefinitely) ...
+2026-06-10 11:47:33,270 [INFO] WAITING FOR LOGIN � 750s elapsed (waiting indefinitely) ...
+2026-06-10 11:48:33,030 [INFO] WAITING FOR LOGIN � 810s elapsed (waiting indefinitely) ...
+2026-06-10 11:49:32,939 [INFO] WAITING FOR LOGIN � 870s elapsed (waiting indefinitely) ...
+2026-06-10 11:51:03,103 [INFO] WAITING FOR LOGIN � 960s elapsed (waiting indefinitely) ...
+2026-06-10 11:51:38,020 [WARNING] Browser window was manually closed by the user. Aborting login.
+2026-06-10 11:51:38,023 [ERROR] Login failed: Browser window closed manually by the user.
+2026-06-10 11:51:39,779 [INFO] Crawl log finished - id=158 pages=11 status=stopped
+2026-06-10 11:51:39,779 [INFO] Exiting crawler due to manual browser closure.
+2026-06-10 11:51:39,780 [INFO] User closed the persistent browser before navigation.

@@ -47,43 +47,59 @@ def fetch_url_or_read_file(path_or_url: str, as_bytes: bool = False):
 def clean_html(html: str) -> str:
     try:
         soup = BeautifulSoup(html, "html.parser")
+        # Remove scripts, styles, comments
         for tag in soup.find_all(["script", "style"]):
             tag.decompose()
         for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
             comment.extract()
+
+        # Remove or normalize noisy attributes and elements
+        ignore_selector_substrings = config.get("diff", {}).get("ignore_selectors", [])
+        ignore_attr_patterns = [re.compile(p) for p in config.get("diff", {}).get("ignore_attribute_patterns", [])]
         for tag in soup.find_all(True):
+            # Remove elements whose class or id indicate noise
+            cls = " ".join(tag.get("class") or [])
+            idv = tag.get("id") or ""
+            if any(sub in cls for sub in ignore_selector_substrings) or any(sub in idv for sub in ignore_selector_substrings):
+                tag.decompose(); continue
+
             attrs_to_remove = []
-            attrs_to_clean = {}
-            for attr, value in tag.attrs.items():
-                attr_lower = attr.lower()
-                if attr_lower.startswith("_nghost") or attr_lower.startswith("_ngcontent"):
+            attrs_to_set = {}
+            for attr, value in list(tag.attrs.items()):
+                al = attr.lower()
+                # Remove dynamic framework attributes
+                if any(p.match(al) for p in ignore_attr_patterns):
                     attrs_to_remove.append(attr); continue
-                if attr_lower.startswith("_echarts_instance"):
+                # Remove common noisy attributes
+                if al in ("nonce", "data-nonce", "data-token", "data-csrf", "data-requestverificationtoken", "data-session"):
                     attrs_to_remove.append(attr); continue
-                if attr_lower in ("data-uid","data-reactid","data-reactroot","data-ember-action","data-guid"):
+                # Remove inline styles entirely
+                if al == "style":
                     attrs_to_remove.append(attr); continue
-                if attr_lower == "class":
-                    if isinstance(value, list):
-                        attrs_to_clean[attr] = [v for v in value if "ng-star-inserted" not in v]
-                    elif isinstance(value, str):
-                        attrs_to_clean[attr] = value.replace("ng-star-inserted","").strip()
-                    continue
-                if attr_lower.startswith("ng-reflect"):
+                # Remove class/id and other noisy attributes entirely (we don't want attribute-level noise to mask structural changes)
+                if al in ("class", "id") or al.startswith("data-") or al.startswith("ng-") or al.startswith("_nghost") or al.startswith("_ngcontent"):
                     attrs_to_remove.append(attr); continue
-                if attr_lower == "autocomplete" and isinstance(value, str):
-                    if re.fullmatch(r"[a-f0-9]{8,}", value):
+                # Remove ids that look random (app-12345, abc-1a2b3c)
+                if al == "id":
+                    if re.match(r"^(app-|[a-z]+-[0-9a-f]{5,})", str(value or ""), re.I):
                         attrs_to_remove.append(attr); continue
-                if attr_lower in ("nonce","data-nonce","data-token","data-csrf","data-requestverificationtoken"):
-                    attrs_to_remove.append(attr); continue
-                if attr_lower == "style" and isinstance(value, str):
-                    cleaned_style = re.sub(r"max-height\s*:\s*calc\([^)]+\)\s*;?","",value).strip().rstrip(";")
-                    attrs_to_clean[attr] = cleaned_style; continue
-            for attr in attrs_to_remove:
-                del tag.attrs[attr]
-            for attr, val in attrs_to_clean.items():
-                tag.attrs[attr] = val
+                # Collapse long base64 inline blobs
+                if isinstance(value, str) and "data:" in value and "base64" in value:
+                    attrs_to_set[attr] = re.sub(r'data:[^;]+;base64,[A-Za-z0-9+/=]{20,}', 'BASE64_PLACEHOLDER', value)
+            for a in attrs_to_remove:
+                try: del tag.attrs[a]
+                except Exception: pass
+            for a, v in attrs_to_set.items():
+                tag.attrs[a] = v
+
+        # Final text normalization
         text = soup.prettify()
-        text = re.sub(r"End Session \(\d+\)", "End Session (N)", text)
+        # Replace long base64 blocks in the whole text
+        text = re.sub(r'data:[^;]+;base64,[A-Za-z0-9+/=]{20,}', 'BASE64_PLACEHOLDER', text)
+        # Normalize common phrases
+        text = re.sub(r"End Session \(\d+\)", "End Session (N)", text, flags=re.I)
+        # Collapse excessive blank lines and whitespace
+        text = re.sub(r"\s+\n", "\n", text)
         text = re.sub(r"\n{3,}", "\n\n", text)
         return text
     except Exception as e:
@@ -302,13 +318,28 @@ def visual_diff(baseline_path, current_bytes, diff_image_save_path=None):
 
         if baseline_img.size != current_img.size:
             current_img = current_img.resize(baseline_img.size, Image.LANCZOS)
+        # Optionally mask header/footer zones which often contain dynamic content
+        cfg = config.get("diff", {})
+        top_mask = int(cfg.get("visual_mask_top_px", 80))
+        bottom_mask = int(cfg.get("visual_mask_bottom_px", 80))
+        w, h = baseline_img.size
+        def crop_mask(img):
+            if top_mask <= 0 and bottom_mask <= 0:
+                return img
+            top = top_mask
+            bottom = h - bottom_mask
+            # Crop to middle region only for diff, keep full images for rendering
+            return img.crop((0, top, w, bottom))
 
-        diff_img       = ImageChops.difference(baseline_img, current_img)
-        pixels         = list(diff_img.getdata())
+        base_crop = crop_mask(baseline_img)
+        curr_crop = crop_mask(current_img)
+        diff_img = ImageChops.difference(base_crop, curr_crop)
+        pixels = list(diff_img.getdata())
         changed_pixels = sum(1 for p in pixels if any(c > 10 for c in p))
-        total_pixels   = len(pixels)
-        change_ratio   = changed_pixels / total_pixels
-        changed        = change_ratio > PIXEL_THRESHOLD
+        total_pixels = len(pixels) if pixels else 1
+        change_ratio = changed_pixels / total_pixels
+        visual_threshold = cfg.get("visual_change_min_ratio", cfg.get("pixel_threshold", PIXEL_THRESHOLD))
+        changed = change_ratio > visual_threshold
 
         diff_image_path = None
         if changed:
@@ -340,6 +371,7 @@ def visual_diff(baseline_path, current_bytes, diff_image_save_path=None):
 
 def html_diff(baseline_path, current_html):
     try:
+        changed = False
         if not baseline_path:
             return {"changed": False, "reason": "no baseline"}
 
@@ -354,10 +386,76 @@ def html_diff(baseline_path, current_html):
         current_lines  = current_clean.splitlines()
 
         diff = list(unified_diff(baseline_lines, current_lines, lineterm="", n=2))
-        changed = len(diff) > 0
+        raw_diff_lines_count = len(diff)
+        raw_changed = raw_diff_lines_count > 0
+
+        # Detect structural additions that should always be considered meaningful:
+        # new table rows/cells, new links, or heading changes; also detect keywords inside <td>
+        structural_addition = False
+        td_keywords = ["circular", "notice", "deadline", "dated", "download"]
+        for line in diff:
+            if not line.startswith("+") or line.startswith("+++"):
+                continue
+            ln = line[1:]
+            # If a table row/cell, link or heading is added, mark as structural
+            if re.search(r"<\s*(tr|td|a|h[1-3])\b", ln, re.I):
+                structural_addition = True
+                break
+            # Check for keywords inside added <td> content
+            m = re.search(r"<\s*td[^>]*>(.*?)</td>", ln, re.I | re.S)
+            if m:
+                inner = re.sub(r"<[^>]+>", "", m.group(1) or "").lower()
+                if any(k in inner for k in td_keywords):
+                    structural_addition = True
+                    break
 
         added_texts, removed_texts = extract_text_changes(diff)
         summary = summarize_changes(added_texts, removed_texts) if changed else "No changes"
+
+        # Compute textual similarity/changes: number of meaningful words changed and lines changed
+        try:
+            # get plain text and tokenize
+            baseline_text = re.sub(r"\s+", " ", BeautifulSoup(baseline_clean, "html.parser").get_text(separator=" ")).strip()
+            current_text = re.sub(r"\s+", " ", BeautifulSoup(current_clean, "html.parser").get_text(separator=" ")).strip()
+            baseline_words = re.findall(r"\w+", baseline_text)
+            current_words = re.findall(r"\w+", current_text)
+            sm = SequenceMatcher(None, baseline_words, current_words, autojunk=False)
+            words_changed = 0
+            for tag, i1, i2, j1, j2 in sm.get_opcodes():
+                if tag != "equal":
+                    words_changed += max(i2 - i1, j2 - j1)
+            # lines changed count (ignore metadata headers)
+            lines_changed = sum(1 for l in diff if l.startswith("+") or l.startswith("-"))
+            # apply text-level noise filters: ignore lines matching timestamp/token patterns
+            noise_line_patterns = [
+                re.compile(r"\d+\s+minutes?\s+ago", re.I),
+                re.compile(r"\d+\s+hours?\s+ago", re.I),
+                re.compile(r"last updated.*\d", re.I),
+                re.compile(r"[A-Za-z0-9+/]{60,}"),
+                re.compile(r"\b(token|csrf|nonce|session)\b", re.I),
+            ]
+            meaningful_lines = 0
+            for line in diff:
+                if line.startswith("+++") or line.startswith("---") or line.startswith("@@"):
+                    continue
+                content = line[1:].strip() if len(line) > 1 else ""
+                # strip HTML tags before noise matching
+                content_text = re.sub(r"<[^>]+>", "", content)
+                if any(p.search(content_text) for p in noise_line_patterns):
+                    continue
+                if content:
+                    meaningful_lines += 1
+        except Exception:
+            words_changed = 0
+            lines_changed = 0
+            meaningful_lines = 0
+
+        text_change_min_words = config.get("diff", {}).get("text_change_min_words", 5)
+        text_line_min_changes = config.get("diff", {}).get("text_line_min_changes", 3)
+        meaningful_html_change = (words_changed >= text_change_min_words) or (meaningful_lines >= text_line_min_changes)
+        # If structural additions detected (table rows, links, headings, keyword-bearing td), always treat as meaningful
+        if 'structural_addition' in locals() and structural_addition:
+            meaningful_html_change = True
 
         changes_with_selectors = []
         for item in added_texts:
@@ -442,11 +540,17 @@ def html_diff(baseline_path, current_html):
         except Exception:
             html_snippet = None
 
-        logger.info("HTML diff — changed=%s diff_lines=%s summary=%s", changed, len(diff), summary)
+        # Use meaningful_html_change as the effective 'changed' result so noise-only diffs are ignored.
+        effective_changed = bool(meaningful_html_change)
+        logger.info(
+            "HTML diff — raw_changed=%s raw_diff_lines=%d effective_changed=%s summary=%s",
+            raw_changed, raw_diff_lines_count, effective_changed, summary
+        )
 
         return {
-            "changed":               changed,
-            "diff_lines":            len(diff),
+            "changed":               effective_changed,
+            "raw_changed":           raw_changed,
+            "diff_lines":            raw_diff_lines_count,
             "diff_sample":           diff[:50],
             "summary":               summary,
             "added_texts":           [i.get("text") for i in added_texts[:10]],
@@ -454,6 +558,10 @@ def html_diff(baseline_path, current_html):
             "changes_with_selectors": changes_with_selectors[:20],
             "highlighted_lines":     highlighted_lines,
             "html_snippet":          html_snippet,
+            "words_changed":         int(words_changed) if 'words_changed' in locals() else 0,
+            "lines_changed":         int(lines_changed) if 'lines_changed' in locals() else 0,
+            "meaningful_lines":      int(meaningful_lines) if 'meaningful_lines' in locals() else 0,
+            "meaningful_html_change": bool(meaningful_html_change) if 'meaningful_html_change' in locals() else False,
         }
 
     except Exception as e:
@@ -544,11 +652,55 @@ async def run_all_diffs(portal_name, url, current_screenshot, current_html, base
                 results[key] = {"changed": False, "error": str(result)}
             else:
                 results[key] = result
+    # --- decide noise/confidence using simple combined heuristics ---
+    diff_cfg = config.get("diff", {})
+    text_min_words = diff_cfg.get("text_change_min_words", 2)
+    visual_min_ratio = diff_cfg.get("visual_change_min_ratio", PIXEL_THRESHOLD)
 
-    any_changed = any(r.get("changed", False) for r in results.values())
-    logger.info("Diff complete for %s — any_changed=%s", url, any_changed)
+    html_res = results.get("html", {}) if "html" in results else {}
+    visual_res = results.get("visual", {}) if "visual" in results else {}
+    har_res = results.get("har", {}) if "har" in results else {}
 
-    return {"any_changed": any_changed, "results": results}
+    added_texts = html_res.get("added_texts", []) or []
+    removed_texts = html_res.get("removed_texts", []) or []
+    text_changes_count = len(added_texts) + len(removed_texts)
+    visual_ratio = visual_res.get("change_ratio", 0) or 0
+    har_changed = har_res.get("changed", False)
+
+    # confidence scoring (simple weighted sum)
+    score = 0.0
+    if text_changes_count >= text_min_words:
+        score += 0.6
+    elif text_changes_count > 0:
+        score += 0.25
+    if visual_ratio >= visual_min_ratio:
+        score += 0.5
+    if har_changed:
+        score += 0.2
+    confidence = min(1.0, score)
+    is_noise_overall = confidence < 0.45
+
+    # annotate per-diff-type noise flag and confidence
+    for dkey, dval in results.items():
+        try:
+            if dkey == "html":
+                dval["is_noise"] = (text_changes_count < text_min_words) and (visual_ratio < visual_min_ratio)
+            elif dkey == "visual":
+                dval["is_noise"] = (visual_ratio < visual_min_ratio) and (text_changes_count == 0)
+            elif dkey == "har":
+                # treat HAR-only small endpoint changes as noise unless major
+                dval["is_noise"] = not bool(dval.get("changed", False))
+            else:
+                dval["is_noise"] = False
+            dval["confidence"] = round(confidence, 3)
+        except Exception:
+            pass
+
+    any_changed = any(r.get("changed", False) and not r.get("is_noise", False) for r in results.values())
+    logger.info("Diff complete for %s — any_changed=%s overall_confidence=%.2f text_changes=%d visual_ratio=%.4f",
+                url, any_changed, confidence, text_changes_count, visual_ratio)
+
+    return {"any_changed": any_changed, "results": results, "confidence": round(confidence, 3), "is_noise": is_noise_overall}
 
 
 if __name__ == "__main__":

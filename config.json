@@ -3,59 +3,142 @@
     {
       "name": "EPR PLASTIC",
       "url": "https://eprplastic.cpcb.gov.in/#/plastic/home",
-      "auth": "manual",
+      "auth": "persistent",
       "crawl_interval_minutes": 60,
       "crawl": {
         "only_home": true,
         "capture_dropdowns": true
-      }
+      },
+      "login_url": "https://eprplastic.cpcb.gov.in/#/plastic/login",
+      "login_success_selector": "app-header .user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), .logout-btn, a:has-text('Logout'), .profile-name",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/EPR_PLASTIC",
+      "post_login_pages": [
+ 
+       
+        {
+          "label": "PIBO_Unregistered_Procurement",
+          "url": "https://eprplastic.cpcb.gov.in/#/plastic/pibo-unregistered-procurement",
+          "method": "pibo_unregistered"
+        }
+        ,
+        {
+          "label": "PIBO_Material",
+          "url": "https://eprplastic.cpcb.gov.in/#/epr/pibo-operations/material",
+          "method": "scroll"
+        },
+        {
+          "label": "PIBO_Sales",
+          "url": "https://eprplastic.cpcb.gov.in/#/epr/pibo-operations/sales",
+          "method": "scroll"
+        }
+      ]
     },
     {
       "name": "EPR EWASTE",
       "url": "https://eprewaste.cpcb.gov.in/#/",
-      "auth": "none",
+      "auth": "persistent",
       "crawl_interval_minutes": 60,
       "crawl": {
         "only_home": true,
         "capture_dropdowns": true
-      }
+      },
+      "login_url": "https://eprewaste.cpcb.gov.in/#/",
+      "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout'), .profile-name, [class*='user-info'], button:has-text('Logout')",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/EPR_EWASTE",
+      "post_login_pages": [
+        {
+          "label": "Dashboard",
+          "url": "https://eprewaste.cpcb.gov.in/#/dashboard",
+          "method": "scroll"
+        }
+      ]
     },
     {
       "name": "EPR BATTERY",
       "url": "https://eprbattery.cpcb.gov.in/",
-      "auth": "none",
+      "auth": "persistent",
       "crawl_interval_minutes": 60,
       "crawl": {
         "only_home": true,
         "capture_dropdowns": true
-      }
+      },
+      "login_url": "https://eprbattery.cpcb.gov.in/",
+      "session_check_url": "https://eprbattery.cpcb.gov.in/user/producerDashboard",
+      "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout')",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/EPR_BATTERY",
+      "post_login_pages": [
+        {
+          "label": "Dashboard",
+          "url": "https://eprbattery.cpcb.gov.in/user/nationaldashboard",
+          "method": "scroll"
+        }
+      ]
     },
     {
       "name": "EPR TYRES",
       "url": "https://eprtyres.cpcb.gov.in/",
-      "auth": "none",
+      "auth": "persistent",
       "crawl_interval_minutes": 60,
       "crawl": {
         "only_home": true,
         "capture_dropdowns": true
-      }
+      },
+      "login_url": "https://eprtyres.cpcb.gov.in/user/login",
+      "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout')",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/EPR_TYRES",
+      "post_login_pages": [
+        {
+          "label": "Dashboard",
+          "url": "https://eprtyres.cpcb.gov.in/user/dashboard",
+          "method": "scroll"
+        }
+      ]
     },
     {
       "name": "EPR USEDOIL",
       "url": "https://eprusedoil.cpcb.gov.in/",
-      "auth": "none",
+      "auth": "persistent",
       "crawl_interval_minutes": 60,
       "crawl": {
         "only_home": true,
         "capture_dropdowns": true
-      }
+      },
+      "login_url": "https://eprusedoil.cpcb.gov.in/login",
+      "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout')",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/EPR_USEDOIL",
+      "post_login_pages": [
+        {
+          "label": "Dashboard",
+          "url": "https://eprusedoil.cpcb.gov.in/dashboard",
+          "method": "scroll"
+        }
+      ]
     },
     {
       "name": "EPR ELV",
       "url": "https://eprelv.cpcb.gov.in/",
-      "auth": "none",
+      "auth": "persistent",
       "crawl_interval_minutes": 60,
-      "crawl": { "only_home": true, "capture_dropdowns": true }
+      "crawl": {
+        "only_home": true,
+        "capture_dropdowns": true
+      },
+      "login_url": "https://eprelv.cpcb.gov.in/login",
+      "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout')",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/EPR_ELV",
+      "post_login_pages": [
+        {
+          "label": "Dashboard",
+          "url": "https://eprelv.cpcb.gov.in/dashboard",
+          "method": "scroll"
+        }
+      ]
     }
   ],
   "schedule": {
@@ -67,7 +150,16 @@
     "html": true,
     "json": true,
     "har": true,
-    "pixel_threshold": 0.05
+    "pixel_threshold": 0.05,
+    "ignore_selectors": [".timestamp", ".updated-at", ".ads", ".cookie-banner", ".spinner", ".skeleton", ".promo"],
+    "ignore_attribute_patterns": ["^data-v-", "^ng-", "^_nghost", "^_ngcontent", "^aria-"],
+    "text_change_min_words": 5,
+    "text_change_min_ratio": 0.01,
+    "text_line_min_changes": 3,
+    "visual_change_min_ratio": 0.05,
+    "visual_mask_top_px": 80,
+    "visual_mask_bottom_px": 80,
+    "har_ignore_endpoints": ["ping","heartbeat","keepalive"]
   },
   "storage": {
     "db": "changes.db",
@@ -77,8 +169,6 @@
   "browser": {
     "headless": true,
     "timeout_ms": 30000,
-    "persistent": true,
-    "user_data_dir": "browser_session",
     "viewport": {
       "width": 1280,
       "height": 800
