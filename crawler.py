@@ -54,7 +54,7 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 import sys
-import from playwright.async_api import async_playwright, BrowserContext
+from playwright.async_api import async_playwright, BrowserContext
 # CI mode detection - force headless / skip login pages in CI
 CI_MODE = os.getenv("CI", "false").lower() == "true"
 
