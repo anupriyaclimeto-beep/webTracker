@@ -122,8 +122,9 @@ def upload_to_cloudinary(local_path, resource_type="image"):
         url = result.get("secure_url")
         logger.info("Cloudinary upload OK: %s -> %s", local_path, url)
         return url
-    except Exception as e:
-        logger.error("Cloudinary upload FAILED for %s: %s", local_path, e)
+    except Exception:
+        # Log full exception for debugging in CI/workflow logs
+        logger.exception("Cloudinary upload FAILED for %s", local_path)
         return None
 
 
