@@ -53,6 +53,10 @@ import re
 import shutil
 from datetime import datetime
 from pathlib import Path
+import sys
+
+# CI mode detection - force headless / skip login pages in CI
+CI_MODE = os.getenv("CI", "false").lower() == "true"
 
 from PIL import Image
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeout
@@ -573,7 +577,9 @@ async def crawl_portal(portal_config: dict):
     logger.info("━" * 60)
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, args=_browser_args())
+        # Force headless in CI, otherwise use configured headless flag
+        browser_headless = True if CI_MODE else config.get("browser", {}).get("headless", True)
+        browser = await p.chromium.launch(headless=browser_headless, args=_browser_args())
         context = await browser.new_context(
             viewport=_viewport(),
             record_har_path=har_path,
@@ -865,7 +871,13 @@ async def crawl_portal(portal_config: dict):
         logger.info("Browser profile found at %s — will attempt session restore", profile_dir)
 
     async with async_playwright() as p:
-        from auth import launch_persistent_context, monitor_browser
+        from auth import launch_persistent_context, monitor_browser, profile_exists
+        # In CI we skip post-login pages when no profile exists (cannot perform manual login)
+        if CI_MODE and not profile_exists(portal_config):
+            logger.warning("CI mode — no profile found for %s; skipping post-login pages.", portal_name)
+            finish_crawl_log(crawl_id, pages_visited, status="done")
+            logger.info("═══ EPR PLASTIC ALL DONE: %d pages crawled (CI skip) ═══", pages_visited)
+            return
         persistent_ctx = await launch_persistent_context(p, portal_config)
         browser_closed_event = asyncio.Event()
         monitor_task = asyncio.create_task(monitor_browser(persistent_ctx, browser_closed_event))
