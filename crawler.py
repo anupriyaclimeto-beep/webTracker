@@ -468,6 +468,18 @@ async def diff_and_store(portal_name: str, url: str, snap: dict, har_path: str):
                 # persist if decided
                 if should_save:
                     try:
+                        # If visual diff produced a local diff image, upload it and record URL in diff_detail
+                        try:
+                            if diff_type == "visual":
+                                local_diff_path = diff_data.get("diff_image_path") or diff_data.get("diff_image_save_path")
+                                if local_diff_path and os.path.exists(local_diff_path):
+                                    uploaded = upload_to_cloudinary(local_diff_path, resource_type="image")
+                                    if uploaded:
+                                        diff_data["diff_image_url"] = uploaded
+                        except Exception:
+                            # non-fatal: continue saving diff even if upload fails
+                            logger.debug("Failed to upload diff image for %s: %s", url, exc_info=True)
+
                         save_diff(portal=portal_name, url=url,
                                   diff_type=diff_type, diff_detail=diff_data,
                                   screenshot_url=screenshot_url, html_url=html_url)

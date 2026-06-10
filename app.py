@@ -860,11 +860,18 @@ def render_highlighted_html_diff(detail):
 def render_visual_diff(detail, change, baseline_path=None, current_path=None):
     ratio        = detail.get("change_ratio", 0)
     pixels       = detail.get("changed_pixels", 0)
-    diff_img_path = detail.get("diff_image_path")
+    diff_img_path = detail.get("diff_image_path") or detail.get("diff_image_save_path")
+    diff_img_url  = detail.get("diff_image_url")
     st.info(f"🖼️ **{pixels:,} pixels changed ({ratio*100:.1f}%)**")
-    if diff_img_path and os.path.exists(diff_img_path):
+    # Prefer remote URL if available, otherwise local path if it exists
+    if diff_img_url:
+        st.markdown("**🔴 Highlighted diff — red areas show what changed:**")
+        st.image(diff_img_url, use_container_width=True)
+        return
+    if diff_img_path and (diff_img_path.startswith("http") or os.path.exists(diff_img_path)):
         st.markdown("**🔴 Highlighted diff — red areas show what changed:**")
         st.image(diff_img_path, use_container_width=True)
+        return
     else:
         c1, c2 = st.columns(2)
         with c1:
@@ -1139,7 +1146,7 @@ with st.container(border=True):
         st.warning("⚠️ Please select a specific portal first (do not leave 'All Portals').")
         st.session_state["run_warning"] = False
 
-    cc1, cc2, cc3 = st.columns([4, 2, 2])
+    cc1, cc2 = st.columns([5, 3])
 
     with cc1:
         st.markdown("<div style='font-size:10.5px;font-family:\"IBM Plex Mono\",monospace;color:#526d95;"
@@ -1178,41 +1185,7 @@ with st.container(border=True):
             # Do not clear global caches or force a rerun here to avoid layout shifts / loaders.
         st.markdown("</div>", unsafe_allow_html=True)
 
-    with cc3:
-        # ── Session status — for all persistent-auth portals ──────────────
-        st.markdown("<div style='font-size:10.5px;font-family:\"IBM Plex Mono\",monospace;color:#526d95;"
-                    "text-transform:uppercase;margin-bottom:6px;letter-spacing:0.04em'>🔐 Session</div>",
-                    unsafe_allow_html=True)
-        selected_portal = st.session_state.portal
-        pcfg = get_portal_config(selected_portal) if selected_portal != "All Portals" else None
-        if pcfg and pcfg.get("auth") == "persistent":
-            profile_dir  = Path(pcfg.get("browser_profile_dir",
-                               f"browser_profiles/{selected_portal.replace(' ', '_')}"))
-            cookies_path = profile_dir / "cookies.json"
-            profile_ok   = profile_dir.exists() and any(profile_dir.iterdir()) if profile_dir.exists() else False
-            cookies_ok   = cookies_path.exists() and cookies_path.stat().st_size > 10 if cookies_path.exists() else False
-            btn_disabled = running_crawl is not None or manual_running
-            if cookies_ok:
-                st.markdown("<div style='font-size:11px;color:#22c55e;margin-bottom:4px'>✅ Session saved</div>",
-                            unsafe_allow_html=True)
-            elif profile_ok:
-                st.markdown("<div style='font-size:11px;color:#f59e0b;margin-bottom:4px'>⚠ Login needed</div>",
-                            unsafe_allow_html=True)
-            else:
-                st.markdown("<div style='font-size:11px;color:#94a3b8;margin-bottom:4px'>○ No session yet</div>",
-                            unsafe_allow_html=True)
-            btn_label = "↺ Re-login" if profile_ok else "⚙ First login"
-            if st.button(btn_label, use_container_width=True, key="relogin_btn",
-                         disabled=bool(btn_disabled),
-                         help="Clear saved session — next crawl will open login window"):
-                if clear_portal_profile(selected_portal):
-                    st.success(f"Session cleared for {selected_portal}. Next crawl will open login window.")
-                else:
-                    st.info("No profile to clear.")
-                time.sleep(1); st.rerun()
-        else:
-            st.markdown("<div style='font-size:11px;color:#2d3a52;padding-top:6px'>— select a portal</div>",
-                        unsafe_allow_html=True)
+    # Session column removed per user request (persistent session UI not needed).
 
 st.markdown("<hr style='margin:4px 0 20px;border-color:#1a1f2e'>", unsafe_allow_html=True)
 st.markdown("<div style='padding:0 8px'>", unsafe_allow_html=True)
@@ -1319,14 +1292,12 @@ if st.session_state.view == "overview":
                 "<div class='page-subtitle'>Health summary for every monitored portal</div>",
                 unsafe_allow_html=True)
 
+    # Show only the main summary cards (remove ALERT/WARNING/CLEAN per request)
     cards = [
         ("PORTALS",       total_portals, "#3b82f6"),
         ("CHANGES TODAY", total_today,   "#f87171" if total_today else "#34d399"),
-        ("🔴 ALERT",      portals_alert, "#f87171"),
-        ("🟡 WARNING",    portals_warn,  "#fbbf24"),
-        ("🟢 CLEAN",      portals_ok,    "#34d399"),
     ]
-    cols = st.columns(5)
+    cols = st.columns(len(cards))
     for col, (label, val, color) in zip(cols, cards):
         with col:
             st.markdown(f"<div class='stat-card' style='--accent:{color}'>"
