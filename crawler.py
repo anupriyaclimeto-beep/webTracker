@@ -31,6 +31,10 @@ Flag files written during run (same pattern as .crawler.pid):
   .login_needed  → app.py shows amber "waiting for login" banner
 """
 
+from __future__ import annotations
+
+import asyncio
+
 import asyncio
 
 async def monitor_browser(context: BrowserContext, closed_event: asyncio.Event) -> None:
