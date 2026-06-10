@@ -53,7 +53,12 @@ ARCHIVE_DIR = config["storage"]["archive_dir"]
 # ── ENVIRONMENT / CLOUD DETECTION ─────────────────────────────────────────────
 load_dotenv(dotenv_path=Path(__file__).parent / ".env", override=True)
 IS_CLOUD = os.getenv("STREAMLIT_SHARING_MODE") is not None or os.path.exists("/mount/src")
-AUTH_FLAG = os.path.join(Path(__file__).parent, ".user_logged_in")
+_DEFAULT_AUTH_FLAG = os.path.join(Path(__file__).parent, ".user_logged_in")
+# Use a writable temporary location when running on cloud (Streamlit sharing)
+if IS_CLOUD:
+    AUTH_FLAG = "/tmp/.user_logged_in"
+else:
+    AUTH_FLAG = _DEFAULT_AUTH_FLAG
 
 def _secret(key, default=None):
     try:
