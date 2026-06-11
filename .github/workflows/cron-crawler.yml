@@ -7,36 +7,50 @@ on:
 
 jobs:
   crawl:
+    name: Crawl ${{ matrix.portal }}
     runs-on: ubuntu-latest
-    timeout-minutes: 120  # 2 hour timeout for crawl
-    
+    timeout-minutes: 45
+    strategy:
+      matrix:
+        portal: ["EPR PLASTIC", "EPR EWASTE", "EPR BATTERY", "EPR TYRES", "EPR USEDOIL", "EPR ELV"]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          playwright install
-      
-      - name: Run crawler for all portals
+          python -m playwright install chromium
+
+      - name: Run crawler (portal)
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          PYTHONPATH: ${{ github.workspace }}
+          CI: "true"
+          SUPABASE_HOST: ${{ secrets.SUPABASE_HOST }}
+          SUPABASE_PORT: ${{ secrets.SUPABASE_PORT }}
+          SUPABASE_DB: ${{ secrets.SUPABASE_DB }}
+          SUPABASE_USER: ${{ secrets.SUPABASE_USER }}
+          SUPABASE_PASSWORD: ${{ secrets.SUPABASE_PASSWORD }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          LOGIN_USER: ${{ secrets.LOGIN_USER }}
+          LOGIN_PASS: ${{ secrets.LOGIN_PASS }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
         run: |
-          echo "Starting crawl at $(date)"
-          python scripts/run_crawler_daemon.py 2>&1 | tee crawler.log
+          echo "Starting crawl for ${{ matrix.portal }} at $(date)"
+          python crawler.py --once --portal "${{ matrix.portal }}" --mode public_only 2>&1 | tee crawler.log
           echo "Crawl complete at $(date)"
-      
+
       - name: Upload logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: crawler-logs
+          name: crawler-logs-${{ matrix.portal }}-${{ github.run_number }}
           path: crawler.log
           retention-days: 7

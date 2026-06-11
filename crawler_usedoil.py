@@ -187,6 +187,19 @@ async def goto_home(page):
     await asyncio.sleep(2)
 
 
+async def is_login_required(page) -> bool:
+    """Lightweight login detection based on URL heuristics."""
+    login_indicators = ["login", "signin", "username", "password", "otp"]
+    try:
+        current_url = (page.url or "").lower()
+    except Exception:
+        return False
+    for indicator in login_indicators:
+        if indicator in current_url:
+            return True
+    return False
+
+
 async def do_direct_url(page, url: str, har_path: str, pages_visited: int,
                         label: str = "") -> int:
     """Navigate directly to a URL, scroll-and-stitch, save + diff."""
@@ -292,7 +305,7 @@ async def do_nav_scroll(page, har_path: str, pages_visited: int,
 
 # ── Main crawl ────────────────────────────────────────────────────────────────
 
-async def crawl_usedoil_portal(portal_config: dict):
+async def crawl_usedoil_portal(portal_config: dict, mode: str = "full"):
     har_dir  = Path(ARCHIVE_DIR) / PORTAL_NAME
     har_dir.mkdir(parents=True, exist_ok=True)
     har_path = str(har_dir / f"{PORTAL_NAME}_network.har")
@@ -447,6 +460,11 @@ async def crawl_usedoil_portal(portal_config: dict):
     # PHASE 2 — Persistent context: post-login pages
     # ══════════════════════════════════════════════════════════════════════════
     post_login_pages = portal_config.get("post_login_pages", [])
+    if mode == "public_only":
+        logger.info("public_only mode — skipping post-login pages for %s", PORTAL_NAME)
+        finish_crawl_log(crawl_id, pages_visited, status="done")
+        logger.info("═══ EPR USEDOIL ALL DONE: %d pages (public_only) ═══", pages_visited)
+        return
     if not post_login_pages:
         logger.info("No post_login_pages configured — skipping Phase 2")
         finish_crawl_log(crawl_id, pages_visited, status="done")

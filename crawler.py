@@ -1337,7 +1337,7 @@ async def crawl_pibo_unregistered_procurement(page, portal_name: str, har_path: 
 
 # ── Multi-portal router ───────────────────────────────────────────────────────
 
-async def run_all_portals(portal_name_filter: str | None = None):
+async def run_all_portals(portal_name_filter: str | None = None, mode: str = "full"):
     for portal in config.get("portals", []):
         name = portal["name"]
 
@@ -1351,22 +1351,23 @@ async def run_all_portals(portal_name_filter: str | None = None):
 
         try:
             if name == "EPR PLASTIC":
+                # Keep Plastic unchanged — uses its own internal logic
                 await crawl_portal(portal)
             elif name == "EPR EWASTE":
                 from crawler_ewaste import crawl_ewaste_portal
-                await crawl_ewaste_portal(portal)
+                await crawl_ewaste_portal(portal, mode=mode)
             elif name == "EPR BATTERY":
                 from crawler_battery import crawl_battery_portal
-                await crawl_battery_portal(portal)
+                await crawl_battery_portal(portal, mode=mode)
             elif name == "EPR TYRES":
                 from crawler_tyres import crawl_tyres_portal
-                await crawl_tyres_portal(portal)
+                await crawl_tyres_portal(portal, mode=mode)
             elif name == "EPR ELV":
                 from crawler_elv import crawl_elv_portal
-                await crawl_elv_portal(portal)
+                await crawl_elv_portal(portal, mode=mode)
             elif name == "EPR USEDOIL":
                 from crawler_usedoil import crawl_usedoil_portal
-                await crawl_usedoil_portal(portal)
+                await crawl_usedoil_portal(portal, mode=mode)
             else:
                 logger.warning("Unknown portal '%s' — skipping", name)
                 continue
@@ -1406,6 +1407,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="CPCB EPR Portal Crawler")
     parser.add_argument("--portal", help="Run only this portal, e.g. 'EPR PLASTIC'")
     parser.add_argument("--once", action="store_true", help="Run once and exit")
+    parser.add_argument("--mode", choices=["full", "public_only"], default="full",
+                        help="Run mode: 'full' or 'public_only' (public-only skips login pages)")
     parser.add_argument(
         "--clear-profile",
         action="store_true",
@@ -1426,6 +1429,6 @@ if __name__ == "__main__":
         else:
             print(f"Portal '{portal_name}' not found in config.json")
     elif args.once:
-        asyncio.run(run_all_portals(args.portal))
+        asyncio.run(run_all_portals(args.portal, mode=args.mode))
     else:
         asyncio.run(scheduler(args.portal))
