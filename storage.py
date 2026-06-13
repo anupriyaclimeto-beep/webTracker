@@ -9,10 +9,16 @@ from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Cloudinary imports
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+# Cloudinary imports (optional – may not be available on serverless platforms)
+try:
+    import cloudinary
+    import cloudinary.uploader
+    import cloudinary.api
+    HAS_CLOUDINARY = True
+except ImportError:
+    HAS_CLOUDINARY = False
+    logger = logging.getLogger(__name__)
+    logger.warning("Cloudinary not available – image uploads disabled")
 
 # Load environment variables
 BASE_DIR = Path(__file__).parent
@@ -31,7 +37,7 @@ CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
 CLOUDINARY_API_KEY    = os.getenv("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 
-USE_CLOUDINARY = all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET])
+USE_CLOUDINARY = HAS_CLOUDINARY and all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET])
 
 if USE_CLOUDINARY:
     cloudinary.config(
@@ -40,9 +46,6 @@ if USE_CLOUDINARY:
         api_secret=CLOUDINARY_API_SECRET,
         secure=True,
     )
-else:
-    # If any credential missing we will skip Cloudinary uploads.
-    cloudinary.config()  # defaults, no effect
 USE_SUPABASE = all([
     SUPABASE_HOST,
     SUPABASE_PORT,
@@ -517,26 +520,6 @@ def cleanup_old_snapshots(url_folder, keep=2):
             logger.info("Deleted old snapshot folder: %s", full_path)
     except Exception as e:
         logger.error("Error during snapshot cleanup - %s", e)
-
-
-def upload_to_cloudinary(local_path, resource_type="image"):
-    """Upload a local file to Cloudinary and return the secure URL.
-    Returns None if Cloudinary is not configured or upload fails.
-    """
-    if not USE_CLOUDINARY:
-        return None
-    try:
-        result = cloudinary.uploader.upload(
-            local_path,
-            resource_type=resource_type,
-            folder="webtracker",
-        )
-        url = result.get("secure_url")
-        logger.info("Cloudinary upload OK: %s -> %s", local_path, url)
-        return url
-    except Exception as e:
-        logger.error("Cloudinary upload FAILED for %s: %s", local_path, e)
-        return None
 
 
 def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
