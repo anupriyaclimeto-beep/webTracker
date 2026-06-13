@@ -14,8 +14,23 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-with open("config.json") as f:
-    config = json.load(f)
+try:
+    with open("config.json") as f:
+        config = json.load(f)
+except FileNotFoundError:
+    # Fallback config for Vercel/cloud environments without config.json
+    config = {
+        "diff": {
+            "noise_confidence_threshold": 0.6,
+            "visual_change_min_ratio": 0.05,
+            "pixel_threshold": 0.05,
+            "text_change_min_words": 5,
+            "text_line_min_changes": 3,
+        },
+        "storage": {"db": "database.db"},
+        "portals": [],
+    }
+    logger.warning("config.json not found, using fallback configuration")
 
 # Login credentials from .env
 LOGIN_USER = os.getenv("LOGIN_USER", "webtracker@test.com")
