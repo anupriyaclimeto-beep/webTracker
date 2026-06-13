@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_ENDPOINTS } from '../config';
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -12,7 +13,7 @@ export default function Login({ onLogin }) {
     setError('');
 
     try {
-      const res = await fetch('/api/login', {
+      const res = await fetch(API_ENDPOINTS.login, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -24,7 +25,7 @@ export default function Login({ onLogin }) {
         setError(data.error || 'Invalid credentials');
       }
     } catch (err) {
-      setError('Connection error');
+      setError('Connection error: ' + err.message);
     }
     setLoading(false);
   };

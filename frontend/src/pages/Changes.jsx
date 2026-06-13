@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ExternalLink, Filter, Eye, Image as ImageIcon, X, Globe, FileText } from 'lucide-react';
+import { API_ENDPOINTS } from '../config';
 
 function ChangeCard({ change, onImageClick }) {
   // Check if we have a diff image URL
@@ -154,7 +155,7 @@ export default function Changes() {
   const fetchChanges = async (portal = '') => {
     setLoading(true);
     try {
-      const url = portal ? `/api/changes/${encodeURIComponent(portal)}` : '/api/changes';
+      const url = portal ? `${API_ENDPOINTS.changes}/${encodeURIComponent(portal)}` : API_ENDPOINTS.changes;
       const res = await fetch(url);
       const data = await res.json();
       // Filter out changes that are "no visible" / noise-only so cards don't show

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Activity, Clock, Database, Globe, RefreshCw, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { API_ENDPOINTS } from '../config';
 
 export default function Overview() {
   const [portals, setPortals] = useState([]);
@@ -10,7 +11,7 @@ export default function Overview() {
 
   const fetchPortals = async () => {
     try {
-      const res = await fetch('/api/portals');
+      const res = await fetch(API_ENDPOINTS.portals);
       const data = await res.json();
       if (data.portals) setPortals(data.portals);
     } catch (err) {
