@@ -68,7 +68,9 @@ if USE_SUPABASE:
 def get_conn():
     """
     Return a fresh database connection.
-    Tries Supabase (PostgreSQL) first; if the connection fails, raises an error.
+    - If Supabase is configured: connect to PostgreSQL (required for cloud deployments)
+    - If NOT configured on cloud (Vercel, Streamlit Cloud, etc.): raise error
+    - If NOT configured locally: fall back to SQLite for development
     """
     if USE_SUPABASE:
         try:
@@ -77,8 +79,22 @@ def get_conn():
             logger.error("Supabase connection failed: %s", e)
             # Do NOT silently fall back to SQLite — require Supabase when configured.
             raise
-    # If not configured to use Supabase, use local sqlite
-    return sqlite3.connect(DB_PATH)
+    else:
+        # USE_SUPABASE is False
+        if IS_CLOUD:
+            # On Vercel, Streamlit Cloud, or other cloud environments:
+            # SQLite cannot work because the filesystem is ephemeral and read-only.
+            # The user MUST configure Supabase for cloud deployments.
+            raise RuntimeError(
+                "SQLite is not supported on cloud deployments (Vercel, Streamlit Cloud, etc.) "
+                "because the filesystem is ephemeral and not writable for database files. "
+                "Please configure Supabase by setting these environment variables: "
+                "SUPABASE_HOST, SUPABASE_PORT, SUPABASE_DB, SUPABASE_USER, "
+                "SUPABASE_PASSWORD (or SUPABASE_SERVICE_ROLE_KEY)"
+            )
+        else:
+            # For local non-cloud development, use SQLite
+            return sqlite3.connect(DB_PATH)
 
 
 def _supabase_retry(max_retries=3, delay=2):
@@ -140,8 +156,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Detect if we are running on Streamlit Cloud
-IS_CLOUD = os.getenv("STREAMLIT_SHARING_MODE") is not None or os.path.exists("/mount/src")
+# Detect if we are running on a cloud environment (Streamlit Cloud, Vercel, etc.)
+IS_CLOUD = (
+    os.getenv("STREAMLIT_SHARING_MODE") is not None or  # Streamlit Cloud
+    os.path.exists("/mount/src") or  # Streamlit Cloud (alternative check)
+    os.getenv("VERCEL") is not None or  # Vercel
+    os.getenv("VERCEL_ENV") is not None  # Vercel
+)
 
 # Load configuration
 try:
