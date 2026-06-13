@@ -35,11 +35,20 @@ function ChangeCard({ change, onImageClick }) {
           </div>
           
           {/* AI / Content Summary */}
-          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100 my-3">
-            <p className="text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">
-              {change.ai_summary || "No description generated for this change."}
-            </p>
-          </div>
+          {(() => {
+            const aiSummary = change.ai_summary || (change.diff_detail && change.diff_detail.summary) || "";
+            const txt = (aiSummary || "").toString();
+            const lower = txt.toLowerCase();
+            const show = txt.trim() && !lower.includes("no description") && !lower.includes("no visible") && !lower.includes("no changes");
+            if (!show) return null;
+            return (
+              <div className="bg-slate-50 rounded-lg p-4 border border-slate-100 my-3">
+                <p className="text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">
+                  {txt}
+                </p>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Action Links & Metadata */}
@@ -139,6 +148,7 @@ export default function Changes() {
   const [changes, setChanges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterPortal, setFilterPortal] = useState('');
+  const [filterDate, setFilterDate] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
 
   const fetchChanges = async (portal = '') => {
@@ -147,7 +157,47 @@ export default function Changes() {
       const url = portal ? `/api/changes/${encodeURIComponent(portal)}` : '/api/changes';
       const res = await fetch(url);
       const data = await res.json();
-      setChanges(data.changes || []);
+      // Filter out changes that are "no visible" / noise-only so cards don't show
+      const raw = data.changes || [];
+      function parseDetail(change) {
+        let d = change.diff_detail || {};
+        if (typeof d === 'string' && d) {
+          try { d = JSON.parse(d); } catch (e) { d = {}; }
+        }
+        return d || {};
+      }
+      function isVisible(change) {
+        const d = parseDetail(change);
+        const type = (change.diff_type || "").toLowerCase();
+        const ai = (change.ai_summary || (d.summary || "") || "").toString().toLowerCase();
+        if (ai.includes("no description") || ai.includes("no visible") || ai.includes("no changes")) return false;
+        if (type === "visual") {
+          const pixels = Number(d.changed_pixels || 0);
+          const ratio = Number(d.change_ratio || 0);
+          return pixels > 0 && ratio > 0.05;
+        }
+        if (type === "html") {
+          const words = Number(d.words_changed || d.wordsChanged || 0);
+          const lines = Number(d.diff_lines || d.lines_changed || 0);
+          const highlighted = Array.isArray(d.highlighted_lines) ? d.highlighted_lines.length > 0 : false;
+          if (words === 0 && lines === 0 && !highlighted) return false;
+          return true;
+        }
+        if (type === "har" || type === "json") {
+          // treat non-empty diff detail as visible
+          if (Object.keys(d).length === 0) return false;
+          if (type === "har") {
+            const new_ep = d.new_endpoints || [];
+            const rem_ep = d.removed_endpoints || [];
+            return (Array.isArray(new_ep) && new_ep.length>0) || (Array.isArray(rem_ep) && rem_ep.length>0);
+          }
+          return true;
+        }
+        // default: show
+        return true;
+      }
+      const visible = raw.filter(isVisible);
+      setChanges(visible);
     } catch (err) {
       console.error(err);
     }
@@ -158,12 +208,27 @@ export default function Changes() {
     fetchChanges(filterPortal);
   }, [filterPortal]);
 
+  const filteredChanges = changes.filter(change => {
+    if (!filterDate) return true;
+    const changeDate = new Date(change.timestamp).toISOString().split('T')[0];
+    return changeDate === filterDate;
+  });
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-slate-900">Latest Changes</h1>
-        <div className="flex items-center space-x-2">
-          <Filter className="w-4 h-4 text-slate-500" />
+        <div className="flex items-center space-x-2 flex-wrap gap-y-2">
+          <Filter className="w-4 h-4 text-slate-500 hidden sm:block" />
+          
+          <input 
+            type="date" 
+            className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+            title="Filter by date"
+          />
+
           <select 
             className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
             value={filterPortal}
@@ -182,13 +247,13 @@ export default function Changes() {
 
       {loading ? (
         <div className="text-center py-12 text-slate-500 animate-pulse">Loading changes...</div>
-      ) : changes.length === 0 ? (
+      ) : filteredChanges.length === 0 ? (
         <div className="text-center py-12 text-slate-500 bg-white rounded-xl border border-slate-200">
           No changes found.
         </div>
       ) : (
         <div className="space-y-4">
-          {changes.map((change) => (
+          {filteredChanges.map((change) => (
             <ChangeCard 
               key={change.id} 
               change={change} 
