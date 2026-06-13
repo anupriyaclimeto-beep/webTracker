@@ -236,11 +236,11 @@ export default function Changes() {
           >
             <option value="">All Portals</option>
             <option value="EPR PLASTIC">EPR PLASTIC</option>
-            <option value="Battery Portal">Battery Portal</option>
-            <option value="E-Waste Portal">E-Waste Portal</option>
-            <option value="ELV Portal">ELV Portal</option>
-            <option value="Tyre Portal">Tyre Portal</option>
-            <option value="Used Oil Portal">Used Oil Portal</option>
+            <option value="EPR BATTERY">Battery Portal</option>
+            <option value="EPR EWASTE">E-Waste Portal</option>
+            <option value="EPR ELV">ELV Portal</option>
+            <option value="EPR TYRES">Tyre Portal</option>
+            <option value="EPR USEDOIL">Used Oil Portal</option>
           </select>
         </div>
       </div>
