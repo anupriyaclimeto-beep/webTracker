@@ -141,61 +141,73 @@ def init_db():
     """
     if USE_SUPABASE:
         logger.info("Supabase detected - ensuring required tables exist in remote DB.")
-        conn = get_conn()
-        with conn.cursor() as cur:
-            # changes table
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS public.changes (
-                    id BIGSERIAL PRIMARY KEY,
-                    portal TEXT NOT NULL,
-                    url TEXT NOT NULL,
-                    diff_type TEXT NOT NULL,
-                    diff_detail JSONB,
-                    ai_summary TEXT,
-                    screenshot_url TEXT,
-                    html_url TEXT,
-                    timestamp TIMESTAMPTZ NOT NULL
-                )
-            """)
-            # baselines table
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS public.baselines (
-                    id BIGSERIAL PRIMARY KEY,
-                    portal TEXT NOT NULL,
-                    url TEXT NOT NULL,
-                    html_path TEXT,
-                    screenshot_path TEXT,
-                    har_path TEXT,
-                    screenshot_url TEXT,
-                    html_url TEXT,
-                    updated_at TIMESTAMPTZ NOT NULL
-                )
-            """)
-            cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_baselines_portal_url ON public.baselines (portal, url)
-            """)
-            # crawl_log table
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS public.crawl_log (
-                    id BIGSERIAL PRIMARY KEY,
-                    portal TEXT NOT NULL,
-                    started_at TIMESTAMPTZ NOT NULL,
-                    finished_at TIMESTAMPTZ,
-                    pages_visited INTEGER DEFAULT 0,
-                    status TEXT DEFAULT 'running'
-                )
-            """)
-            # hidden_changes helper
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS public.hidden_changes (
-                    change_id BIGINT PRIMARY KEY,
-                    hidden_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-                )
-            """)
-            conn.commit()
-        conn.close()
-        logger.info("Supabase tables ensured.")
-        return
+        import psycopg2
+        for attempt in range(2):
+            try:
+                conn = get_conn()
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS public.changes (
+                            id BIGSERIAL PRIMARY KEY,
+                            portal TEXT NOT NULL,
+                            url TEXT NOT NULL,
+                            diff_type TEXT NOT NULL,
+                            diff_detail JSONB,
+                            ai_summary TEXT,
+                            screenshot_url TEXT,
+                            html_url TEXT,
+                            timestamp TIMESTAMPTZ NOT NULL
+                        )
+                    """)
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS public.baselines (
+                            id BIGSERIAL PRIMARY KEY,
+                            portal TEXT NOT NULL,
+                            url TEXT NOT NULL,
+                            html_path TEXT,
+                            screenshot_path TEXT,
+                            har_path TEXT,
+                            screenshot_url TEXT,
+                            html_url TEXT,
+                            updated_at TIMESTAMPTZ NOT NULL
+                        )
+                    """)
+                    cur.execute("""
+                        CREATE INDEX IF NOT EXISTS idx_baselines_portal_url ON public.baselines (portal, url)
+                    """)
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS public.crawl_log (
+                            id BIGSERIAL PRIMARY KEY,
+                            portal TEXT NOT NULL,
+                            started_at TIMESTAMPTZ NOT NULL,
+                            finished_at TIMESTAMPTZ,
+                            pages_visited INTEGER DEFAULT 0,
+                            status TEXT DEFAULT 'running'
+                        )
+                    """)
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS public.hidden_changes (
+                            change_id BIGINT PRIMARY KEY,
+                            hidden_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                        )
+                    """)
+                conn.commit()
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                logger.info("Supabase tables ensured.")
+                return
+            except (psycopg2.OperationalError, psycopg2.InterfaceError) as e:
+                logger.warning(f"Connection dropped during init_db, retrying... ({e})")
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                if attempt == 1:
+                    logger.error("Failed to ensure Supabase tables after retry.")
+                    return
+
 
     # ----- SQLite initialisation (unchanged) -----
     os.makedirs(ARCHIVE_DIR, exist_ok=True)

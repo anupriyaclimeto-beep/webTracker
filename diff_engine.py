@@ -31,7 +31,10 @@ def fetch_url_or_read_file(path_or_url: str, as_bytes: bool = False):
         if path_or_url.startswith("http://") or path_or_url.startswith("https://"):
             resp = requests.get(path_or_url, timeout=15)
             resp.raise_for_status()
-            return resp.content if as_bytes else resp.text
+            if as_bytes:
+                return resp.content
+            resp.encoding = "utf-8"
+            return resp.text
         else:
             if not os.path.exists(path_or_url):
                 return None
@@ -190,7 +193,9 @@ def summarize_changes(added_texts, removed_texts):
         parts.append(f"Added: {', '.join(added_phrases[:5])}" if len(added_phrases)>1 else f"{added_phrases[0]} added")
     if removed_phrases:
         parts.append(f"Removed: {', '.join(removed_phrases[:5])}" if len(removed_phrases)>1 else f"{removed_phrases[0]} removed")
-    return " | ".join(parts) if parts else "Page structure changed (no visible text differences found)"
+    if not parts:
+        return ""  # Return empty string when there are no human-readable phrases
+    return " | ".join(parts)
 
 
 # ── WORD-LEVEL DIFF ───────────────────────────────────────────────────────────
@@ -410,7 +415,8 @@ def html_diff(baseline_path, current_html):
                     break
 
         added_texts, removed_texts = extract_text_changes(diff)
-        summary = summarize_changes(added_texts, removed_texts) if changed else "No changes"
+        # Always compute a concise summary (may be empty string when no readable text changes)
+        summary = summarize_changes(added_texts, removed_texts)
 
         # Compute textual similarity/changes: number of meaningful words changed and lines changed
         try:

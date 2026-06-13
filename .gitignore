@@ -8,23 +8,38 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Databases
+# Databases and local states
 *.db
 *.sqlite
 
 # Cloudinary / local environment keys
 .env
+.streamlit/secrets.toml
+
+# Dependency directories
+node_modules/
+frontend/node_modules/
+
+# Production build outputs
+dist/
+frontend/dist/
+.vite/
+frontend/.vite/
 
 # Crawler logs and PID files
 .crawler.log
 .crawler.pid
+crawler.log
+crawler.pid
 
 # Local crawler snapshots and HAR file archives
 archive/
 
 # Local browser profile data (session cookies, cache)
 browser_profiles/
+browser_session/
 
 # Local scratch files
 scratch/
+
 
