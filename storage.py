@@ -3,6 +3,8 @@ import os
 import shutil
 import json
 import logging
+import time
+import functools
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
@@ -78,6 +80,57 @@ def get_conn():
     # If not configured to use Supabase, use local sqlite
     return sqlite3.connect(DB_PATH)
 
+
+def _supabase_retry(max_retries=3, delay=2):
+    """Decorator that retries a function on SSL / connection errors.
+
+    Catches psycopg2.OperationalError and psycopg2.InterfaceError (which
+    include "SSL connection has been closed unexpectedly"), waits briefly,
+    then retries with a fresh connection.
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            if not USE_SUPABASE:
+                return func(*args, **kwargs)
+            last_err = None
+            for attempt in range(1, max_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    err_msg = str(e).lower()
+                    is_conn_err = (
+                        "ssl connection" in err_msg
+                        or ("connection" in err_msg and "closed" in err_msg)
+                        or "server closed the connection" in err_msg
+                        or "could not connect" in err_msg
+                        or "connection reset" in err_msg
+                    )
+                    # Also catch psycopg2 specific errors if available
+                    try:
+                        import psycopg2
+                        is_conn_err = is_conn_err or isinstance(e, (psycopg2.OperationalError, psycopg2.InterfaceError))
+                    except ImportError:
+                        pass
+                    if not is_conn_err:
+                        raise  # Not a connection error, re-raise immediately
+                    last_err = e
+                    if attempt < max_retries:
+                        wait = delay * attempt
+                        logger.warning(
+                            "DB connection error in %s (attempt %d/%d): %s — retrying in %ds",
+                            func.__name__, attempt, max_retries, e, wait
+                        )
+                        time.sleep(wait)
+                    else:
+                        logger.error(
+                            "DB connection error in %s failed after %d attempts: %s",
+                            func.__name__, max_retries, e
+                        )
+            raise last_err
+        return wrapper
+    return decorator
+
 # ----------------------------------------------------------------------
 # Logging
 # ----------------------------------------------------------------------
@@ -91,15 +144,23 @@ logger = logging.getLogger(__name__)
 IS_CLOUD = os.getenv("STREAMLIT_SHARING_MODE") is not None or os.path.exists("/mount/src")
 
 # Load configuration
-with open("config.json") as f:
-    config = json.load(f)
+try:
+    with open("config.json") as f:
+        config = json.load(f)
+except FileNotFoundError:
+    logger.warning("config.json not found, using minimal fallback configuration")
+    config = {
+        "storage": {"db": "database.db"},
+        "portals": [],
+        "diff": {}
+    }
 
 # SQLite‑only paths (used only when USE_SUPABASE is False)
-DB_PATH     = config["storage"]["db"]
+DB_PATH     = config.get("storage", {}).get("db", "database.db")
 if IS_CLOUD:
     ARCHIVE_DIR = "/tmp/webtracker_archive"
 else:
-    ARCHIVE_DIR = config["storage"]["archive_dir"]
+    ARCHIVE_DIR = config.get("storage", {}).get("archive_dir", "archive")
 
 
 
@@ -316,6 +377,7 @@ def init_db():
 # Data access functions
 # ======================================================================
 
+@_supabase_retry()
 def save_diff(portal, url, diff_type, diff_detail, ai_summary=None, screenshot_url=None, html_url=None):
     """Persist a diff record, now also storing Cloudinary URLs if provided.
     Works with both SQLite and Supabase.
@@ -348,6 +410,7 @@ def save_diff(portal, url, diff_type, diff_detail, ai_summary=None, screenshot_u
     logger.info("Diff saved — portal=%s url=%s type=%s", portal, url, diff_type)
 
 
+@_supabase_retry()
 def get_baseline(portal, url):
     conn = get_conn()
     if USE_SUPABASE:
@@ -386,6 +449,7 @@ def get_baseline(portal, url):
     return None
 
 
+@_supabase_retry()
 def update_baseline(portal, url, html_path, screenshot_path, har_path, screenshot_url=None, html_url=None):
     """
     Always insert a new baseline row to keep full history.
@@ -489,6 +553,7 @@ def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
     return screenshot_path, html_path, har_path, screenshot_url, html_url
 
 
+@_supabase_retry()
 def start_crawl_log(portal):
     started_at = datetime.now().isoformat()
     conn = get_conn()
@@ -513,6 +578,7 @@ def start_crawl_log(portal):
     return crawl_id
 
 
+@_supabase_retry()
 def finish_crawl_log(crawl_id, pages_visited, status="done"):
     finished_at = datetime.now().isoformat()
     conn = get_conn()
@@ -537,6 +603,7 @@ def finish_crawl_log(crawl_id, pages_visited, status="done"):
     )
 
 
+@_supabase_retry()
 def update_crawl_progress(crawl_id, pages_visited):
     """Update pages_visited for a running crawl immediately."""
     try:
@@ -559,6 +626,7 @@ def update_crawl_progress(crawl_id, pages_visited):
         logger.warning("Failed to update crawl progress: %s", e)
 
 
+@_supabase_retry()
 def get_all_changes():
     """Return all change records ordered by newest first (includes Cloudinary URLs)."""
     conn = get_conn()
@@ -573,6 +641,7 @@ def get_all_changes():
     conn.close()
     return rows
 
+@_supabase_retry()
 def clear_baselines_for_portal(portal):
     conn = get_conn()
     if USE_SUPABASE:
@@ -589,6 +658,7 @@ def clear_baselines_for_portal(portal):
     logger.info("Cleared %s old baselines for portal: %s", deleted, portal)
 
 
+@_supabase_retry()
 def purge_old_records(keep_days):
     """
     Delete records older than *keep_days* days.
