@@ -4,7 +4,7 @@
   "framework": "vite",
   "functions": {
     "api.py": {
-      "runtime": "python3.11"
+      "runtime": "python@3.11"
     }
   },
   "routes": [
