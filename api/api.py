@@ -130,6 +130,41 @@ def get_crawl_log():
         logger.error("GET /api/crawl-log error — %s", str(e))
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/crawl/status", methods=["GET"])
+def crawl_status():
+    """Get crawler status"""
+    try:
+        rows = query_db("SELECT * FROM crawl_log WHERE status='running' ORDER BY started_at DESC LIMIT 1")
+        running = len(rows) > 0
+        logs = "No recent crawl logs"
+        if rows:
+            logs = f"Last crawl: {rows[0].get('portal')} - Status: {rows[0].get('status')}"
+        return jsonify({
+            "running": running,
+            "logs": logs
+        })
+    except Exception as e:
+        logger.error("GET /api/crawl/status error — %s", str(e))
+        return jsonify({"running": False, "logs": f"Error: {str(e)}"}), 500
+
+@app.route("/api/crawl/start", methods=["POST"])
+def crawl_start():
+    """Start crawler - for demo, just return success"""
+    try:
+        return jsonify({"success": True, "message": "Crawler started"})
+    except Exception as e:
+        logger.error("POST /api/crawl/start error — %s", str(e))
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/crawl/stop", methods=["POST"])
+def crawl_stop():
+    """Stop crawler - for demo, just return success"""
+    try:
+        return jsonify({"success": True, "message": "Crawler stopped"})
+    except Exception as e:
+        logger.error("POST /api/crawl/stop error — %s", str(e))
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == "__main__":
     logger.info("Flask API starting...")
     logger.info("Database: %s", "Supabase PostgreSQL" if USE_SUPABASE else "Not configured")
