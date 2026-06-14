@@ -11,7 +11,7 @@
       },
       "login_url": "https://eprplastic.cpcb.gov.in/#/plastic/login",
       "login_success_selector": "app-header .user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), .logout-btn, a:has-text('Logout'), .profile-name",
-      "login_timeout_seconds": 0,
+      "login_timeout_seconds": 30,
       "browser_profile_dir": "browser_profiles/EPR_PLASTIC",
       "post_login_pages": [
  
@@ -45,7 +45,7 @@
       },
       "login_url": "https://eprewaste.cpcb.gov.in/#/",
       "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout'), .profile-name, [class*='user-info'], button:has-text('Logout')",
-      "login_timeout_seconds": 0,
+      "login_timeout_seconds": 30,
       "browser_profile_dir": "browser_profiles/EPR_EWASTE",
       "post_login_pages": [
         {
@@ -67,7 +67,7 @@
       "login_url": "https://eprbattery.cpcb.gov.in/",
       "session_check_url": "https://eprbattery.cpcb.gov.in/user/producerDashboard",
       "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout')",
-      "login_timeout_seconds": 0,
+      "login_timeout_seconds": 30,
       "browser_profile_dir": "browser_profiles/EPR_BATTERY",
       "post_login_pages": [
         {
@@ -88,7 +88,7 @@
       },
       "login_url": "https://eprtyres.cpcb.gov.in/user/login",
       "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout')",
-      "login_timeout_seconds": 0,
+      "login_timeout_seconds": 30,
       "browser_profile_dir": "browser_profiles/EPR_TYRES",
       "post_login_pages": [
         {
@@ -109,7 +109,7 @@
       },
       "login_url": "https://eprusedoil.cpcb.gov.in/login",
       "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout')",
-      "login_timeout_seconds": 0,
+      "login_timeout_seconds": 30,
       "browser_profile_dir": "browser_profiles/EPR_USEDOIL",
       "post_login_pages": [
         {
@@ -130,7 +130,7 @@
       },
       "login_url": "https://eprelv.cpcb.gov.in/login",
       "login_success_selector": ".user-name, .dashboard-container, app-dashboard, [routerlink*='dashboard'], .navbar-nav .nav-item:has(.logout), app-home-nav, .logout-btn, a:has-text('Logout')",
-      "login_timeout_seconds": 0,
+      "login_timeout_seconds": 30,
       "browser_profile_dir": "browser_profiles/EPR_ELV",
       "post_login_pages": [
         {

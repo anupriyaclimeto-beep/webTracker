@@ -46,7 +46,9 @@ if USE_CLOUDINARY:
         api_secret=CLOUDINARY_API_SECRET,
         secure=True,
     )
-USE_SUPABASE = all([
+USE_LOCAL_DB = os.getenv("USE_LOCAL_DB", "").lower() in ("1", "true", "yes")
+
+USE_SUPABASE = (not USE_LOCAL_DB) and all([
     SUPABASE_HOST,
     SUPABASE_PORT,
     SUPABASE_DB,
@@ -65,7 +67,8 @@ if USE_SUPABASE:
         f"dbname={SUPABASE_DB} "
         f"user={SUPABASE_USER} "
         f"password={SUPABASE_SERVICE_ROLE or SUPABASE_PWD} "
-        f"sslmode=require"
+        f"sslmode=require "
+        f"connect_timeout=10"
     )
 
 def get_conn():

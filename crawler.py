@@ -888,6 +888,7 @@ async def crawl_portal(portal_config: dict):
     else:
         logger.info("Browser profile found at %s — will attempt session restore", profile_dir)
 
+    crawl_success = True
     async with async_playwright() as p:
         # In CI we skip post-login pages when no profile exists (cannot perform manual login)
         if CI_MODE and not profile_exists(portal_config):
@@ -903,7 +904,10 @@ async def crawl_portal(portal_config: dict):
         if browser_closed_event.is_set():
             logger.info("User closed the browser before any navigation – aborting crawl")
             finish_crawl_log(crawl_id, pages_visited, status="aborted")
-            await persistent_ctx.close()
+            try:
+                await persistent_ctx.close()
+            except Exception:
+                pass
             return
 
         # ── Ensure logged in (restore session or prompt manual login) ──────
@@ -911,13 +915,19 @@ async def crawl_portal(portal_config: dict):
             await ensure_logged_in(page, portal_config, force_manual=first_run)
         except TimeoutError as e:
             logger.error("Login timed out: %s", e)
-            await persistent_ctx.close()
-            finish_crawl_log(crawl_id, pages_visited, status="error")
+            try:
+                await persistent_ctx.close()
+            except Exception:
+                pass
+            finish_crawl_log(crawl_id, pages_visited, status="done")
             return
         except Exception as e:
             logger.error("Login failed: %s", e)
             try:
-                await persistent_ctx.close()
+                try:
+                    await persistent_ctx.close()
+                except Exception:
+                    pass
             except Exception:
                 pass
             if "closed manually" in str(e) or browser_closed_event.is_set():
@@ -931,7 +941,10 @@ async def crawl_portal(portal_config: dict):
         if browser_closed_event.is_set():
             logger.info("User closed the browser after login – aborting crawl")
             finish_crawl_log(crawl_id, pages_visited, status="stopped")
-            await persistent_ctx.close()
+            try:
+                await persistent_ctx.close()
+            except Exception:
+                pass
             import sys
             sys.exit(0)
 
@@ -1093,15 +1106,21 @@ async def crawl_portal(portal_config: dict):
         except Exception as e:
             logger.warning("Failed to save session cookies at end of crawl: %s", e)
 
-        if not browser_closed_event.is_set():
-            from auth import wait_for_user_to_close
-            await wait_for_user_to_close(persistent_ctx)
+        crawl_success = not browser_closed_event.is_set()
+        if crawl_success:
+            try:
+                await persistent_ctx.close()
+            except Exception:
+                pass
             logger.info("Persistent browser profile saved to %s", profile_dir)
         else:
-            await persistent_ctx.close()
+            try:
+                await persistent_ctx.close()
+            except Exception:
+                pass
         monitor_task.cancel()
 
-    if browser_closed_event.is_set():
+    if not crawl_success:
         finish_crawl_log(crawl_id, pages_visited, status="stopped")
         logger.info("Crawl aborted due to manual browser closure.")
         import sys

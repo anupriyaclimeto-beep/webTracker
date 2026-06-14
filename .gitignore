@@ -42,4 +42,12 @@ browser_session/
 # Local scratch files
 scratch/
 
+# Temporary data files and reports
+scan_changes_report.json
+swap_backup*.json
+before.png
+after.png
 
+# One-off debug and test scripts (if they shouldn't be tracked)
+_check_changes.py
+requirements_new.txt

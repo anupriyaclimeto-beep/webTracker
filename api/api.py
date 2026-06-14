@@ -4,7 +4,7 @@ import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
-import pg8000.native
+import pg8000
 from datetime import datetime, timedelta
 
 load_dotenv()
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Supabase PostgreSQL credentials
 SUPABASE_HOST = os.getenv("SUPABASE_HOST", "").strip()
-SUPABASE_PORT = int(os.getenv("SUPABASE_PORT", "6543"))
+SUPABASE_PORT = int(os.getenv("SUPABASE_PORT", "5432"))
 SUPABASE_DB = os.getenv("SUPABASE_DB", "postgres").strip()
 SUPABASE_USER = os.getenv("SUPABASE_USER", "").strip()
 SUPABASE_PASSWORD = os.getenv("SUPABASE_PASSWORD", "").strip()
@@ -57,14 +57,14 @@ def get_db_connection():
         raise RuntimeError("Database not configured")
     
     try:
-        conn = pg8000.native.connect(
+        conn = pg8000.connect(
             host=SUPABASE_HOST,
             port=SUPABASE_PORT,
             database=SUPABASE_DB,
             user=SUPABASE_USER,
             password=SUPABASE_PASSWORD,
             ssl_context=True,
-            timeout=5
+            timeout=10
         )
         return conn
     except Exception as e:
@@ -77,9 +77,15 @@ def query_db(sql):
         conn = get_db_connection()
         if not conn:
             return None  # Signal to use demo data
-        result = conn.run(sql)
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        # Get column names from cursor.description
+        columns = [desc[0] for desc in cursor.description] if cursor.description else None
+        rows = cursor.fetchall()
         conn.close()
-        return result if result else []
+        if rows and columns:
+            return [dict(zip(columns, row)) for row in rows]
+        return []
     except Exception as e:
         logger.warning("Query failed: %s (using demo data)", str(e))
         return None  # Signal to use demo data
@@ -119,13 +125,33 @@ def api_login():
 @app.route("/api/portals", methods=["GET"])
 def get_portals():
     try:
-        rows = query_db("SELECT portal, MAX(started_at) as last_crawl_at, status as last_status, (SELECT COUNT(*) FROM changes WHERE portal = crawl_log.portal) as total_changes FROM crawl_log GROUP BY portal ORDER BY portal")
+        # Use a subquery to get the latest crawl per portal, then join for status
+        rows = query_db("""
+            SELECT
+                cl.portal        AS name,
+                cl.started_at    AS last_crawl_at,
+                cl.status        AS last_status,
+                COALESCE(ch.cnt, 0) AS total_changes
+            FROM (
+                SELECT DISTINCT ON (portal) portal, started_at, status
+                FROM crawl_log
+                ORDER BY portal, started_at DESC
+            ) cl
+            LEFT JOIN (
+                SELECT portal, COUNT(*) AS cnt FROM changes GROUP BY portal
+            ) ch ON ch.portal = cl.portal
+            ORDER BY cl.portal
+        """)
         
         # If database fails, use demo data
         if rows is None:
             rows = DEMO_PORTALS
             logger.info("✓ Using DEMO portals: %d records", len(rows))
         else:
+            # Convert datetime objects to ISO strings for JSON serialization
+            for row in rows:
+                if isinstance(row.get('last_crawl_at'), datetime):
+                    row['last_crawl_at'] = row['last_crawl_at'].isoformat()
             logger.info("✓ DB portals: %d records", len(rows) if rows else 0)
         
         return jsonify({
@@ -141,15 +167,30 @@ def get_portals():
         })
 
 @app.route("/api/changes", methods=["GET"])
-def get_changes():
+@app.route("/api/changes/<portal>", methods=["GET"])
+def get_changes(portal=None):
     try:
-        rows = query_db("SELECT * FROM changes ORDER BY timestamp DESC LIMIT 100")
+        if portal:
+            rows = query_db(f"SELECT * FROM changes WHERE portal = '{portal}' ORDER BY timestamp DESC LIMIT 100")
+        else:
+            rows = query_db("SELECT * FROM changes ORDER BY timestamp DESC LIMIT 100")
         
         # If database fails, use demo data
         if rows is None:
             rows = DEMO_CHANGES
             logger.info("✓ Using DEMO changes: %d records", len(rows))
         else:
+            # Convert datetime objects to ISO strings for JSON serialization
+            for row in rows:
+                for key in ['timestamp']:
+                    if isinstance(row.get(key), datetime):
+                        row[key] = row[key].isoformat()
+                # Parse diff_detail from JSON string if needed
+                if isinstance(row.get('diff_detail'), str):
+                    try:
+                        row['diff_detail'] = json.loads(row['diff_detail'])
+                    except (json.JSONDecodeError, TypeError):
+                        pass
             logger.info("✓ DB changes: %d records", len(rows) if rows else 0)
         
         return jsonify({
@@ -174,6 +215,11 @@ def get_crawl_log():
             rows = DEMO_CRAWL_LOG
             logger.info("✓ Using DEMO crawl log: %d records", len(rows))
         else:
+            # Convert datetime objects to ISO strings for JSON serialization
+            for row in rows:
+                for key in ['started_at', 'finished_at']:
+                    if isinstance(row.get(key), datetime):
+                        row[key] = row[key].isoformat()
             logger.info("✓ DB crawl log: %d records", len(rows) if rows else 0)
         
         return jsonify({

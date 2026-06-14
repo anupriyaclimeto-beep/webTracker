@@ -435,6 +435,17 @@ def html_diff(baseline_path, current_html):
                     break
 
         added_texts, removed_texts = extract_text_changes(diff)
+        
+        # Filter out text items that appear in both added and removed (structural noise)
+        added_texts_str = [t.get("text", "") for t in added_texts if t]
+        removed_texts_str = [t.get("text", "") for t in removed_texts if t]
+        
+        final_added = [a for a in added_texts if a and a.get("text", "") not in removed_texts_str]
+        final_removed = [r for r in removed_texts if r and r.get("text", "") not in added_texts_str]
+        
+        added_texts = final_added
+        removed_texts = final_removed
+
         # Always compute a concise summary (may be empty string when no readable text changes)
         summary = summarize_changes(added_texts, removed_texts)
 
@@ -486,6 +497,10 @@ def html_diff(baseline_path, current_html):
         # If structural additions detected (table rows, links, headings, keyword-bearing td), always treat as meaningful
         if 'structural_addition' in locals() and structural_addition:
             meaningful_html_change = True
+            
+        # If all text changes canceled each other out (purely structural shift), mark as noise
+        if len(added_texts) == 0 and len(removed_texts) == 0 and not structural_addition:
+            meaningful_html_change = False
 
         changes_with_selectors = []
         for item in added_texts:
@@ -703,10 +718,18 @@ async def run_all_diffs(portal_name, url, current_screenshot, current_html, base
         score += 0.6
     elif text_changes_count > 0:
         score += 0.25
-    if visual_ratio >= visual_min_ratio:
-        score += 0.5
+        
+    meaningful_html = html_res.get("meaningful_html_change", False)
+    
+    # Only count visual changes if they are not massive (e.g. >85% is a broken render/error page)
+    # AND if it's a minor shift (<20%), it must be accompanied by a meaningful HTML change.
+    if visual_ratio >= visual_min_ratio and visual_ratio < 0.85:
+        if meaningful_html or visual_ratio >= 0.20:
+            score += 0.5
+            
     if har_changed:
         score += 0.2
+
     confidence = min(1.0, score)
     is_noise_overall = confidence < 0.45
 

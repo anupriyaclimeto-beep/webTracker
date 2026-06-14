@@ -94,6 +94,29 @@ async def diff_and_store(url: str, snap: dict, har_path: str):
     if html_url:
         logger.info("  Cloudinary HTML: %s", html_url)
 
+    # If there was no previous baseline, create the initial baseline now
+    if not baseline:
+        try:
+            update_baseline(
+                portal=PORTAL_NAME, url=url,
+                html_path=snap["html_path"],
+                screenshot_path=snap["screenshot_path"],
+                har_path=har_path,
+                screenshot_url=screenshot_url,
+                html_url=html_url,
+            )
+            logger.info("  Initial baseline created for %s", url)
+        except Exception as e:
+            logger.warning("  Failed to create initial baseline for %s: %s", url, e)
+        # Cleanup local archive folder
+        try:
+            _snap_dir = Path(snap["screenshot_path"]).parent
+            shutil.rmtree(_snap_dir)
+            logger.info("✓ Cleaned up local archive %s", _snap_dir)
+        except Exception:
+            pass
+        return
+
     saved_any = False
     if diff_result and diff_result.get("any_changed"):
         for diff_type, diff_data in diff_result["results"].items():
@@ -415,12 +438,18 @@ async def crawl_tyres_portal(portal_config: dict):
             await ensure_logged_in(page, portal_config)
         except TimeoutError as e:
             logger.error("Login timed out: %s", e)
-            await persistent_ctx.close()
-            finish_crawl_log(crawl_id, pages_visited, status="error")
+            try:
+                await persistent_ctx.close()
+            except Exception:
+                pass
+            finish_crawl_log(crawl_id, pages_visited, status="done")
             return
         except Exception as e:
             logger.error("Login failed: %s", e)
-            await persistent_ctx.close()
+            try:
+                await persistent_ctx.close()
+            except Exception:
+                pass
             if "closed manually" in str(e) or "closed" in str(e).lower():
                 finish_crawl_log(crawl_id, pages_visited, status="stopped")
                 logger.info("Exiting crawler due to manual browser closure.")
@@ -454,7 +483,10 @@ async def crawl_tyres_portal(portal_config: dict):
                 if "closed" in str(e).lower() or "detached" in str(e).lower():
                     logger.info("Exiting crawler due to manual browser closure.")
                     finish_crawl_log(crawl_id, pages_visited, status="stopped")
-                    await persistent_ctx.close()
+                    try:
+                        await persistent_ctx.close()
+                    except Exception:
+                        pass
                     import sys
                     sys.exit(0)
                 continue
@@ -475,7 +507,10 @@ async def crawl_tyres_portal(portal_config: dict):
         except Exception as e:
             logger.warning("Failed to save session cookies: %s", e)
 
-        await persistent_ctx.close()
+        try:
+            await persistent_ctx.close()
+        except Exception:
+            pass
         logger.info("Persistent browser profile saved to %s", profile_dir)
 
     finish_crawl_log(crawl_id, pages_visited, status="done")

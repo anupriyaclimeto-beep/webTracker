@@ -41,23 +41,41 @@ CORS(app)
 
 
 def query_db(query, args=()):
-    """Query the database using storage.py's connection (Supabase or SQLite)."""
-    conn = get_conn()
-    if USE_SUPABASE:
-        with conn.cursor() as cur:
-            cur.execute(query, args)
-            rows = cur.fetchall()
-        conn.close()
-        # psycopg2 RealDictCursor returns RealDictRow, convert to plain dicts
-        return [dict(row) for row in rows]
-    else:
-        import sqlite3
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        cursor.execute(query, args)
-        rows = cursor.fetchall()
-        conn.close()
-        return [dict(row) for row in rows]
+    """Query the database using storage.py's connection (Supabase or SQLite).
+    Retries on connection errors for Supabase."""
+    import time
+    max_retries = 3 if USE_SUPABASE else 1
+    last_err = None
+    for attempt in range(max_retries):
+        try:
+            conn = get_conn()
+            if USE_SUPABASE:
+                with conn.cursor() as cur:
+                    cur.execute(query, args)
+                    rows = cur.fetchall()
+                conn.close()
+                # psycopg2 RealDictCursor returns RealDictRow, convert to plain dicts
+                return [dict(row) for row in rows]
+            else:
+                import sqlite3
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                cursor.execute(query, args)
+                rows = cursor.fetchall()
+                conn.close()
+                return [dict(row) for row in rows]
+        except Exception as e:
+            last_err = e
+            err_msg = str(e).lower()
+            is_conn_err = any(k in err_msg for k in [
+                "ssl", "connection", "closed", "server closed", "reset"
+            ])
+            if is_conn_err and attempt < max_retries - 1:
+                logger.warning("DB query retry %d/%d: %s", attempt + 1, max_retries, e)
+                time.sleep(1)
+                continue
+            raise
+    raise last_err
 
 
 def _filter_visible_rows(rows):
@@ -571,7 +589,10 @@ def crawl_stop():
         return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == "__main__":
-    init_db()
+    try:
+        init_db()
+    except Exception as e:
+        logger.warning("init_db failed (API will still start): %s", e)
     print("\nFlask REST API starting...")
     print(f"Database: {'Supabase (PostgreSQL)' if USE_SUPABASE else 'SQLite'}")
     print("Available endpoints:")
@@ -586,4 +607,4 @@ if __name__ == "__main__":
     print("  http://localhost:5000/api/crawl/status")
     print("  http://localhost:5000/api/crawl/start (POST)")
     print("  http://localhost:5000/api/crawl/stop  (POST)\n")
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, use_reloader=False)
