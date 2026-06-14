@@ -228,4 +228,5 @@ if __name__ == "__main__":
     logger.info("Mode: %s", "DEMO (fallback data)" if DEMO_MODE else "LIVE DATABASE")
     logger.info("Database: %s", "Supabase PostgreSQL" if USE_SUPABASE else "NOT CONFIGURED")
     logger.info("=" * 60)
-    app.run(debug=True, port=5000)
+    port = int(os.getenv("PORT", 5000))
+    app.run(debug=False, host="0.0.0.0", port=port)
