@@ -1040,6 +1040,115 @@ def get_all_portals():
         if p not in all_p:
             all_p.append(p)
     return all_p
+ 
+def count_visible_changes(portal):
+    """Count visible/meaningful changes for today for a portal."""
+    try:
+        if USE_SUPABASE:
+            rows = query_db(
+                "SELECT diff_detail, diff_type, ai_summary, url FROM public.changes WHERE portal=%s AND date(timestamp)=date('now')",
+                (portal,)
+            )
+        else:
+            rows = query_db(
+                "SELECT diff_detail, diff_type, ai_summary, url FROM changes WHERE portal=? AND date(timestamp)=date('now')",
+                (portal,)
+            )
+    except Exception:
+        rows = []
+    
+    # Pre-build set of URLs that have a visible HTML change today to filter visual diff noise
+    visible_html_urls = set()
+    text_min_words = int(config.get("diff", {}).get("text_change_min_words", 5) or 5)
+    text_min_lines = int(config.get("diff", {}).get("text_line_min_changes", 3) or 3)
+    
+    for r in rows:
+        dtype = (r.get("diff_type") or "").lower()
+        if dtype == "html":
+            try:
+                ai = (r.get("ai_summary") or "") or ""
+                if isinstance(ai, str) and ai.strip():
+                    low = ai.lower()
+                    if "no description" in low or "no visible" in low or "no changes" in low:
+                        continue
+                detail = r.get("diff_detail") or {}
+                if isinstance(detail, str):
+                    detail = json.loads(detail or "{}")
+                if not isinstance(detail, dict):
+                    detail = {}
+                if bool(detail.get("is_noise")):
+                    continue
+                conf = detail.get("confidence")
+                try:
+                    conf = float(conf) if conf is not None else None
+                except Exception:
+                    conf = None
+                thr = float(config.get("diff", {}).get("noise_confidence_threshold", 0.6))
+                if conf is not None and conf < thr:
+                    continue
+                
+                words = int(detail.get("words_changed") or detail.get("wordsChanged") or 0)
+                lines = int(detail.get("diff_lines") or detail.get("lines_changed") or 0)
+                highlighted = detail.get("highlighted_lines") or []
+                if words >= text_min_words or lines >= text_min_lines or (highlighted and len(highlighted) > 0):
+                    visible_html_urls.add(r.get("url"))
+            except Exception:
+                pass
+
+    count = 0
+    for r in rows:
+        try:
+            ai = (r.get("ai_summary") or "") or ""
+            if isinstance(ai, str) and ai.strip():
+                low = ai.lower()
+                if "no description" in low or "no visible" in low or "no changes" in low:
+                    continue
+            detail = r.get("diff_detail") or {}
+            if isinstance(detail, str):
+                detail = json.loads(detail or "{}")
+            if not isinstance(detail, dict):
+                detail = {}
+            if bool(detail.get("is_noise")):
+                continue
+            try:
+                conf = detail.get("confidence")
+                conf = float(conf) if conf is not None else None
+            except Exception:
+                conf = None
+            thr = float(config.get("diff", {}).get("noise_confidence_threshold", 0.6))
+            if conf is not None and conf < thr:
+                continue
+            dtype = (r.get("diff_type") or "").lower()
+            if dtype == "visual":
+                try:
+                    pixels = int(detail.get("changed_pixels") or 0)
+                except Exception:
+                    pixels = 0
+                try:
+                    ratio = float(detail.get("change_ratio") or 0.0)
+                except Exception:
+                    ratio = 0.0
+                vmin = float(config.get("diff", {}).get("visual_change_min_ratio", config.get("diff", {}).get("pixel_threshold", 0.05)))
+                if pixels == 0 or ratio <= vmin:
+                    continue
+                # Visual change must have accompanying visible HTML change for same URL
+                if r.get("url") not in visible_html_urls:
+                    continue
+            elif dtype == "html":
+                if r.get("url") not in visible_html_urls:
+                    continue
+            elif dtype in ("har", "json"):
+                if not detail:
+                    continue
+                if dtype == "har":
+                    new_ep = detail.get("new_endpoints") or []
+                    rem_ep = detail.get("removed_endpoints") or []
+                    if not (new_ep or rem_ep):
+                        continue
+            count += 1
+        except Exception:
+            count += 1
+    return count
 
 @st.cache_data(ttl=30)
 def get_portal_stats(portal=None):
@@ -1048,11 +1157,8 @@ def get_portal_stats(portal=None):
     db_stats   = query_db(f"""
         SELECT cl.portal, cl.started_at AS last_crawl_at, cl.pages_visited,
                cl.status AS last_status,
-               COALESCE(td.today_changes,0) AS today_changes,
                COALESCE(at_.all_changes,0)  AS all_time_changes
         FROM crawl_log cl
-        LEFT JOIN (SELECT portal,COUNT(*) AS today_changes FROM changes
-                   WHERE date(timestamp)=date('now') GROUP BY portal) td ON td.portal=cl.portal
         LEFT JOIN (SELECT portal,COUNT(*) AS all_changes FROM changes GROUP BY portal) at_ ON at_.portal=cl.portal
         WHERE cl.id IN (SELECT MAX(id) FROM crawl_log GROUP BY portal)
         {and_clause} ORDER BY cl.portal
@@ -1071,6 +1177,12 @@ def get_portal_stats(portal=None):
     for name, s in stats_map.items():
         if name not in [p["name"] for p in configured_portals]:
             merged.append(s)
+    # Compute visible-only today_changes for each portal
+    for item in merged:
+        try:
+            item["today_changes"] = count_visible_changes(item.get("portal"))
+        except Exception:
+            item["today_changes"] = item.get("today_changes", 0)
     return merged
 
 @st.cache_data(ttl=300)
@@ -1140,6 +1252,23 @@ def get_latest_crawl_changes(portal=None):
     visible = []
     text_min_words = int(config.get("diff", {}).get("text_change_min_words", 5) or 5)
     text_min_lines = int(config.get("diff", {}).get("text_line_min_changes", 3) or 3)
+    
+    # Pre-build set of URLs that have a visible HTML change in the filtered changes list
+    visible_html_urls = set()
+    for r in filtered:
+        if r.get("diff_type") == "html":
+            try:
+                detail = r.get("diff_detail") or {}
+                if isinstance(detail, str):
+                    detail = json.loads(detail or "{}")
+                words = int(detail.get("words_changed") or 0)
+                lines = int(detail.get("diff_lines") or 0)
+                highlighted = detail.get("highlighted_lines") or []
+                if words >= text_min_words or lines >= text_min_lines or (highlighted and len(highlighted) > 0):
+                    visible_html_urls.add(r.get("url"))
+            except Exception:
+                pass
+
     for r in filtered:
         try:
             dtype = r.get("diff_type")
@@ -1157,20 +1286,11 @@ def get_latest_crawl_changes(portal=None):
             except Exception:
                 pixels = 0; ratio = 0.0
             if pixels > 0 and ratio > visual_min:
-                visible_flag = True
+                # Visual change must have accompanying visible HTML change for same URL
+                if r.get("url") in visible_html_urls:
+                    visible_flag = True
         elif dtype == "html":
-            try:
-                words = int(detail.get("words_changed") or 0)
-                lines = int(detail.get("diff_lines") or 0)
-            except Exception:
-                words = 0; lines = 0
-            highlighted = detail.get("highlighted_lines") or []
-            # Only consider HTML changes visible if there are actual visible text differences:
-            # - word count changed above threshold, OR
-            # - line changes above threshold, OR
-            # - explicit highlighted lines (word-level highlights)
-            # Do NOT treat structural-only changes (e.g., added empty <tr> or attribute changes) as visible.
-            if words >= text_min_words or lines >= text_min_lines or (highlighted and len(highlighted) > 0):
+            if r.get("url") in visible_html_urls:
                 visible_flag = True
         elif dtype in ("json", "har"):
             # treat API/data/har changes as visible if there are added/removed entries
@@ -1199,7 +1319,8 @@ def render_highlighted_html_diff(detail):
     highlighted_lines = detail.get("highlighted_lines", [])
     summary           = detail.get("summary", "")
     if not highlighted_lines:
-        if summary: st.info(f"💬 {summary}")
+        if summary and summary.strip() and "no visible" not in summary.lower() and "no description" not in summary.lower() and "no changes" not in summary.lower():
+            st.info(f"💬 {summary}")
         return
 
     def is_noise_line(line):
@@ -1212,7 +1333,10 @@ def render_highlighted_html_diff(detail):
 
     filtered = [l for l in highlighted_lines if not is_noise_line(l)]
     if not filtered:
-        st.info(f"💬 {summary}  — (Rendering/noise-only changes filtered)" if summary else "No readable text changes detected.")
+        if summary and summary.strip() and "no visible" not in summary.lower() and "no description" not in summary.lower() and "no changes" not in summary.lower():
+            st.info(f"💬 {summary}  — (Rendering/noise-only changes filtered)")
+        else:
+            st.info("No readable text changes detected.")
         return
 
     added_count   = sum(1 for l in highlighted_lines if l["type"] == "added")
@@ -1363,7 +1487,10 @@ def render_change_expander(change):
                 render_highlighted_html_diff(detail)
             else:
                 card_lines = []
-                if summary_text:
+                if (summary_text and summary_text.strip() and
+                    "no description" not in summary_text.lower() and
+                    "no visible" not in summary_text.lower() and
+                    "no changes" not in summary_text.lower()):
                     card_lines.append(f"<div style='font-weight:700;margin-bottom:6px'>📄 {_html.escape(summary_text)}</div>")
                 card_lines.append(f"<div style='color:#94a3b8;margin-bottom:6px'>{words_changed} words changed · {lines_changed} lines changed</div>")
                 if added_texts:
@@ -1824,6 +1951,23 @@ elif st.session_state.view == "changes":
                     ratio = float(detail.get("change_ratio") or 0)
                     pixels = int(detail.get("changed_pixels") or 0)
                     if pixels == 0 or ratio < 0.05:
+                        return False
+                    # Visual change must have accompanying visible HTML change for same URL in filtered changes list
+                    has_html = False
+                    for other in filtered:
+                        if other.get("diff_type") == "html" and other.get("url") == change.get("url"):
+                            try:
+                                o_detail = json.loads(other.get("diff_detail") or "{}")
+                                o_words = int(o_detail.get("words_changed") or 0)
+                                o_lines = int(o_detail.get("diff_lines") or 0)
+                                o_summary = (o_detail.get("summary") or "")
+                                if o_words > 0 or o_lines > 0:
+                                    if "no visible text" not in o_summary.lower():
+                                        has_html = True
+                                        break
+                            except Exception:
+                                pass
+                    if not has_html:
                         return False
             except Exception:
                 return False

@@ -2,7 +2,7 @@ name: Scheduled Crawler (11:00 AM IST)
 
 on:
   schedule:
-    - cron: '30 5 * * *'  # 11:00 AM IST daily (05:30 UTC)
+    - cron: '30 15 * * *'  # 9:00 PM IST daily (15:30 UTC)
   workflow_dispatch:  # allow manual trigger from GitHub
 
 jobs:

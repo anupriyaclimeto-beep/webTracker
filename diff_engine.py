@@ -31,7 +31,10 @@ def fetch_url_or_read_file(path_or_url: str, as_bytes: bool = False):
         if path_or_url.startswith("http://") or path_or_url.startswith("https://"):
             resp = requests.get(path_or_url, timeout=15)
             resp.raise_for_status()
-            return resp.content if as_bytes else resp.text
+            if as_bytes:
+                return resp.content
+            resp.encoding = "utf-8"
+            return resp.text
         else:
             if not os.path.exists(path_or_url):
                 return None
@@ -52,6 +55,26 @@ def clean_html(html: str) -> str:
             tag.decompose()
         for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
             comment.extract()
+
+        # Remove captcha-related elements entirely (they change on every page load)
+        for tag in soup.find_all(True):
+            tag_name_lower = (tag.name or "").lower()
+            attrs_str = str(tag.attrs).lower()
+            # Remove img tags whose name/id contains 'captcha'
+            if tag_name_lower == "img":
+                name_attr = (tag.get("name") or "").lower()
+                id_attr = (tag.get("id") or "").lower()
+                src_attr = (tag.get("src") or "").lower()
+                if "captcha" in name_attr or "captcha" in id_attr or "captcha" in src_attr:
+                    tag.decompose(); continue
+                # Also remove img tags with inline base64 data URIs
+                if src_attr.startswith("data:") and "base64" in src_attr:
+                    tag.decompose(); continue
+            # Remove any element whose class/id contains 'captcha'
+            cls_str = " ".join(tag.get("class") or []).lower()
+            id_str = (tag.get("id") or "").lower()
+            if "captcha" in cls_str or "captcha" in id_str:
+                tag.decompose(); continue
 
         # Remove or normalize noisy attributes and elements
         ignore_selector_substrings = config.get("diff", {}).get("ignore_selectors", [])
@@ -85,7 +108,7 @@ def clean_html(html: str) -> str:
                         attrs_to_remove.append(attr); continue
                 # Collapse long base64 inline blobs
                 if isinstance(value, str) and "data:" in value and "base64" in value:
-                    attrs_to_set[attr] = re.sub(r'data:[^;]+;base64,[A-Za-z0-9+/=]{20,}', 'BASE64_PLACEHOLDER', value)
+                    attrs_to_set[attr] = re.sub(r'data:[^;]+;base64,\s*[A-Za-z0-9+/=]{20,}', 'BASE64_PLACEHOLDER', value)
             for a in attrs_to_remove:
                 try: del tag.attrs[a]
                 except Exception: pass
@@ -95,7 +118,7 @@ def clean_html(html: str) -> str:
         # Final text normalization
         text = soup.prettify()
         # Replace long base64 blocks in the whole text
-        text = re.sub(r'data:[^;]+;base64,[A-Za-z0-9+/=]{20,}', 'BASE64_PLACEHOLDER', text)
+        text = re.sub(r'data:[^;]+;base64,\s*[A-Za-z0-9+/=]{20,}', 'BASE64_PLACEHOLDER', text)
         # Normalize common phrases
         text = re.sub(r"End Session \(\d+\)", "End Session (N)", text, flags=re.I)
         # Collapse excessive blank lines and whitespace
@@ -190,7 +213,9 @@ def summarize_changes(added_texts, removed_texts):
         parts.append(f"Added: {', '.join(added_phrases[:5])}" if len(added_phrases)>1 else f"{added_phrases[0]} added")
     if removed_phrases:
         parts.append(f"Removed: {', '.join(removed_phrases[:5])}" if len(removed_phrases)>1 else f"{removed_phrases[0]} removed")
-    return " | ".join(parts) if parts else "Page structure changed (no visible text differences found)"
+    if not parts:
+        return ""  # Return empty string when there are no human-readable phrases
+    return " | ".join(parts)
 
 
 # ── WORD-LEVEL DIFF ───────────────────────────────────────────────────────────
@@ -410,7 +435,8 @@ def html_diff(baseline_path, current_html):
                     break
 
         added_texts, removed_texts = extract_text_changes(diff)
-        summary = summarize_changes(added_texts, removed_texts) if changed else "No changes"
+        # Always compute a concise summary (may be empty string when no readable text changes)
+        summary = summarize_changes(added_texts, removed_texts)
 
         # Compute textual similarity/changes: number of meaningful words changed and lines changed
         try:
@@ -433,6 +459,10 @@ def html_diff(baseline_path, current_html):
                 re.compile(r"last updated.*\d", re.I),
                 re.compile(r"[A-Za-z0-9+/]{60,}"),
                 re.compile(r"\b(token|csrf|nonce|session)\b", re.I),
+                re.compile(r"base64", re.I),
+                re.compile(r"captcha", re.I),
+                re.compile(r"BASE64_PLACEHOLDER", re.I),
+                re.compile(r"data:image/", re.I),
             ]
             meaningful_lines = 0
             for line in diff:

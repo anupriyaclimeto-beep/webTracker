@@ -1,0 +1,15 @@
+node_modules/
+frontend/node_modules/
+venv/
+__pycache__/
+*.pyc
+.git/
+.github/
+tests/
+scripts/
+archive/
+browser_profiles/
+browser_session/
+scratch/
+.streamlit/
+.devcontainer/

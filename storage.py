@@ -3,14 +3,22 @@ import os
 import shutil
 import json
 import logging
+import time
+import functools
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Cloudinary imports
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+# Cloudinary imports (optional – may not be available on serverless platforms)
+try:
+    import cloudinary
+    import cloudinary.uploader
+    import cloudinary.api
+    HAS_CLOUDINARY = True
+except ImportError:
+    HAS_CLOUDINARY = False
+    logger = logging.getLogger(__name__)
+    logger.warning("Cloudinary not available – image uploads disabled")
 
 # Load environment variables
 BASE_DIR = Path(__file__).parent
@@ -29,7 +37,7 @@ CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
 CLOUDINARY_API_KEY    = os.getenv("CLOUDINARY_API_KEY")
 CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 
-USE_CLOUDINARY = all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET])
+USE_CLOUDINARY = HAS_CLOUDINARY and all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET])
 
 if USE_CLOUDINARY:
     cloudinary.config(
@@ -38,9 +46,6 @@ if USE_CLOUDINARY:
         api_secret=CLOUDINARY_API_SECRET,
         secure=True,
     )
-else:
-    # If any credential missing we will skip Cloudinary uploads.
-    cloudinary.config()  # defaults, no effect
 USE_SUPABASE = all([
     SUPABASE_HOST,
     SUPABASE_PORT,
@@ -66,7 +71,9 @@ if USE_SUPABASE:
 def get_conn():
     """
     Return a fresh database connection.
-    Tries Supabase (PostgreSQL) first; if the connection fails, raises an error.
+    - If Supabase is configured: connect to PostgreSQL (required for cloud deployments)
+    - If NOT configured on cloud (Vercel, Streamlit Cloud, etc.): raise error
+    - If NOT configured locally: fall back to SQLite for development
     """
     if USE_SUPABASE:
         try:
@@ -75,8 +82,73 @@ def get_conn():
             logger.error("Supabase connection failed: %s", e)
             # Do NOT silently fall back to SQLite — require Supabase when configured.
             raise
-    # If not configured to use Supabase, use local sqlite
-    return sqlite3.connect(DB_PATH)
+    else:
+        # USE_SUPABASE is False
+        if IS_CLOUD:
+            # On Vercel, Streamlit Cloud, or other cloud environments:
+            # SQLite cannot work because the filesystem is ephemeral and read-only.
+            # The user MUST configure Supabase for cloud deployments.
+            raise RuntimeError(
+                "SQLite is not supported on cloud deployments (Vercel, Streamlit Cloud, etc.) "
+                "because the filesystem is ephemeral and not writable for database files. "
+                "Please configure Supabase by setting these environment variables: "
+                "SUPABASE_HOST, SUPABASE_PORT, SUPABASE_DB, SUPABASE_USER, "
+                "SUPABASE_PASSWORD (or SUPABASE_SERVICE_ROLE_KEY)"
+            )
+        else:
+            # For local non-cloud development, use SQLite
+            return sqlite3.connect(DB_PATH)
+
+
+def _supabase_retry(max_retries=3, delay=2):
+    """Decorator that retries a function on SSL / connection errors.
+
+    Catches psycopg2.OperationalError and psycopg2.InterfaceError (which
+    include "SSL connection has been closed unexpectedly"), waits briefly,
+    then retries with a fresh connection.
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            if not USE_SUPABASE:
+                return func(*args, **kwargs)
+            last_err = None
+            for attempt in range(1, max_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    err_msg = str(e).lower()
+                    is_conn_err = (
+                        "ssl connection" in err_msg
+                        or ("connection" in err_msg and "closed" in err_msg)
+                        or "server closed the connection" in err_msg
+                        or "could not connect" in err_msg
+                        or "connection reset" in err_msg
+                    )
+                    # Also catch psycopg2 specific errors if available
+                    try:
+                        import psycopg2
+                        is_conn_err = is_conn_err or isinstance(e, (psycopg2.OperationalError, psycopg2.InterfaceError))
+                    except ImportError:
+                        pass
+                    if not is_conn_err:
+                        raise  # Not a connection error, re-raise immediately
+                    last_err = e
+                    if attempt < max_retries:
+                        wait = delay * attempt
+                        logger.warning(
+                            "DB connection error in %s (attempt %d/%d): %s — retrying in %ds",
+                            func.__name__, attempt, max_retries, e, wait
+                        )
+                        time.sleep(wait)
+                    else:
+                        logger.error(
+                            "DB connection error in %s failed after %d attempts: %s",
+                            func.__name__, max_retries, e
+                        )
+            raise last_err
+        return wrapper
+    return decorator
 
 # ----------------------------------------------------------------------
 # Logging
@@ -87,19 +159,32 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Detect if we are running on Streamlit Cloud
-IS_CLOUD = os.getenv("STREAMLIT_SHARING_MODE") is not None or os.path.exists("/mount/src")
+# Detect if we are running on a cloud environment (Streamlit Cloud, Vercel, etc.)
+IS_CLOUD = (
+    os.getenv("STREAMLIT_SHARING_MODE") is not None or  # Streamlit Cloud
+    os.path.exists("/mount/src") or  # Streamlit Cloud (alternative check)
+    os.getenv("VERCEL") is not None or  # Vercel
+    os.getenv("VERCEL_ENV") is not None  # Vercel
+)
 
 # Load configuration
-with open("config.json") as f:
-    config = json.load(f)
+try:
+    with open("config.json") as f:
+        config = json.load(f)
+except FileNotFoundError:
+    logger.warning("config.json not found, using minimal fallback configuration")
+    config = {
+        "storage": {"db": "database.db"},
+        "portals": [],
+        "diff": {}
+    }
 
 # SQLite‑only paths (used only when USE_SUPABASE is False)
-DB_PATH     = config["storage"]["db"]
+DB_PATH     = config.get("storage", {}).get("db", "database.db")
 if IS_CLOUD:
     ARCHIVE_DIR = "/tmp/webtracker_archive"
 else:
-    ARCHIVE_DIR = config["storage"]["archive_dir"]
+    ARCHIVE_DIR = config.get("storage", {}).get("archive_dir", "archive")
 
 
 
@@ -141,61 +226,73 @@ def init_db():
     """
     if USE_SUPABASE:
         logger.info("Supabase detected - ensuring required tables exist in remote DB.")
-        conn = get_conn()
-        with conn.cursor() as cur:
-            # changes table
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS public.changes (
-                    id BIGSERIAL PRIMARY KEY,
-                    portal TEXT NOT NULL,
-                    url TEXT NOT NULL,
-                    diff_type TEXT NOT NULL,
-                    diff_detail JSONB,
-                    ai_summary TEXT,
-                    screenshot_url TEXT,
-                    html_url TEXT,
-                    timestamp TIMESTAMPTZ NOT NULL
-                )
-            """)
-            # baselines table
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS public.baselines (
-                    id BIGSERIAL PRIMARY KEY,
-                    portal TEXT NOT NULL,
-                    url TEXT NOT NULL,
-                    html_path TEXT,
-                    screenshot_path TEXT,
-                    har_path TEXT,
-                    screenshot_url TEXT,
-                    html_url TEXT,
-                    updated_at TIMESTAMPTZ NOT NULL
-                )
-            """)
-            cur.execute("""
-                CREATE INDEX IF NOT EXISTS idx_baselines_portal_url ON public.baselines (portal, url)
-            """)
-            # crawl_log table
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS public.crawl_log (
-                    id BIGSERIAL PRIMARY KEY,
-                    portal TEXT NOT NULL,
-                    started_at TIMESTAMPTZ NOT NULL,
-                    finished_at TIMESTAMPTZ,
-                    pages_visited INTEGER DEFAULT 0,
-                    status TEXT DEFAULT 'running'
-                )
-            """)
-            # hidden_changes helper
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS public.hidden_changes (
-                    change_id BIGINT PRIMARY KEY,
-                    hidden_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-                )
-            """)
-            conn.commit()
-        conn.close()
-        logger.info("Supabase tables ensured.")
-        return
+        import psycopg2
+        for attempt in range(2):
+            try:
+                conn = get_conn()
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS public.changes (
+                            id BIGSERIAL PRIMARY KEY,
+                            portal TEXT NOT NULL,
+                            url TEXT NOT NULL,
+                            diff_type TEXT NOT NULL,
+                            diff_detail JSONB,
+                            ai_summary TEXT,
+                            screenshot_url TEXT,
+                            html_url TEXT,
+                            timestamp TIMESTAMPTZ NOT NULL
+                        )
+                    """)
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS public.baselines (
+                            id BIGSERIAL PRIMARY KEY,
+                            portal TEXT NOT NULL,
+                            url TEXT NOT NULL,
+                            html_path TEXT,
+                            screenshot_path TEXT,
+                            har_path TEXT,
+                            screenshot_url TEXT,
+                            html_url TEXT,
+                            updated_at TIMESTAMPTZ NOT NULL
+                        )
+                    """)
+                    cur.execute("""
+                        CREATE INDEX IF NOT EXISTS idx_baselines_portal_url ON public.baselines (portal, url)
+                    """)
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS public.crawl_log (
+                            id BIGSERIAL PRIMARY KEY,
+                            portal TEXT NOT NULL,
+                            started_at TIMESTAMPTZ NOT NULL,
+                            finished_at TIMESTAMPTZ,
+                            pages_visited INTEGER DEFAULT 0,
+                            status TEXT DEFAULT 'running'
+                        )
+                    """)
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS public.hidden_changes (
+                            change_id BIGINT PRIMARY KEY,
+                            hidden_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                        )
+                    """)
+                conn.commit()
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                logger.info("Supabase tables ensured.")
+                return
+            except (psycopg2.OperationalError, psycopg2.InterfaceError) as e:
+                logger.warning(f"Connection dropped during init_db, retrying... ({e})")
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                if attempt == 1:
+                    logger.error("Failed to ensure Supabase tables after retry.")
+                    return
+
 
     # ----- SQLite initialisation (unchanged) -----
     os.makedirs(ARCHIVE_DIR, exist_ok=True)
@@ -304,6 +401,7 @@ def init_db():
 # Data access functions
 # ======================================================================
 
+@_supabase_retry()
 def save_diff(portal, url, diff_type, diff_detail, ai_summary=None, screenshot_url=None, html_url=None):
     """Persist a diff record, now also storing Cloudinary URLs if provided.
     Works with both SQLite and Supabase.
@@ -336,6 +434,7 @@ def save_diff(portal, url, diff_type, diff_detail, ai_summary=None, screenshot_u
     logger.info("Diff saved — portal=%s url=%s type=%s", portal, url, diff_type)
 
 
+@_supabase_retry()
 def get_baseline(portal, url):
     conn = get_conn()
     if USE_SUPABASE:
@@ -374,6 +473,7 @@ def get_baseline(portal, url):
     return None
 
 
+@_supabase_retry()
 def update_baseline(portal, url, html_path, screenshot_path, har_path, screenshot_url=None, html_url=None):
     """
     Always insert a new baseline row to keep full history.
@@ -422,26 +522,6 @@ def cleanup_old_snapshots(url_folder, keep=2):
         logger.error("Error during snapshot cleanup - %s", e)
 
 
-def upload_to_cloudinary(local_path, resource_type="image"):
-    """Upload a local file to Cloudinary and return the secure URL.
-    Returns None if Cloudinary is not configured or upload fails.
-    """
-    if not USE_CLOUDINARY:
-        return None
-    try:
-        result = cloudinary.uploader.upload(
-            local_path,
-            resource_type=resource_type,
-            folder="webtracker",
-        )
-        url = result.get("secure_url")
-        logger.info("Cloudinary upload OK: %s -> %s", local_path, url)
-        return url
-    except Exception as e:
-        logger.error("Cloudinary upload FAILED for %s: %s", local_path, e)
-        return None
-
-
 def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
     timestamp  = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_url   = (
@@ -477,6 +557,7 @@ def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
     return screenshot_path, html_path, har_path, screenshot_url, html_url
 
 
+@_supabase_retry()
 def start_crawl_log(portal):
     started_at = datetime.now().isoformat()
     conn = get_conn()
@@ -501,6 +582,7 @@ def start_crawl_log(portal):
     return crawl_id
 
 
+@_supabase_retry()
 def finish_crawl_log(crawl_id, pages_visited, status="done"):
     finished_at = datetime.now().isoformat()
     conn = get_conn()
@@ -525,6 +607,7 @@ def finish_crawl_log(crawl_id, pages_visited, status="done"):
     )
 
 
+@_supabase_retry()
 def update_crawl_progress(crawl_id, pages_visited):
     """Update pages_visited for a running crawl immediately."""
     try:
@@ -547,6 +630,7 @@ def update_crawl_progress(crawl_id, pages_visited):
         logger.warning("Failed to update crawl progress: %s", e)
 
 
+@_supabase_retry()
 def get_all_changes():
     """Return all change records ordered by newest first (includes Cloudinary URLs)."""
     conn = get_conn()
@@ -561,6 +645,7 @@ def get_all_changes():
     conn.close()
     return rows
 
+@_supabase_retry()
 def clear_baselines_for_portal(portal):
     conn = get_conn()
     if USE_SUPABASE:
@@ -577,6 +662,7 @@ def clear_baselines_for_portal(portal):
     logger.info("Cleared %s old baselines for portal: %s", deleted, portal)
 
 
+@_supabase_retry()
 def purge_old_records(keep_days):
     """
     Delete records older than *keep_days* days.
