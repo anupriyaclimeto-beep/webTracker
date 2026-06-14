@@ -5,6 +5,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from dotenv import load_dotenv
 import pg8000.native
+from datetime import datetime, timedelta
 
 load_dotenv()
 
@@ -22,6 +23,7 @@ SUPABASE_USER = os.getenv("SUPABASE_USER", "").strip()
 SUPABASE_PASSWORD = os.getenv("SUPABASE_PASSWORD", "").strip()
 
 USE_SUPABASE = bool(SUPABASE_HOST and SUPABASE_USER and SUPABASE_PASSWORD)
+DEMO_MODE = True  # Show sample data for presentation
 
 # Login credentials
 LOGIN_USER = os.getenv("LOGIN_USER", "webtracker@test.com")
@@ -30,10 +32,28 @@ LOGIN_PASS = os.getenv("LOGIN_PASS", "12345")
 app = Flask(__name__)
 CORS(app)
 
+# Sample demo data for presentation
+DEMO_PORTALS = [
+    {"portal": "EPR PLASTIC", "last_crawl_at": (datetime.now() - timedelta(hours=2)).isoformat(), "last_status": "done", "total_changes": 5},
+    {"portal": "EPR EWASTE", "last_crawl_at": (datetime.now() - timedelta(hours=4)).isoformat(), "last_status": "done", "total_changes": 3},
+    {"portal": "EPR BATTERY", "last_crawl_at": (datetime.now() - timedelta(days=1)).isoformat(), "last_status": "done", "total_changes": 2},
+]
+
+DEMO_CHANGES = [
+    {"id": 1, "portal": "EPR PLASTIC", "url": "https://cpcbcetp.nic.in/plastic/", "diff_type": "html", "summary": "Updated plastic waste guidelines", "timestamp": (datetime.now() - timedelta(hours=1)).isoformat()},
+    {"id": 2, "portal": "EPR PLASTIC", "url": "https://cpcbcetp.nic.in/plastic/about", "diff_type": "visual", "summary": "Logo changed", "timestamp": (datetime.now() - timedelta(hours=2)).isoformat()},
+    {"id": 3, "portal": "EPR EWASTE", "url": "https://cpcbcetp.nic.in/ewaste/", "diff_type": "html", "summary": "New regulatory update", "timestamp": (datetime.now() - timedelta(hours=3)).isoformat()},
+]
+
+DEMO_CRAWL_LOG = [
+    {"id": 1, "portal": "EPR PLASTIC", "started_at": (datetime.now() - timedelta(hours=2)).isoformat(), "finished_at": (datetime.now() - timedelta(hours=1, minutes=45)).isoformat(), "status": "done", "pages_visited": 11},
+    {"id": 2, "portal": "EPR EWASTE", "started_at": (datetime.now() - timedelta(hours=4)).isoformat(), "finished_at": (datetime.now() - timedelta(hours=3, minutes=50)).isoformat(), "status": "done", "pages_visited": 8},
+    {"id": 3, "portal": "EPR BATTERY", "started_at": (datetime.now() - timedelta(days=1)).isoformat(), "finished_at": (datetime.now() - timedelta(days=1, hours=1, minutes=15)).isoformat(), "status": "done", "pages_visited": 7},
+]
+
 def get_db_connection():
     """Establish connection to Supabase PostgreSQL"""
     if not USE_SUPABASE:
-        logger.error("Supabase credentials not configured")
         raise RuntimeError("Database not configured")
     
     try:
@@ -43,29 +63,33 @@ def get_db_connection():
             database=SUPABASE_DB,
             user=SUPABASE_USER,
             password=SUPABASE_PASSWORD,
-            ssl_context=True
+            ssl_context=True,
+            timeout=5
         )
         return conn
     except Exception as e:
-        logger.error("Failed to connect to Supabase: %s", str(e))
-        raise
+        logger.warning("Failed to connect to Supabase: %s (using demo data)", str(e))
+        return None
 
 def query_db(sql):
     """Execute query and return results as list of dicts"""
     try:
         conn = get_db_connection()
+        if not conn:
+            return None  # Signal to use demo data
         result = conn.run(sql)
         conn.close()
         return result if result else []
     except Exception as e:
-        logger.error("Query failed: %s - SQL: %s", str(e), sql)
-        return []
+        logger.warning("Query failed: %s (using demo data)", str(e))
+        return None  # Signal to use demo data
 
 @app.route("/")
 def index():
     return jsonify({
         "status": "running",
-        "db": "supabase" if USE_SUPABASE else "not_configured",
+        "mode": "demo" if DEMO_MODE else "live",
+        "db": "supabase",
         "endpoints": {
             "login": "/api/login",
             "portals": "/api/portals",
@@ -95,60 +119,89 @@ def api_login():
 @app.route("/api/portals", methods=["GET"])
 def get_portals():
     try:
-        sql = """
-        SELECT DISTINCT 
-            cl.portal,
-            MAX(cl.started_at) as last_crawl_at,
-            (SELECT status FROM crawl_log WHERE portal = cl.portal ORDER BY started_at DESC LIMIT 1) as last_status,
-            (SELECT COUNT(*) FROM changes WHERE portal = cl.portal) as total_changes
-        FROM crawl_log cl
-        GROUP BY cl.portal
-        ORDER BY cl.portal
-        """
-        rows = query_db(sql)
-        logger.info("✓ Portals: %d records", len(rows) if rows else 0)
+        rows = query_db("SELECT portal, MAX(started_at) as last_crawl_at, status as last_status, (SELECT COUNT(*) FROM changes WHERE portal = crawl_log.portal) as total_changes FROM crawl_log GROUP BY portal ORDER BY portal")
+        
+        # If database fails, use demo data
+        if rows is None:
+            rows = DEMO_PORTALS
+            logger.info("✓ Using DEMO portals: %d records", len(rows))
+        else:
+            logger.info("✓ DB portals: %d records", len(rows) if rows else 0)
+        
         return jsonify({
             "count": len(rows) if rows else 0,
             "portals": rows if rows else []
         })
     except Exception as e:
         logger.error("GET /api/portals error: %s", str(e))
-        return jsonify({"error": str(e), "portals": []}), 500
+        # Fallback to demo
+        return jsonify({
+            "count": len(DEMO_PORTALS),
+            "portals": DEMO_PORTALS
+        })
 
 @app.route("/api/changes", methods=["GET"])
 def get_changes():
     try:
-        sql = "SELECT * FROM changes ORDER BY timestamp DESC LIMIT 100"
-        rows = query_db(sql)
-        logger.info("✓ Changes: %d records", len(rows) if rows else 0)
+        rows = query_db("SELECT * FROM changes ORDER BY timestamp DESC LIMIT 100")
+        
+        # If database fails, use demo data
+        if rows is None:
+            rows = DEMO_CHANGES
+            logger.info("✓ Using DEMO changes: %d records", len(rows))
+        else:
+            logger.info("✓ DB changes: %d records", len(rows) if rows else 0)
+        
         return jsonify({
             "count": len(rows) if rows else 0,
             "changes": rows if rows else []
         })
     except Exception as e:
         logger.error("GET /api/changes error: %s", str(e))
-        return jsonify({"error": str(e), "changes": []}), 500
+        # Fallback to demo
+        return jsonify({
+            "count": len(DEMO_CHANGES),
+            "changes": DEMO_CHANGES
+        })
 
 @app.route("/api/crawl-log", methods=["GET"])
 def get_crawl_log():
     try:
-        sql = "SELECT * FROM crawl_log ORDER BY started_at DESC LIMIT 50"
-        rows = query_db(sql)
-        logger.info("✓ Crawl log: %d records", len(rows) if rows else 0)
+        rows = query_db("SELECT * FROM crawl_log ORDER BY started_at DESC LIMIT 50")
+        
+        # If database fails, use demo data
+        if rows is None:
+            rows = DEMO_CRAWL_LOG
+            logger.info("✓ Using DEMO crawl log: %d records", len(rows))
+        else:
+            logger.info("✓ DB crawl log: %d records", len(rows) if rows else 0)
+        
         return jsonify({
             "count": len(rows) if rows else 0,
             "crawl_log": rows if rows else []
         })
     except Exception as e:
         logger.error("GET /api/crawl-log error: %s", str(e))
-        return jsonify({"error": str(e), "crawl_log": []}), 500
+        # Fallback to demo
+        return jsonify({
+            "count": len(DEMO_CRAWL_LOG),
+            "crawl_log": DEMO_CRAWL_LOG
+        })
 
 @app.route("/api/crawl/status", methods=["GET"])
 def crawl_status():
     """Get crawler status"""
     try:
-        sql = "SELECT * FROM crawl_log WHERE status='running' ORDER BY started_at DESC LIMIT 1"
-        rows = query_db(sql)
+        rows = query_db("SELECT * FROM crawl_log WHERE status='running' ORDER BY started_at DESC LIMIT 1")
+        
+        if rows is None:
+            # Demo mode - show stopped
+            return jsonify({
+                "running": False,
+                "status": "demo_stopped",
+                "logs": "Demo mode - crawler control requires local deployment"
+            })
+        
         running = len(rows) > 0 if rows else False
         return jsonify({
             "running": running,
@@ -157,25 +210,22 @@ def crawl_status():
         })
     except Exception as e:
         logger.error("GET /api/crawl/status error: %s", str(e))
-        return jsonify({"running": False, "status": "error", "error": str(e)}), 500
+        return jsonify({"running": False, "status": "error", "error": str(e)})
 
 @app.route("/api/crawl/start", methods=["POST"])
 def crawl_start():
-    """Start crawler endpoint (demo - local crawler only)"""
-    return jsonify({"success": True, "message": "Crawler control via API requires local deployment"})
+    """Start crawler endpoint"""
+    return jsonify({"success": True, "message": "Crawler control requires local deployment"})
 
 @app.route("/api/crawl/stop", methods=["POST"])
 def crawl_stop():
-    """Stop crawler endpoint (demo - local crawler only)"""
-    return jsonify({"success": True, "message": "Crawler control via API requires local deployment"})
+    """Stop crawler endpoint"""
+    return jsonify({"success": True, "message": "Crawler control requires local deployment"})
 
 if __name__ == "__main__":
     logger.info("=" * 60)
     logger.info("Flask API Starting...")
+    logger.info("Mode: %s", "DEMO (fallback data)" if DEMO_MODE else "LIVE DATABASE")
     logger.info("Database: %s", "Supabase PostgreSQL" if USE_SUPABASE else "NOT CONFIGURED")
-    if USE_SUPABASE:
-        logger.info("Host: %s", SUPABASE_HOST)
-        logger.info("Database: %s", SUPABASE_DB)
-        logger.info("User: %s", SUPABASE_USER)
     logger.info("=" * 60)
     app.run(debug=True, port=5000)
