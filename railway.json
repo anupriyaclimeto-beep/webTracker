@@ -5,7 +5,6 @@
     "dockerfile": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "cd api && python api.py",
     "healthcheckPath": "/",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE"
