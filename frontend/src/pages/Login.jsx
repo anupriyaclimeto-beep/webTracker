@@ -18,6 +18,15 @@ export default function Login({ onLogin }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
+      
+      if (!res.ok) {
+        const text = await res.text();
+        setError(`API error (${res.status}): ${res.statusText}`);
+        console.error('API Response:', text);
+        setLoading(false);
+        return;
+      }
+      
       const data = await res.json();
       if (data.success) {
         onLogin();
@@ -26,6 +35,7 @@ export default function Login({ onLogin }) {
       }
     } catch (err) {
       setError('Connection error: ' + err.message);
+      console.error('Login error:', err);
     }
     setLoading(false);
   };
