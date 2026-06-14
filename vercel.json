@@ -2,11 +2,6 @@
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
-  "functions": {
-    "api.py": {
-      "maxDuration": 60
-    }
-  },
   "routes": [
     {
       "src": "/api/.*",
