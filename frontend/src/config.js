@@ -2,8 +2,8 @@
 // In production (Vercel), this will be the same origin (same domain)
 // In development (localhost), this can be overridden with VITE_API_URL
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (typeof window !== 'undefined' ? window.location.origin : '');
+export const API_BASE_URL = import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? '' : (typeof window !== 'undefined' ? window.location.origin : ''));
 
 export const API_ENDPOINTS = {
   login: `${API_BASE_URL}/api/login`,

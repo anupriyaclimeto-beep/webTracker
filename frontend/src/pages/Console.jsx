@@ -16,7 +16,7 @@ export default function Console() {
       const res = await fetch(API_ENDPOINTS.crawlStatus);
       const data = await res.json();
       setIsRunning(data.running);
-      setStatus(data.db_status || 'stopped');
+      setStatus(data.db_status || data.status || 'stopped');
       if (data.logs) {
         setLogs(data.logs);
       }
