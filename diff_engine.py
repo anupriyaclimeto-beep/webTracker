@@ -161,7 +161,14 @@ def extract_text_changes(diff_sample):
             result = extract_readable_text(line[1:].strip())
             if result:
                 removed_texts.append(result)
-    return added_texts, removed_texts
+                
+    added_strings = [x.get("text", "") for x in added_texts if x]
+    removed_strings = [x.get("text", "") for x in removed_texts if x]
+    
+    added_unique = [a for a in added_texts if a and a.get("text", "") not in removed_strings]
+    removed_unique = [r for r in removed_texts if r and r.get("text", "") not in added_strings]
+    
+    return added_unique, removed_unique
 
 
 def extract_readable_text(html_fragment):
@@ -486,6 +493,9 @@ def html_diff(baseline_path, current_html):
         # If structural additions detected (table rows, links, headings, keyword-bearing td), always treat as meaningful
         if 'structural_addition' in locals() and structural_addition:
             meaningful_html_change = True
+
+        if not summary:
+            meaningful_html_change = False
 
         changes_with_selectors = []
         for item in added_texts:
