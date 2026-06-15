@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  webtracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: webtracker-app
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      # Add any necessary API keys below or create a .env file
+    env_file:
+      - .env
+    restart: unless-stopped

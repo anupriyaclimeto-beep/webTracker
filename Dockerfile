@@ -20,6 +20,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements_new.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
+# Install Playwright and its system dependencies (only Chromium to save space)
+RUN playwright install --with-deps chromium
+
 # Copy all backend code
 COPY . .
 
