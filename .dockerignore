@@ -1,0 +1,11 @@
+node_modules/
+venv/
+.git/
+__pycache__/
+*.pyc
+.env
+changes.db
+webtracker.db
+archive/
+scratch/
+browser_profiles/

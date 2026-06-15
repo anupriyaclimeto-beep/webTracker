@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 from storage import get_conn, USE_SUPABASE, init_db
@@ -36,8 +36,17 @@ except FileNotFoundError:
 LOGIN_USER = os.getenv("LOGIN_USER", "webtracker@test.com")
 LOGIN_PASS = os.getenv("LOGIN_PASS", "12345")
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="frontend/dist", static_url_path="/")
 CORS(app)
+
+# Serve React App
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, "index.html")
 
 
 def query_db(query, args=()):
