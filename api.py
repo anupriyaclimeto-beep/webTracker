@@ -264,14 +264,14 @@ def get_portals():
         portals = config.get("portals", [])
         if USE_SUPABASE:
             all_changes = query_db(
-                "SELECT portal, url, diff_type, diff_detail, ai_summary, timestamp FROM public.changes"
+                "SELECT portal, url, diff_type, diff_detail, ai_summary, timestamp FROM public.changes WHERE ai_summary IS NULL OR (ai_summary != 'No changes' AND ai_summary != 'No description generated for this change.')"
             )
             crawl_rows = query_db(
                 "SELECT DISTINCT ON (portal) portal, started_at, status FROM public.crawl_log ORDER BY portal, started_at DESC"
             )
         else:
             all_changes = query_db(
-                "SELECT portal, url, diff_type, diff_detail, ai_summary, timestamp FROM changes"
+                "SELECT portal, url, diff_type, diff_detail, ai_summary, timestamp FROM changes WHERE ai_summary IS NULL OR (ai_summary != 'No changes' AND ai_summary != 'No description generated for this change.')"
             )
             crawl_rows = query_db(
                 "SELECT portal, started_at, status FROM crawl_log ORDER BY started_at DESC"
