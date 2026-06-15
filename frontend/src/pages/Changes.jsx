@@ -169,6 +169,13 @@ function ChangeCard({ change, onImageClick }) {
                 <span className="text-xs">No screenshot captured</span>
               </div>
             )}
+          </>
+        ) : (
+          <div className="aspect-[16/10] md:h-48 rounded-lg border border-dashed border-slate-300 flex flex-col items-center justify-center bg-slate-50 text-slate-400">
+            <ImageIcon className="w-8 h-8 mb-2 stroke-[1.5]" />
+            <span className="text-xs">No screenshot captured</span>
+          </div>
+        )}
       </div>
     </div>
   );
