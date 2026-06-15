@@ -40,7 +40,9 @@ export default function Overview() {
   }
 
   const totalChanges = portals.reduce((acc, p) => acc + (p.total_changes || 0), 0);
-  const portalsOffline = portals.filter(p => p.last_status === 'server_down' || p.last_status === 'error').length;
+  const offlinePortals = portals.filter(p => p.last_status === 'server_down' || p.last_status === 'error');
+  const portalsOfflineCount = offlinePortals.length;
+  const offlineNames = offlinePortals.map(p => p.name).join(', ');
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -78,8 +80,12 @@ export default function Overview() {
             </span>
           </div>
           <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-indigo-100">
-            <span>{portalsOffline > 0 ? `${portalsOffline} portal${portalsOffline > 1 ? 's' : ''} responding slow` : "All connections online"}</span>
-            <span className={`w-2 h-2 rounded-full ${portalsOffline > 0 ? 'bg-amber-400' : 'bg-emerald-400'} animate-ping`}></span>
+            <span>
+              {portalsOfflineCount > 0 
+                ? `${offlineNames} ${portalsOfflineCount > 1 ? 'are' : 'is'} down` 
+                : "All connections online"}
+            </span>
+            <span className={`w-2 h-2 rounded-full ${portalsOfflineCount > 0 ? 'bg-amber-400' : 'bg-emerald-400'} animate-ping`}></span>
           </div>
         </div>
 
