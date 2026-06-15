@@ -86,9 +86,7 @@ export default function Console() {
           {!isRunning ? (
             <button 
               onClick={handleStart}
-              disabled={true}
-              title="Manual crawling is temporarily disabled"
-              className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg transition shadow-sm opacity-50 cursor-not-allowed"
+              className="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition shadow-sm"
             >
               <Play className="w-4 h-4 mr-2" />
               Start Crawler
