@@ -78,8 +78,8 @@ export default function Overview() {
             </span>
           </div>
           <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-indigo-100">
-            <span>All connections online</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span>{portalsOffline > 0 ? `${portalsOffline} portal${portalsOffline > 1 ? 's' : ''} responding slow` : "All connections online"}</span>
+            <span className={`w-2 h-2 rounded-full ${portalsOffline > 0 ? 'bg-amber-400' : 'bg-emerald-400'} animate-ping`}></span>
           </div>
         </div>
 
