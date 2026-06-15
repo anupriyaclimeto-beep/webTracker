@@ -367,7 +367,7 @@ def visual_diff(baseline_path, current_bytes, diff_image_save_path=None):
         changed = change_ratio > visual_threshold
 
         diff_image_path = None
-        if changed:
+        if changed_pixels > 0:
             diff_bytes = generate_diff_image(baseline_path, current_bytes)
             if diff_bytes and diff_image_save_path:
                 os.makedirs(os.path.dirname(diff_image_save_path), exist_ok=True)

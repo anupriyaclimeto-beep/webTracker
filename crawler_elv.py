@@ -73,11 +73,13 @@ async def save_snapshot(page, key: str, screenshot_bytes: bytes) -> dict:
 
 async def diff_and_store(url, snap, har_path):
     baseline    = get_baseline(PORTAL_NAME, url)
+    diff_image_path = f"archive/{PORTAL_NAME.replace(' ','_')}_diff_{datetime.now().strftime('%Y%m%d%H%M%S')}.png"
     diff_result = await run_all_diffs(
         portal_name=PORTAL_NAME, url=url,
         current_screenshot=snap["screenshot_bytes"],
         current_html=snap["html"],
         baseline=baseline,
+        diff_image_save_path=diff_image_path
     )
     # Upload to Cloudinary
     screenshot_url = upload_to_cloudinary(snap["screenshot_path"], resource_type="image")
@@ -86,6 +88,14 @@ async def diff_and_store(url, snap, har_path):
         logger.info("  Cloudinary screenshot: %s", screenshot_url)
     if html_url:
         logger.info("  Cloudinary HTML: %s", html_url)
+
+    diff_image_url = None
+    if diff_result and diff_result.get("results", {}).get("visual", {}).get("diff_image_path"):
+        diff_image_url = upload_to_cloudinary(diff_result["results"]["visual"]["diff_image_path"], resource_type="image")
+        if diff_image_url:
+            diff_result["results"]["visual"]["diff_image_url"] = diff_image_url
+            if "html" in diff_result["results"]:
+                diff_result["results"]["html"]["diff_image_url"] = diff_image_url
 
     saved_any = False
     if diff_result and diff_result.get("any_changed"):
