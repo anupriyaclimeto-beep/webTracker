@@ -68,19 +68,45 @@ if USE_SUPABASE:
         f"sslmode=require"
     )
 
+_pool = None
+
+class PooledConnectionWrapper:
+    def __init__(self, conn, pool):
+        self._conn = conn
+        self._pool = pool
+    def cursor(self, *args, **kwargs):
+        return self._conn.cursor(*args, **kwargs)
+    def commit(self):
+        self._conn.commit()
+    def rollback(self):
+        self._conn.rollback()
+    def close(self):
+        try:
+            self._pool.putconn(self._conn)
+        except Exception:
+            pass
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
 def get_conn():
     """
-    Return a fresh database connection.
-    - If Supabase is configured: connect to PostgreSQL (required for cloud deployments)
-    - If NOT configured on cloud (Vercel, Streamlit Cloud, etc.): raise error
-    - If NOT configured locally: fall back to SQLite for development
+    Return a connection from the pool.
+    - If Supabase is configured: connect to PostgreSQL via pool
+    - If NOT configured on cloud: raise error
+    - If NOT configured locally: fall back to SQLite
     """
+    global _pool
     if USE_SUPABASE:
         try:
-            return psycopg2.connect(_DSN, cursor_factory=RealDictCursor)
+            if _pool is None:
+                from psycopg2.pool import ThreadedConnectionPool
+                # Pool of 1 to 10 connections
+                _pool = ThreadedConnectionPool(1, 10, _DSN, cursor_factory=RealDictCursor)
+            
+            conn = _pool.getconn()
+            return PooledConnectionWrapper(conn, _pool)
         except Exception as e:
             logger.error("Supabase connection failed: %s", e)
-            # Do NOT silently fall back to SQLite — require Supabase when configured.
             raise
     else:
         # USE_SUPABASE is False
