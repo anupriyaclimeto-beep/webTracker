@@ -109,8 +109,18 @@ async def diff_and_store(url, snap, har_path):
                 saved_any = True
                 logger.info("  Change: %s | %s", url, diff_type)
 
-    # Update baseline only after saving changes
-    if saved_any:
+    force_baseline = False
+    if not baseline:
+        logger.info("No baseline existed for %s, creating first baseline.", url)
+        force_baseline = True
+    elif diff_result:
+        res = diff_result.get("results", {})
+        if res.get("visual", {}).get("reason") == "failed to load baseline" or res.get("html", {}).get("reason") == "failed to load baseline html":
+            logger.info("Baseline failed to load locally for %s, replacing it.", url)
+            force_baseline = True
+
+    # Update baseline only after saving changes or if forced
+    if saved_any or force_baseline:
         try:
             update_baseline(
                 portal=PORTAL_NAME, url=url,

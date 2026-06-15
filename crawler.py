@@ -494,9 +494,16 @@ async def diff_and_store(portal_name: str, url: str, snap: dict, har_path: str):
             except Exception as e:
                 logger.error("Error deciding save for diff_type=%s url=%s: %s", diff_type, url, e)
 
-    # If we saved any diffs, update the baseline now (last)
+    # If we saved any diffs or failed to load the existing baseline locally, update the baseline now (last)
     try:
-        if saved_any:
+        force_baseline = False
+        if diff_result:
+            res = diff_result.get("results", {})
+            if res.get("visual", {}).get("reason") == "failed to load baseline" or res.get("html", {}).get("reason") == "failed to load baseline html":
+                logger.info("Baseline failed to load locally for %s, replacing it.", url)
+                force_baseline = True
+
+        if saved_any or force_baseline:
             update_baseline(
                 portal=portal_name, url=url,
                 html_path=snap["html_path"],
@@ -505,7 +512,7 @@ async def diff_and_store(portal_name: str, url: str, snap: dict, har_path: str):
                 screenshot_url=screenshot_url,
                 html_url=html_url,
             )
-            logger.info("  Baseline updated after saving changes: %s", url)
+            logger.info("  Baseline updated after saving changes or forced: %s", url)
     except Exception as e:
         logger.warning("Failed to update baseline after saving diffs for %s: %s", url, e)
     # Cleanup local archive folder
