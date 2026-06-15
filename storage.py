@@ -433,29 +433,29 @@ def save_diff(portal, url, diff_type, diff_detail, ai_summary=None, screenshot_u
     Works with both SQLite and Supabase.
     """
     timestamp = datetime.now().isoformat()
-    if USE_SUPABASE:
-        conn = get_conn()
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO public.changes
-                    (portal, url, diff_type, diff_detail, ai_summary, screenshot_url, html_url, timestamp)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """,
+    conn = get_conn()
+    try:
+        if USE_SUPABASE:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO public.changes
+                        (portal, url, diff_type, diff_detail, ai_summary, screenshot_url, html_url, timestamp)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (portal, url, diff_type, json.dumps(diff_detail), ai_summary, screenshot_url, html_url, timestamp),
+                )
+                conn.commit()
+        else:
+            cursor = conn.cursor()
+            cursor.execute(
+                """INSERT INTO changes
+                   (portal, url, diff_type, diff_detail, ai_summary, screenshot_url, html_url, timestamp)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (portal, url, diff_type, json.dumps(diff_detail), ai_summary, screenshot_url, html_url, timestamp),
             )
             conn.commit()
-        conn.close()
-    else:
-        conn   = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        cursor.execute(
-            """INSERT INTO changes
-               (portal, url, diff_type, diff_detail, ai_summary, screenshot_url, html_url, timestamp)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (portal, url, diff_type, json.dumps(diff_detail), ai_summary, screenshot_url, html_url, timestamp),
-        )
-        conn.commit()
+    finally:
         conn.close()
     logger.info("Diff saved — portal=%s url=%s type=%s", portal, url, diff_type)
 
@@ -463,31 +463,33 @@ def save_diff(portal, url, diff_type, diff_detail, ai_summary=None, screenshot_u
 @_supabase_retry()
 def get_baseline(portal, url):
     conn = get_conn()
-    if USE_SUPABASE:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT html_path, screenshot_path, har_path, screenshot_url, html_url
-                FROM public.baselines
-                WHERE portal=%s AND url=%s
-                ORDER BY updated_at DESC
-                LIMIT 1
-                """,
+    try:
+        if USE_SUPABASE:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT html_path, screenshot_path, har_path, screenshot_url, html_url
+                    FROM public.baselines
+                    WHERE portal=%s AND url=%s
+                    ORDER BY updated_at DESC
+                    LIMIT 1
+                    """,
+                    (portal, url),
+                )
+                row = cur.fetchone()
+        else:
+            cursor = conn.cursor()
+            cursor.execute(
+                """SELECT html_path, screenshot_path, har_path, screenshot_url, html_url
+                   FROM baselines
+                   WHERE portal=? AND url=?
+                   ORDER BY updated_at DESC
+                   LIMIT 1""",
                 (portal, url),
             )
-            row = cur.fetchone()
-    else:
-        cursor = conn.cursor()
-        cursor.execute(
-            """SELECT html_path, screenshot_path, har_path, screenshot_url, html_url
-               FROM baselines
-               WHERE portal=? AND url=?
-               ORDER BY updated_at DESC
-               LIMIT 1""",
-            (portal, url),
-        )
-        row = cursor.fetchone()
-    conn.close()
+            row = cursor.fetchone()
+    finally:
+        conn.close()
     if row:
         return {
             "html_path":       row["html_path"] if USE_SUPABASE else row[0],
@@ -507,27 +509,29 @@ def update_baseline(portal, url, html_path, screenshot_path, har_path, screensho
     """
     updated_at = datetime.now().isoformat()
     conn = get_conn()
-    if USE_SUPABASE:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO public.baselines
-                    (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """,
+    try:
+        if USE_SUPABASE:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO public.baselines
+                        (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url),
+                )
+                conn.commit()
+        else:
+            cursor = conn.cursor()
+            cursor.execute(
+                """INSERT INTO baselines
+                   (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url),
             )
             conn.commit()
-    else:
-        cursor = conn.cursor()
-        cursor.execute(
-            """INSERT INTO baselines
-               (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (portal, url, html_path, screenshot_path, har_path, updated_at, screenshot_url, html_url),
-        )
-        conn.commit()
-    conn.close()
+    finally:
+        conn.close()
     logger.info("Baseline updated - portal=%s url=%s", portal, url)
 
 
@@ -587,24 +591,26 @@ def archive_artefacts(portal, url, screenshot_bytes, html_content, har_data):
 def start_crawl_log(portal):
     started_at = datetime.now().isoformat()
     conn = get_conn()
-    if USE_SUPABASE:
-        with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO public.crawl_log (portal, started_at, status) VALUES (%s, %s, 'running') RETURNING id",
+    try:
+        if USE_SUPABASE:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO public.crawl_log (portal, started_at, status) VALUES (%s, %s, 'running') RETURNING id",
+                    (portal, started_at)
+                )
+                row = cur.fetchone()
+                crawl_id = row['id'] if isinstance(row, dict) else row[0]
+                conn.commit()
+        else:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO crawl_log (portal, started_at, status) VALUES (?, ?, 'running')",
                 (portal, started_at)
             )
-            row = cur.fetchone()
-            crawl_id = row['id'] if isinstance(row, dict) else row[0]
+            crawl_id = cursor.lastrowid
             conn.commit()
-    else:
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO crawl_log (portal, started_at, status) VALUES (?, ?, 'running')",
-            (portal, started_at)
-        )
-        crawl_id = cursor.lastrowid
-        conn.commit()
-    conn.close()
+    finally:
+        conn.close()
     return crawl_id
 
 
@@ -612,21 +618,23 @@ def start_crawl_log(portal):
 def finish_crawl_log(crawl_id, pages_visited, status="done"):
     finished_at = datetime.now().isoformat()
     conn = get_conn()
-    if USE_SUPABASE:
-        with conn.cursor() as cur:
-            cur.execute(
-                "UPDATE public.crawl_log SET finished_at=%s, pages_visited=%s, status=%s WHERE id=%s",
+    try:
+        if USE_SUPABASE:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE public.crawl_log SET finished_at=%s, pages_visited=%s, status=%s WHERE id=%s",
+                    (finished_at, pages_visited, status, crawl_id)
+                )
+                conn.commit()
+        else:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE crawl_log SET finished_at=?, pages_visited=?, status=? WHERE id=?",
                 (finished_at, pages_visited, status, crawl_id)
             )
             conn.commit()
-    else:
-        cursor = conn.cursor()
-        cursor.execute(
-            "UPDATE crawl_log SET finished_at=?, pages_visited=?, status=? WHERE id=?",
-            (finished_at, pages_visited, status, crawl_id)
-        )
-        conn.commit()
-    conn.close()
+    finally:
+        conn.close()
     logger.info(
         "Crawl log finished - id=%s pages=%s status=%s",
         crawl_id, pages_visited, status
@@ -636,8 +644,8 @@ def finish_crawl_log(crawl_id, pages_visited, status="done"):
 @_supabase_retry()
 def update_crawl_progress(crawl_id, pages_visited):
     """Update pages_visited for a running crawl immediately."""
+    conn = get_conn()
     try:
-        conn = get_conn()
         if USE_SUPABASE:
             with conn.cursor() as cur:
                 cur.execute(
@@ -645,47 +653,51 @@ def update_crawl_progress(crawl_id, pages_visited):
                     (pages_visited, crawl_id)
                 )
                 conn.commit()
-            conn.close()
         else:
             cur = conn.cursor()
             cur.execute("UPDATE crawl_log SET pages_visited=? WHERE id=?", (pages_visited, crawl_id))
             conn.commit()
-            conn.close()
         logger.info("Updated crawl progress - id=%s pages=%s", crawl_id, pages_visited)
     except Exception as e:
         logger.warning("Failed to update crawl progress: %s", e)
+    finally:
+        conn.close()
 
 
 @_supabase_retry()
 def get_all_changes():
     """Return all change records ordered by newest first (includes Cloudinary URLs)."""
     conn = get_conn()
-    if USE_SUPABASE:
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM public.changes ORDER BY timestamp DESC")
-            rows = cur.fetchall()
-    else:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM changes ORDER BY timestamp DESC")
-        rows = cursor.fetchall()
-    conn.close()
-    return rows
+    try:
+        if USE_SUPABASE:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM public.changes ORDER BY timestamp DESC")
+                rows = cur.fetchall()
+        else:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM changes ORDER BY timestamp DESC")
+            rows = cursor.fetchall()
+        return rows
+    finally:
+        conn.close()
 
 @_supabase_retry()
 def clear_baselines_for_portal(portal):
     conn = get_conn()
-    if USE_SUPABASE:
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM public.baselines WHERE portal=%s", (portal,))
-            deleted = cur.rowcount
+    try:
+        if USE_SUPABASE:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM public.baselines WHERE portal=%s", (portal,))
+                deleted = cur.rowcount
+                conn.commit()
+        else:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM baselines WHERE portal=?", (portal,))
+            deleted = cursor.rowcount
             conn.commit()
-    else:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM baselines WHERE portal=?", (portal,))
-        deleted = cursor.rowcount
-        conn.commit()
-    conn.close()
-    logger.info("Cleared %s old baselines for portal: %s", deleted, portal)
+        logger.info("Cleared %s old baselines for portal: %s", deleted, portal)
+    finally:
+        conn.close()
 
 
 @_supabase_retry()
@@ -697,18 +709,20 @@ def purge_old_records(keep_days):
     from datetime import timedelta
     cutoff = (datetime.now() - timedelta(days=keep_days)).isoformat()
     conn = get_conn()
-    if USE_SUPABASE:
-        with conn.cursor() as cur:
-            cur.execute("DELETE FROM public.changes WHERE timestamp < %s", (cutoff,))
-            deleted = cur.rowcount
+    try:
+        if USE_SUPABASE:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM public.changes WHERE timestamp < %s", (cutoff,))
+                deleted = cur.rowcount
+                conn.commit()
+        else:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM changes WHERE timestamp < ?", (cutoff,))
+            deleted = cursor.rowcount
             conn.commit()
-    else:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM changes WHERE timestamp < ?", (cutoff,))
-        deleted = cursor.rowcount
-        conn.commit()
-    conn.close()
-    logger.info("Purged %s records older than %s days", deleted, keep_days)
+        logger.info("Purged %s records older than %s days", deleted, keep_days)
+    finally:
+        conn.close()
 
 
 if __name__ == "__main__":

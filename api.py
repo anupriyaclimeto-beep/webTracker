@@ -43,21 +43,22 @@ CORS(app)
 def query_db(query, args=()):
     """Query the database using storage.py's connection (Supabase or SQLite)."""
     conn = get_conn()
-    if USE_SUPABASE:
-        with conn.cursor() as cur:
-            cur.execute(query, args)
-            rows = cur.fetchall()
+    try:
+        if USE_SUPABASE:
+            with conn.cursor() as cur:
+                cur.execute(query, args)
+                rows = cur.fetchall()
+            # psycopg2 RealDictCursor returns RealDictRow, convert to plain dicts
+            return [dict(row) for row in rows]
+        else:
+            import sqlite3
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute(query, args)
+            rows = cursor.fetchall()
+            return [dict(row) for row in rows]
+    finally:
         conn.close()
-        # psycopg2 RealDictCursor returns RealDictRow, convert to plain dicts
-        return [dict(row) for row in rows]
-    else:
-        import sqlite3
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        cursor.execute(query, args)
-        rows = cursor.fetchall()
-        conn.close()
-        return [dict(row) for row in rows]
 
 
 def _filter_visible_rows(rows):
