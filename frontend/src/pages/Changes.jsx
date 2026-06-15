@@ -5,8 +5,7 @@ import { API_ENDPOINTS } from '../config';
 function ChangeCard({ change, onImageClick }) {
   // Check if we have a diff image URL
   const hasDiffImage = !!change.diff_detail?.diff_image_url;
-  const hasHtmlDiff = Array.isArray(change.diff_detail?.highlighted_lines) && change.diff_detail.highlighted_lines.length > 0;
-  const [activeView, setActiveView] = useState(hasDiffImage ? 'diff' : (hasHtmlDiff ? 'html_diff' : 'screenshot'));
+  const [activeView, setActiveView] = useState(hasDiffImage ? 'diff' : 'screenshot');
 
   const imageUrl = activeView === 'diff' 
     ? change.diff_detail?.diff_image_url 
@@ -113,62 +112,27 @@ function ChangeCard({ change, onImageClick }) {
                       : 'text-slate-500 hover:text-slate-700'
                   }`}
                 >
-                  Visual Diff
-                </button>
-              )}
-              {hasHtmlDiff && (
-                <button
-                  onClick={() => setActiveView('html_diff')}
-                  className={`flex-1 text-center py-1 text-xs font-medium rounded-md transition ${
-                    activeView === 'html_diff' 
-                      ? 'bg-white text-slate-800 shadow-sm' 
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  HTML Diff
+                  Diff Highlight
                 </button>
               )}
             </div>
 
-            {activeView === 'html_diff' ? (
-              <div className="relative aspect-[16/10] md:h-48 rounded-lg border border-slate-200 overflow-auto bg-slate-900 text-slate-300 text-[10px] sm:text-xs font-mono p-3 leading-relaxed shadow-inner">
-                {change.diff_detail.highlighted_lines.map((line, idx) => {
-                  let bgColor = '';
-                  let textColor = 'text-slate-300';
-                  if (line.type === 'added') { bgColor = 'bg-emerald-900/30'; textColor = 'text-emerald-300'; }
-                  else if (line.type === 'removed') { bgColor = 'bg-rose-900/30'; textColor = 'text-rose-300'; }
-                  else if (line.type === 'context_header') { bgColor = 'bg-slate-800'; textColor = 'text-blue-300 font-bold'; }
-                  
-                  return (
-                    <div key={idx} className={`px-2 py-0.5 whitespace-pre-wrap break-all ${bgColor} ${textColor}`}>
-                       <span dangerouslySetInnerHTML={{__html: line.html || line.text}} />
-                    </div>
-                  );
-                })}
+            <div 
+              onClick={() => onImageClick(imageUrl)}
+              className="relative group aspect-[16/10] md:h-48 rounded-lg overflow-hidden border border-slate-200 cursor-zoom-in bg-slate-50 flex items-center justify-center shadow-inner"
+            >
+              <img 
+                src={imageUrl} 
+                alt="Change Visual" 
+                className="w-full h-full object-cover object-top transition group-hover:scale-105 duration-200"
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition duration-200">
+                <span className="inline-flex items-center px-2.5 py-1.5 bg-black/60 rounded-md text-white text-xs font-medium shadow-lg">
+                  <Eye className="w-3.5 h-3.5 mr-1.5" />
+                  View Full Size
+                </span>
               </div>
-            ) : imageUrl ? (
-              <div 
-                onClick={() => onImageClick(imageUrl)}
-                className="relative group aspect-[16/10] md:h-48 rounded-lg overflow-hidden border border-slate-200 cursor-zoom-in bg-slate-50 flex items-center justify-center shadow-inner"
-              >
-                <img 
-                  src={imageUrl} 
-                  alt="Change Visual" 
-                  className="w-full h-full object-cover object-top transition group-hover:scale-105 duration-200"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition duration-200">
-                  <span className="inline-flex items-center px-2.5 py-1.5 bg-black/60 rounded-md text-white text-xs font-medium shadow-lg">
-                    <Eye className="w-3.5 h-3.5 mr-1.5" />
-                    View Full Size
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="aspect-[16/10] md:h-48 rounded-lg border border-dashed border-slate-300 flex flex-col items-center justify-center bg-slate-50 text-slate-400">
-                <ImageIcon className="w-8 h-8 mb-2 stroke-[1.5]" />
-                <span className="text-xs">No screenshot captured</span>
-              </div>
-            )}
+            </div>
           </>
         ) : (
           <div className="aspect-[16/10] md:h-48 rounded-lg border border-dashed border-slate-300 flex flex-col items-center justify-center bg-slate-50 text-slate-400">
