@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ExternalLink, Filter, Eye, Image as ImageIcon, X, Globe, FileText } from 'lucide-react';
+import { ExternalLink, Filter, Eye, Image as ImageIcon, X, Globe, FileText, ZoomIn, ZoomOut, RefreshCw } from 'lucide-react';
 import { API_ENDPOINTS } from '../config';
 
 function ChangeCard({ change, onImageClick }) {
@@ -151,6 +151,11 @@ export default function Changes() {
   const [filterPortal, setFilterPortal] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [zoom, setZoom] = useState(1);
+
+  useEffect(() => {
+    if (!selectedImage) setZoom(1);
+  }, [selectedImage]);
 
   const fetchChanges = async (portal = '') => {
     setLoading(true);
@@ -267,20 +272,64 @@ export default function Changes() {
       {/* Lightbox / Modal for full-size screenshot */}
       {selectedImage && (
         <div 
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-zoom-out animate-fadeIn"
+          className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4 animate-fadeIn"
           onClick={() => setSelectedImage(null)}
         >
+          {/* Controls Bar */}
           <div 
-            className="relative max-w-5xl max-h-[90vh] overflow-auto bg-slate-900 rounded-xl p-2 shadow-2xl"
+            className="absolute top-4 right-4 flex space-x-2 z-50 bg-slate-800/80 backdrop-blur-sm p-1.5 rounded-full shadow-lg border border-slate-700/50"
             onClick={(e) => e.stopPropagation()}
           >
-            <img src={selectedImage} alt="Enlarged screenshot" className="max-w-full max-h-[85vh] rounded-lg" />
             <button 
-              className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 transition shadow-md"
+              className="p-2 hover:bg-slate-700 rounded-full text-slate-300 hover:text-white transition"
+              title="Zoom Out"
+              onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}
+            >
+              <ZoomOut className="w-5 h-5" />
+            </button>
+            <div className="flex items-center px-2 text-sm font-mono text-slate-300 font-medium">
+              {Math.round(zoom * 100)}%
+            </div>
+            <button 
+              className="p-2 hover:bg-slate-700 rounded-full text-slate-300 hover:text-white transition"
+              title="Zoom In"
+              onClick={() => setZoom(z => Math.min(4, z + 0.25))}
+            >
+              <ZoomIn className="w-5 h-5" />
+            </button>
+            <div className="w-px h-6 bg-slate-600/50 self-center mx-1"></div>
+            <button 
+              className="p-2 hover:bg-slate-700 rounded-full text-slate-300 hover:text-white transition"
+              title="Reset Zoom"
+              onClick={() => setZoom(1)}
+            >
+              <RefreshCw className="w-5 h-5" />
+            </button>
+            <div className="w-px h-6 bg-slate-600/50 self-center mx-1"></div>
+            <button 
+              className="p-2 hover:bg-red-500/20 rounded-full text-slate-300 hover:text-red-400 transition"
+              title="Close"
               onClick={() => setSelectedImage(null)}
             >
               <X className="w-5 h-5" />
             </button>
+          </div>
+
+          <div 
+            className={`relative w-full h-full overflow-auto flex ${zoom > 1 ? 'items-start justify-start' : 'items-center justify-center'} p-8`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img 
+              src={selectedImage} 
+              alt="Enlarged screenshot" 
+              className="rounded-lg shadow-2xl transition-all duration-200"
+              style={{
+                width: zoom > 1 ? `${zoom * 100}%` : 'auto',
+                maxWidth: zoom === 1 ? '100%' : 'none',
+                maxHeight: zoom === 1 ? '85vh' : 'none',
+                objectFit: 'contain'
+              }}
+            />
           </div>
         </div>
       )}
