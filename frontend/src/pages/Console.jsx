@@ -86,7 +86,13 @@ export default function Console() {
           {!isRunning ? (
             <button 
               onClick={handleStart}
-              className="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition shadow-sm"
+              disabled={window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'}
+              className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition shadow-sm ${
+                (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1')
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              }`}
+              title={(window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') ? "Manual execution is disabled on the live server" : ""}
             >
               <Play className="w-4 h-4 mr-2" />
               Start Crawler
