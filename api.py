@@ -514,7 +514,7 @@ def crawl_start():
         if portal == "All Portals":
             portal = None
 
-        cmd = [sys.executable, "crawler.py", "--once"]
+        cmd = [sys.executable, "-u", "crawler.py", "--once"]
         if portal:
             cmd.extend(["--portal", portal])
 

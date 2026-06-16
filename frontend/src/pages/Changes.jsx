@@ -42,6 +42,45 @@ function ChangeCard({ change, onImageClick }) {
             const lower = txt.toLowerCase();
             const show = txt.trim() && !lower.includes("no description") && !lower.includes("no visible") && !lower.includes("no changes");
             if (!show) return null;
+            
+            // Check if it's the raw formatted diff string
+            if (txt.includes("Added:") || txt.includes("Removed:")) {
+              const parts = txt.split("|");
+              return (
+                <div className="space-y-3 my-3">
+                  {parts.map((part, i) => {
+                    const p = part.trim();
+                    if (p.startsWith("Added:")) {
+                      const items = p.replace("Added:", "").split(",").map(s => s.trim().replace(/^"|"$/g, ''));
+                      return (
+                        <div key={i} className="bg-emerald-50/50 border border-emerald-100 rounded-lg p-3">
+                          <span className="text-emerald-700 text-xs font-bold uppercase tracking-wider mb-2 block">Data Added / New Items</span>
+                          <div className="flex flex-wrap gap-2">
+                            {items.map((item, idx) => (
+                              item ? <span key={idx} className="bg-white border border-emerald-200 text-emerald-800 text-xs px-2.5 py-1 rounded-md shadow-sm font-medium">{item}</span> : null
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    } else if (p.startsWith("Removed:")) {
+                      const items = p.replace("Removed:", "").split(",").map(s => s.trim().replace(/^"|"$/g, ''));
+                      return (
+                        <div key={i} className="bg-rose-50/50 border border-rose-100 rounded-lg p-3">
+                          <span className="text-rose-700 text-xs font-bold uppercase tracking-wider mb-2 block">Data Removed / Deleted Items</span>
+                          <div className="flex flex-wrap gap-2">
+                            {items.map((item, idx) => (
+                              item ? <span key={idx} className="bg-white border border-rose-200 text-rose-800 text-xs px-2.5 py-1 rounded-md shadow-sm font-medium line-through decoration-rose-300">{item}</span> : null
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return <p key={i} className="text-slate-700 text-sm">{p}</p>;
+                  })}
+                </div>
+              );
+            }
+
             return (
               <div className="bg-slate-50 rounded-lg p-4 border border-slate-100 my-3">
                 <p className="text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">

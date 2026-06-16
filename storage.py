@@ -46,6 +46,7 @@ if USE_CLOUDINARY:
         api_secret=CLOUDINARY_API_SECRET,
         secure=True,
     )
+
 USE_SUPABASE = all([
     SUPABASE_HOST,
     SUPABASE_PORT,
