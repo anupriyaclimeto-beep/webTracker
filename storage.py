@@ -40,8 +40,8 @@ CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 USE_CLOUDINARY = HAS_CLOUDINARY and all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET])
 
 # Automatically detect if running locally vs live VPS
-if os.getenv("NODE_ENV") != "production":
-    USE_CLOUDINARY = False
+# if os.getenv("NODE_ENV") != "production":
+#     USE_CLOUDINARY = False
 
 if USE_CLOUDINARY:
     cloudinary.config(
@@ -59,8 +59,8 @@ USE_SUPABASE = all([
     SUPABASE_PWD or SUPABASE_SERVICE_ROLE,
 ])
 
-if os.getenv("NODE_ENV") != "production":
-    USE_SUPABASE = False
+# if os.getenv("NODE_ENV") != "production":
+#     USE_SUPABASE = False
 
 if USE_SUPABASE:
     import psycopg2

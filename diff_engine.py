@@ -268,16 +268,11 @@ def generate_diff_image(baseline_path: str, current_bytes: bytes):
         w, h = baseline_img.size
 
         diff_img    = ImageChops.difference(baseline_img, current_img)
-        diff_arr    = diff_img.load()
-        mask        = Image.new("L", (w, h), 0)
-
-        changed_pixels = 0
-        for y in range(h):
-            for x in range(w):
-                r, g, b = diff_arr[x, y]
-                if r > 15 or g > 15 or b > 15:
-                    changed_pixels += 1
-                    mask.putpixel((x, y), 255)
+        gray        = diff_img.convert("L")
+        mask        = gray.point(lambda p: 255 if p > 15 else 0, mode="L")
+        
+        hist        = gray.histogram()
+        changed_pixels = sum(hist[16:])
 
         mask = mask.filter(ImageFilter.MaxFilter(11))
 
@@ -366,9 +361,14 @@ def visual_diff(baseline_path, current_bytes, diff_image_save_path=None):
         base_crop = crop_mask(baseline_img)
         curr_crop = crop_mask(current_img)
         diff_img = ImageChops.difference(base_crop, curr_crop)
-        pixels = list(diff_img.getdata())
-        changed_pixels = sum(1 for p in pixels if any(c > 10 for c in p))
-        total_pixels = len(pixels) if pixels else 1
+        
+        gray = diff_img.convert("L")
+        hist = gray.histogram()
+        changed_pixels = sum(hist[11:])
+        
+        total_pixels = diff_img.width * diff_img.height
+        if total_pixels == 0: total_pixels = 1
+        
         change_ratio = changed_pixels / total_pixels
         visual_threshold = cfg.get("visual_change_min_ratio", cfg.get("pixel_threshold", PIXEL_THRESHOLD))
         changed = change_ratio > visual_threshold

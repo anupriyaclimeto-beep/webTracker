@@ -284,21 +284,23 @@ async def crawl_sales_details(
 
         # 2. Registration Type dropdown: Select Unregistered
         try:
-            # Click Dropdown
+            # Click Dropdown robustly
             try:
-                await page.locator("xpath=/html/body/ngb-modal-window/div/div/div[2]/app-pibo-material-procurement-form-sales/form/div[1]/div[1]/div/ng-select/div/div/div[3]/input").click(timeout=5000)
+                await page.locator("xpath=/html/body/ngb-modal-window/div/div/div[2]/app-pibo-material-procurement-form-sales/form/div[1]/div[1]/div/ng-select").click(timeout=5000)
             except:
-                await page.locator("ng-select[placeholder*='Registration Type'] input, ng-select:near(:text('Registration Type'), 100) input").first.click(timeout=5000)
+                await page.locator("ng-select:near(:text('Registration Type'), 100)").first.click(timeout=5000, force=True)
             
             await asyncio.sleep(1)
             
             # Click Unregistered
             try:
-                # Prioritize text-selector to guarantee we don't accidentally click 'Registered' if XPaths are wrong
-                await page.locator("span:has-text('Unregistered'), .ng-option:has-text('Unregistered'), .mat-option:has-text('Unregistered')").first.click(timeout=5000)
+                await page.locator(".ng-option >> text=\"Unregistered\"").first.click(timeout=5000, force=True)
             except:
-                # Fallback to the exact div[2] xpath if text matching fails
-                await page.locator("xpath=/html/body/ngb-modal-window/div/div/div[2]/app-pibo-material-procurement-form-sales/form/div[1]/div[1]/div/ng-select/ng-dropdown-panel/div/div[2]/div[2]/span").click(timeout=5000)
+                try:
+                    await page.locator("//div[contains(@class, 'ng-option')]//span[contains(text(), 'Unregistered')]").first.click(timeout=5000, force=True)
+                except:
+                    # Fallback to the exact div[2] xpath
+                    await page.locator("xpath=/html/body/ngb-modal-window/div/div/div[2]/app-pibo-material-procurement-form-sales/form/div[1]/div[1]/div/ng-select/ng-dropdown-panel/div/div[2]/div[2]/span").click(timeout=5000, force=True)
             
             await asyncio.sleep(2) # Wait for the form fields to appear
         except Exception as e:
@@ -318,11 +320,14 @@ async def crawl_sales_details(
                 
                 # 2. Click the specific entity (Producer, Brand Owner, Importer)
                 try:
-                    # Try text matching first
-                    await page.locator(f"span:has-text('{entity_name}'), div.ng-option:has-text('{entity_name}')").first.click(timeout=5000, force=True)
+                    # Try text matching first - using exact role or class with text
+                    await page.locator(f".ng-option >> text=\"{entity_name}\"").first.click(timeout=5000, force=True)
                 except:
-                    # Fallback to absolute XPath
-                    await page.locator(f"xpath={entity_xpath}").click(timeout=5000, force=True)
+                    try:
+                        await page.locator(f"//div[contains(@class, 'ng-option')]//span[contains(text(), '{entity_name}')]").first.click(timeout=5000, force=True)
+                    except:
+                        # Fallback to absolute XPath
+                        await page.locator(f"xpath={entity_xpath}").click(timeout=5000, force=True)
                 
                 await asyncio.sleep(2)
 

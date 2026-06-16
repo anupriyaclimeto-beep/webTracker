@@ -2,7 +2,7 @@ name: Scheduled Crawler (11:00 AM IST)
 
 on:
   schedule:
-    - cron: '45 15 * * *'  # 9:15 PM IST daily (15:45 UTC)
+    - cron: '30 3 * * *'   # 9:00 AM IST daily (03:30 UTC)
   workflow_dispatch:  # allow manual trigger from GitHub
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 45
     strategy:
       matrix:
-        portal: ["EPR PLASTIC", "EPR EWASTE", "EPR BATTERY", "EPR TYRES", "EPR USEDOIL", "EPR ELV"]
+        portal: ["EPR PLASTIC", "EPR EWASTE", "EPR BATTERY", "EPR TYRES", "EPR USEDOIL", "EPR ELV", "CPCB NIC"]
     steps:
       - uses: actions/checkout@v4
 

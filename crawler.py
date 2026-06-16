@@ -1408,6 +1408,9 @@ async def run_all_portals(portal_name_filter: str | None = None, mode: str = "fu
             elif name == "MOEF":
                 from crawler_moef import crawl_moef_portal
                 await crawl_moef_portal(portal, mode=mode)
+            elif name == "CPCB NIC":
+                from crawler_cpcb_nic import crawl_cpcb_nic_portal
+                await crawl_cpcb_nic_portal(portal, mode=mode)
             else:
                 logger.warning("Unknown portal '%s' — skipping", name)
                 continue

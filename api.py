@@ -271,7 +271,9 @@ def get_changes_by_portal(portal):
 @app.route("/api/portals", methods=["GET"])
 def get_portals():
     try:
-        portals = config.get("portals", [])
+        with open("config.json") as f:
+            local_config = json.load(f)
+        portals = local_config.get("portals", [])
         if USE_SUPABASE:
             all_changes = query_db(
                 "SELECT portal, url, diff_type, diff_detail, ai_summary, timestamp FROM public.changes WHERE ai_summary IS NULL OR (ai_summary != 'No changes' AND ai_summary != 'No description generated for this change.')"
@@ -528,8 +530,10 @@ def crawl_start():
             pass
 
         env = os.environ.copy()
+        env["PYTHONIOENCODING"] = "utf-8"
         proc = subprocess.Popen(
             cmd,
+            stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,

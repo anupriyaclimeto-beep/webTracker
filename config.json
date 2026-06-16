@@ -14,14 +14,11 @@
       "login_timeout_seconds": 0,
       "browser_profile_dir": "browser_profiles/EPR_PLASTIC",
       "post_login_pages": [
- 
-       
         {
           "label": "PIBO_Unregistered_Procurement",
           "url": "https://eprplastic.cpcb.gov.in/#/plastic/pibo-unregistered-procurement",
           "method": "pibo_unregistered"
-        }
-        ,
+        },
         {
           "label": "PIBO_Material",
           "url": "https://eprplastic.cpcb.gov.in/#/epr/pibo-operations/material",
@@ -169,6 +166,16 @@
       "login_timeout_seconds": 0,
       "browser_profile_dir": "browser_profiles/MOEF",
       "post_login_pages": []
+    },
+    {
+      "name": "CPCB NIC",
+      "url": "https://cpcb.nic.in/index.php",
+      "auth": "none",
+      "crawl_interval_minutes": 60,
+      "crawl": {
+        "only_home": false,
+        "capture_dropdowns": true
+      }
     }
   ],
   "schedule": {
@@ -181,15 +188,33 @@
     "json": true,
     "har": true,
     "pixel_threshold": 0.05,
-    "ignore_selectors": [".timestamp", ".updated-at", ".ads", ".cookie-banner", ".spinner", ".skeleton", ".promo"],
-    "ignore_attribute_patterns": ["^data-v-", "^ng-", "^_nghost", "^_ngcontent", "^aria-"],
+    "ignore_selectors": [
+      ".timestamp",
+      ".updated-at",
+      ".ads",
+      ".cookie-banner",
+      ".spinner",
+      ".skeleton",
+      ".promo"
+    ],
+    "ignore_attribute_patterns": [
+      "^data-v-",
+      "^ng-",
+      "^_nghost",
+      "^_ngcontent",
+      "^aria-"
+    ],
     "text_change_min_words": 5,
     "text_change_min_ratio": 0.01,
     "text_line_min_changes": 3,
     "visual_change_min_ratio": 0.05,
     "visual_mask_top_px": 80,
     "visual_mask_bottom_px": 80,
-    "har_ignore_endpoints": ["ping","heartbeat","keepalive"]
+    "har_ignore_endpoints": [
+      "ping",
+      "heartbeat",
+      "keepalive"
+    ]
   },
   "storage": {
     "db": "changes.db",
