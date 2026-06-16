@@ -83,6 +83,7 @@ export default function Console() {
             <option value="EPR USEDOIL">Used Oil Portal</option>
             <option value="EPR SSO">EPR SSO</option>
             <option value="MOEF">MOEF Portal</option>
+            <option value="CPCB NIC">CPCB NIC</option>
           </select>
 
           {!isRunning ? (

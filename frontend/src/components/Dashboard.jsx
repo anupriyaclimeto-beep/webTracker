@@ -6,7 +6,7 @@ export default function Dashboard({ onLogout }) {
   const navItems = [
     { name: 'Overview', path: '/overview', icon: LayoutDashboard },
     { name: 'Changes', path: '/changes', icon: FileText },
-    { name: 'Console', path: '/console', icon: Terminal },
+    // { name: 'Console', path: '/console', icon: Terminal },
   ];
 
   return (

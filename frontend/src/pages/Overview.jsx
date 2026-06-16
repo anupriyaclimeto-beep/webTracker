@@ -134,7 +134,7 @@ export default function Overview() {
             return (
               <div 
                 key={portal.name} 
-                onClick={() => navigate('/console', { state: { portal: portal.name } })}
+                onClick={() => navigate('/changes', { state: { portal: portal.name } })}
                 className="group relative bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-xl hover:-translate-y-1 transition duration-300 ease-in-out cursor-pointer flex flex-col justify-between overflow-hidden"
               >
                 {/* Visual indicator stripe */}
@@ -195,7 +195,7 @@ export default function Overview() {
                     {portal.last_crawl_at ? new Date(portal.last_crawl_at).toLocaleDateString() : 'No run recorded'}
                   </span>
                   <span className="text-blue-500 group-hover:translate-x-1 transition flex items-center font-bold">
-                    Console <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                    Changes <ArrowRight className="w-3.5 h-3.5 ml-1" />
                   </span>
                 </div>
 

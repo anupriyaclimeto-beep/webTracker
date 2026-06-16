@@ -184,10 +184,13 @@ function ChangeCard({ change, onImageClick }) {
   );
 }
 
+import { useLocation } from 'react-router-dom';
+
 export default function Changes() {
+  const location = useLocation();
   const [changes, setChanges] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterPortal, setFilterPortal] = useState('');
+  const [filterPortal, setFilterPortal] = useState(location.state?.portal || '');
   const [filterDate, setFilterDate] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [zoom, setZoom] = useState(1);
@@ -288,6 +291,7 @@ export default function Changes() {
             <option value="EPR USEDOIL">Used Oil Portal</option>
             <option value="EPR SSO">EPR SSO</option>
             <option value="MOEF">MOEF Portal</option>
+            <option value="CPCB NIC">CPCB NIC</option>
           </select>
         </div>
       </div>
