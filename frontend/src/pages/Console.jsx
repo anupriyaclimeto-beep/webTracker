@@ -81,6 +81,8 @@ export default function Console() {
             <option value="EPR ELV">ELV Portal</option>
             <option value="EPR TYRES">Tyre Portal</option>
             <option value="EPR USEDOIL">Used Oil Portal</option>
+            <option value="EPR SSO">EPR SSO</option>
+            <option value="MOEF">MOEF Portal</option>
           </select>
 
           {!isRunning ? (

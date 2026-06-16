@@ -1044,7 +1044,6 @@ async def crawl_portal(portal_config: dict):
                 logger.info("User closed the browser during crawl – aborting")
                 break
 
-            # Special deep-crawl mode for PIBO Unregistered Procurement
             if method == "pibo_unregistered":
                 from pibo_crawler import crawl_pibo_unregistered_procurement
                 sub_count = await crawl_pibo_unregistered_procurement(
@@ -1060,38 +1059,60 @@ async def crawl_portal(portal_config: dict):
                 logger.info("  PIBO Unregistered done | pages_visited=%d", pages_visited)
                 continue
 
-            await safe_goto(page, url, label=label)
-
-            if method == "scroll":
-                screenshot_bytes = await scroll_and_stitch(page)
+            # Special deep-crawl for target PIBO pages
+            if url == "https://eprplastic.cpcb.gov.in/#/epr/pibo-operations/material":
+                from pibo_crawler import crawl_material_procurement
+                sub_count = await crawl_material_procurement(
+                    page, url, portal_name, har_path,
+                    save_snapshot, diff_and_store, scroll_and_stitch, safe_goto, HOME_URL
+                )
+                pages_visited += sub_count
+                CURRENT_PAGES_VISITED = pages_visited
+                try:
+                    update_crawl_progress(crawl_id, pages_visited)
+                except Exception as e:
+                    logger.warning("Failed to update crawl progress: %s", e)
+                visited_targets.add(url)
+                logger.info("  '%s' done | pages_visited=%d", label, pages_visited)
+                
+            elif url == "https://eprplastic.cpcb.gov.in/#/epr/pibo-operations/sales":
+                from pibo_crawler import crawl_sales_details
+                sub_count = await crawl_sales_details(
+                    page, url, portal_name, har_path,
+                    save_snapshot, diff_and_store, scroll_and_stitch, safe_goto, HOME_URL
+                )
+                pages_visited += sub_count
+                CURRENT_PAGES_VISITED = pages_visited
+                try:
+                    update_crawl_progress(crawl_id, pages_visited)
+                except Exception as e:
+                    logger.warning("Failed to update crawl progress: %s", e)
+                visited_targets.add(url)
+                logger.info("  '%s' done | pages_visited=%d", label, pages_visited)
+                
             else:
-                screenshot_bytes = await page.screenshot(full_page=False, type="png")
-            # If this is one of the target PIBO pages, try to select 'Unregistered'
-            try:
-                if url in target_pages:
-                    ok = await try_select_unregistered(page)
-                    if ok:
-                        logger.info("Selected 'Unregistered' on %s", url)
-                    visited_targets.add(url)
-            except Exception as e:
-                logger.warning("Failed special interaction on %s: %s", url, e)
+                # Normal page crawl
+                await safe_goto(page, url, label=label)
 
-            snap = await save_snapshot(page, portal_name, page_key, screenshot_bytes)
-            await diff_and_store(portal_name, page_key, snap, har_path)
-            pages_visited += 1
-            CURRENT_PAGES_VISITED = pages_visited
-            try:
-                update_crawl_progress(crawl_id, pages_visited)
-            except Exception as e:
-                logger.warning("Failed to update crawl progress: %s", e)
-            logger.info("  '%s' done | pages_visited=%d", label, pages_visited)
+                if method == "scroll":
+                    screenshot_bytes = await scroll_and_stitch(page)
+                else:
+                    screenshot_bytes = await page.screenshot(full_page=False, type="png")
+
+                snap = await save_snapshot(page, portal_name, page_key, screenshot_bytes)
+                await diff_and_store(portal_name, page_key, snap, har_path)
+                pages_visited += 1
+                CURRENT_PAGES_VISITED = pages_visited
+                try:
+                    update_crawl_progress(crawl_id, pages_visited)
+                except Exception as e:
+                    logger.warning("Failed to update crawl progress: %s", e)
+                logger.info("  '%s' done | pages_visited=%d", label, pages_visited)
 
             # If we've visited all configured targets, finish crawl and exit
             if visited_targets >= target_pages:
                 logger.info("All target post-login pages visited — finishing crawl.")
-                finish_crawl_log(crawl_id, pages_visited, status="done")
-                logger.info("═══ EPR PLASTIC ALL DONE: %d pages crawled (targets complete) ═══", pages_visited)
-                return
+                break
 
         # Save cookies at the end of crawl
         try:
@@ -1345,6 +1366,12 @@ async def crawl_pibo_unregistered_procurement(page, portal_name: str, har_path: 
 # ── Multi-portal router ───────────────────────────────────────────────────────
 
 async def run_all_portals(portal_name_filter: str | None = None, mode: str = "full"):
+    try:
+        from storage import purge_old_records
+        purge_old_records(keep_days=7)
+    except Exception as e:
+        logger.error(f"Failed to purge old records: {e}")
+
     for portal in config.get("portals", []):
         name = portal["name"]
 
@@ -1375,6 +1402,12 @@ async def run_all_portals(portal_name_filter: str | None = None, mode: str = "fu
             elif name == "EPR USEDOIL":
                 from crawler_usedoil import crawl_usedoil_portal
                 await crawl_usedoil_portal(portal, mode=mode)
+            elif name == "EPR SSO":
+                from crawler_sso import crawl_sso_portal
+                await crawl_sso_portal(portal, mode=mode)
+            elif name == "MOEF":
+                from crawler_moef import crawl_moef_portal
+                await crawl_moef_portal(portal, mode=mode)
             else:
                 logger.warning("Unknown portal '%s' — skipping", name)
                 continue

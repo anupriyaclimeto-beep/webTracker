@@ -39,6 +39,10 @@ CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
 
 USE_CLOUDINARY = HAS_CLOUDINARY and all([CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET])
 
+# Automatically detect if running locally vs live VPS
+if os.getenv("NODE_ENV") != "production":
+    USE_CLOUDINARY = False
+
 if USE_CLOUDINARY:
     cloudinary.config(
         cloud_name=CLOUDINARY_CLOUD_NAME,
@@ -54,6 +58,9 @@ USE_SUPABASE = all([
     SUPABASE_USER,
     SUPABASE_PWD or SUPABASE_SERVICE_ROLE,
 ])
+
+if os.getenv("NODE_ENV") != "production":
+    USE_SUPABASE = False
 
 if USE_SUPABASE:
     import psycopg2
@@ -636,26 +643,75 @@ def clear_baselines_for_portal(portal):
 
 
 @_supabase_retry()
-def purge_old_records(keep_days):
+def purge_old_records(keep_days=7):
     """
-    Delete records older than *keep_days* days.
-    Works for both back‑ends.
+    Delete records older than *keep_days* days from changes, baselines, and crawl_log.
+    Also deletes the associated assets from Cloudinary.
     """
+    import re
     from datetime import timedelta
     cutoff = (datetime.now() - timedelta(days=keep_days)).isoformat()
     conn = get_conn()
     try:
+        urls_to_delete = []
         if USE_SUPABASE:
             with conn.cursor() as cur:
+                # Fetch Cloudinary URLs from changes
+                cur.execute("SELECT screenshot_url, html_url FROM public.changes WHERE timestamp < %s", (cutoff,))
+                urls_to_delete.extend([row for row in cur.fetchall()])
+                
+                # Fetch Cloudinary URLs from baselines
+                cur.execute("SELECT screenshot_url, html_url FROM public.baselines WHERE updated_at < %s", (cutoff,))
+                urls_to_delete.extend([row for row in cur.fetchall()])
+
+                # Delete from changes
                 cur.execute("DELETE FROM public.changes WHERE timestamp < %s", (cutoff,))
-                deleted = cur.rowcount
+                del_changes = cur.rowcount
+                # Delete from baselines
+                cur.execute("DELETE FROM public.baselines WHERE updated_at < %s", (cutoff,))
+                del_baselines = cur.rowcount
+                # Delete from crawl_log
+                cur.execute("DELETE FROM public.crawl_log WHERE started_at < %s", (cutoff,))
+                del_crawls = cur.rowcount
                 conn.commit()
         else:
             cursor = conn.cursor()
+            cursor.execute("SELECT screenshot_url, html_url FROM changes WHERE timestamp < ?", (cutoff,))
+            urls_to_delete.extend([row for row in cursor.fetchall()])
+            
+            cursor.execute("SELECT screenshot_url, html_url FROM baselines WHERE updated_at < ?", (cutoff,))
+            urls_to_delete.extend([row for row in cursor.fetchall()])
+
             cursor.execute("DELETE FROM changes WHERE timestamp < ?", (cutoff,))
-            deleted = cursor.rowcount
+            del_changes = cursor.rowcount
+            cursor.execute("DELETE FROM baselines WHERE updated_at < ?", (cutoff,))
+            del_baselines = cursor.rowcount
+            cursor.execute("DELETE FROM crawl_log WHERE started_at < ?", (cutoff,))
+            del_crawls = cursor.rowcount
             conn.commit()
-        logger.info("Purged %s records older than %s days", deleted, keep_days)
+            
+        # Delete from Cloudinary
+        if USE_CLOUDINARY:
+            deleted_cloudinary = 0
+            for row in urls_to_delete:
+                for url in (row.get('screenshot_url') if isinstance(row, dict) else row[0], row.get('html_url') if isinstance(row, dict) else row[1]):
+                    if url and isinstance(url, str):
+                        m = re.search(r'/v\d+/(.+)\.[a-zA-Z0-9]+$', url)
+                        if m:
+                            public_id = m.group(1)
+                            try:
+                                # Determine resource type based on URL (Cloudinary defaults to image, raw for html)
+                                rtype = "raw" if "/raw/upload/" in url else "image"
+                                cloudinary.uploader.destroy(public_id, resource_type=rtype)
+                                deleted_cloudinary += 1
+                            except Exception as e:
+                                logger.error(f"Failed to delete {public_id} from Cloudinary: {e}")
+            logger.info("Purged %s images from Cloudinary.", deleted_cloudinary)
+
+        logger.info("Purged %s changes, %s baselines, %s crawls older than %s days", 
+                    del_changes, del_baselines, del_crawls, keep_days)
+    except Exception as e:
+        logger.error("Error purging old records: %s", e)
     finally:
         conn.close()
 

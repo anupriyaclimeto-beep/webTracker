@@ -421,25 +421,9 @@ def html_diff(baseline_path, current_html):
         raw_diff_lines_count = len(diff)
         raw_changed = raw_diff_lines_count > 0
 
-        # Detect structural additions that should always be considered meaningful:
-        # new table rows/cells, new links, or heading changes; also detect keywords inside <td>
+        # Structural addition logic removed by user request.
+        # We now rely purely on actual text content changes or visual pixels, ignoring raw HTML structure shifts.
         structural_addition = False
-        td_keywords = ["circular", "notice", "deadline", "dated", "download"]
-        for line in diff:
-            if not line.startswith("+") or line.startswith("+++"):
-                continue
-            ln = line[1:]
-            # If a table row/cell, link or heading is added, mark as structural
-            if re.search(r"<\s*(tr|td|a|h[1-3])\b", ln, re.I):
-                structural_addition = True
-                break
-            # Check for keywords inside added <td> content
-            m = re.search(r"<\s*td[^>]*>(.*?)</td>", ln, re.I | re.S)
-            if m:
-                inner = re.sub(r"<[^>]+>", "", m.group(1) or "").lower()
-                if any(k in inner for k in td_keywords):
-                    structural_addition = True
-                    break
 
         added_texts, removed_texts = extract_text_changes(diff)
         # Always compute a concise summary (may be empty string when no readable text changes)
@@ -490,9 +474,7 @@ def html_diff(baseline_path, current_html):
         text_change_min_words = config.get("diff", {}).get("text_change_min_words", 5)
         text_line_min_changes = config.get("diff", {}).get("text_line_min_changes", 3)
         meaningful_html_change = (words_changed >= text_change_min_words) or (meaningful_lines >= text_line_min_changes)
-        # If structural additions detected (table rows, links, headings, keyword-bearing td), always treat as meaningful
-        if 'structural_addition' in locals() and structural_addition:
-            meaningful_html_change = True
+        # If structural additions detected logic removed. We only care about words_changed and meaningful_lines.
 
         if not summary:
             meaningful_html_change = False

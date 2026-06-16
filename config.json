@@ -139,6 +139,36 @@
           "method": "scroll"
         }
       ]
+    },
+    {
+      "name": "EPR SSO",
+      "url": "https://epr.cpcb.gov.in/login",
+      "auth": "persistent",
+      "crawl_interval_minutes": 60,
+      "crawl": {
+        "only_home": true,
+        "capture_dropdowns": true
+      },
+      "login_url": "https://epr.cpcb.gov.in/login",
+      "login_success_selector": "",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/EPR_SSO",
+      "post_login_pages": []
+    },
+    {
+      "name": "MOEF",
+      "url": "https://moef.gov.in/",
+      "auth": "persistent",
+      "crawl_interval_minutes": 60,
+      "crawl": {
+        "only_home": true,
+        "capture_dropdowns": false
+      },
+      "login_url": "https://moef.gov.in/",
+      "login_success_selector": "",
+      "login_timeout_seconds": 0,
+      "browser_profile_dir": "browser_profiles/MOEF",
+      "post_login_pages": []
     }
   ],
   "schedule": {

@@ -11,6 +11,8 @@ Contains handlers for:
 import asyncio
 import logging
 import re
+import os
+import json
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -75,7 +77,19 @@ async def close_modal(page):
             continue
     await page.keyboard.press("Escape")
     await asyncio.sleep(1)
-    logger.info("  Modal closed via Escape")
+    logger.info("  Modal close attempted via Escape")
+
+    # Violent fallback: if modal still exists, nuke it via JS
+    try:
+        if await page.locator("ngb-modal-window, .modal, .cdk-overlay-container").count() > 0:
+            await page.evaluate("""
+                document.querySelectorAll('ngb-modal-window, .modal, .modal-backdrop, .cdk-overlay-backdrop').forEach(e => e.remove());
+                document.body.classList.remove('modal-open');
+            """)
+            await asyncio.sleep(0.5)
+            logger.info("  Modal force-removed via JS")
+    except Exception:
+        pass
 
 
 async def open_dropdown_and_capture(
@@ -180,9 +194,17 @@ async def crawl_material_procurement(
         if await open_dropdown_and_capture(page, "Registration Type", "RegistrationType_open", BASE_KEY, portal_name, har_path, save_snapshot, diff_and_store):
             pv += 1
 
+        # Open dropdown using exact XPath
+        try:
+            await page.locator("xpath=/html/body/ngb-modal-window/div/div/div[2]/app-pibo-material-procurement-form/div/form/div/div/div/ng-select/div/div/div[2]").click(timeout=3000)
+            await asyncio.sleep(1)
+        except:
+            pass
+
         # Select "Unregistered" to reveal fields
         unregistered_selected = False
         for sel in [
+            "xpath=/html/body/ngb-modal-window/div/div/div[2]/app-pibo-material-procurement-form/div/form/div/div/div/ng-select/ng-dropdown-panel/div/div[2]/div[2]",
             "mat-option:has-text('Unregistered')",
             ".mat-option:has-text('Unregistered')",
             "[role='option']:has-text('Unregistered')",
@@ -257,19 +279,103 @@ async def crawl_sales_details(
         await diff_and_store(portal_name, BASE_KEY + "__form__initial", snap, har_path)
         pv += 1
 
-        # 2. Registration Type dropdown
-        if await open_dropdown_and_capture(page, "Registration Type", "RegistrationType_open", BASE_KEY, portal_name, har_path, save_snapshot, diff_and_store):
-            pv += 1
+        # Give the modal extra time to fully load and render its fields
+        await asyncio.sleep(2)
 
-        # 3. Entity Type dropdown
-        if await open_dropdown_and_capture(page, "Entity Type", "EntityType_open", BASE_KEY, portal_name, har_path, save_snapshot, diff_and_store):
-            pv += 1
+        # 2. Registration Type dropdown: Select Unregistered
+        try:
+            # Click Dropdown
+            try:
+                await page.locator("xpath=/html/body/ngb-modal-window/div/div/div[2]/app-pibo-material-procurement-form-sales/form/div[1]/div[1]/div/ng-select/div/div/div[3]/input").click(timeout=5000)
+            except:
+                await page.locator("ng-select[placeholder*='Registration Type'] input, ng-select:near(:text('Registration Type'), 100) input").first.click(timeout=5000)
+            
+            await asyncio.sleep(1)
+            
+            # Click Unregistered
+            try:
+                # Prioritize text-selector to guarantee we don't accidentally click 'Registered' if XPaths are wrong
+                await page.locator("span:has-text('Unregistered'), .ng-option:has-text('Unregistered'), .mat-option:has-text('Unregistered')").first.click(timeout=5000)
+            except:
+                # Fallback to the exact div[2] xpath if text matching fails
+                await page.locator("xpath=/html/body/ngb-modal-window/div/div/div[2]/app-pibo-material-procurement-form-sales/form/div[1]/div[1]/div/ng-select/ng-dropdown-panel/div/div[2]/div[2]/span").click(timeout=5000)
+            
+            await asyncio.sleep(2) # Wait for the form fields to appear
+        except Exception as e:
+            logger.error("Failed to select Unregistered in Sales: %s", e)
 
-        # 4. Plastic Material Type dropdown
-        if await open_dropdown_and_capture(page, "Plastic Material Type", "PlasticMaterialType_open", BASE_KEY, portal_name, har_path, save_snapshot, diff_and_store):
-            pv += 1
+        # Helper function to select Entity Type and intercept JSON from Entity Name dropdown
+        async def intercept_and_select_entity(entity_name, entity_xpath, json_filename):
+            try:
+                # 1. Click Entity Type dropdown robustly
+                try:
+                    # Click the dropdown container itself, not the hidden input
+                    await page.locator("xpath=/html/body/ngb-modal-window/div/div/div[2]/app-pibo-material-procurement-form-sales/form/div[1]/div[3]/div/ng-select").click(timeout=5000)
+                except:
+                    await page.locator("ng-select:near(:text('Entity Type'), 100), ng-select[placeholder*='Entity Type']").first.click(timeout=5000, force=True)
+                
+                await asyncio.sleep(1)
+                
+                # 2. Click the specific entity (Producer, Brand Owner, Importer)
+                try:
+                    # Try text matching first
+                    await page.locator(f"span:has-text('{entity_name}'), div.ng-option:has-text('{entity_name}')").first.click(timeout=5000, force=True)
+                except:
+                    # Fallback to absolute XPath
+                    await page.locator(f"xpath={entity_xpath}").click(timeout=5000, force=True)
+                
+                await asyncio.sleep(2)
 
-        # 5. Final form state
+                # Set up response interceptor
+                api_response_data = None
+                
+                async def handle_response(response):
+                    nonlocal api_response_data
+                    if "list_entity_name" in response.url and response.status == 200:
+                        try:
+                            api_response_data = await response.json()
+                        except:
+                            pass
+                
+                page.on("response", handle_response)
+                
+                # 3. Click Entity Name dropdown to trigger the API call
+                try:
+                    await page.locator("ng-select:near(:text('Name of the Entity'), 100), ng-select[placeholder*='Entity Name']").first.click(timeout=5000, force=True)
+                except:
+                    await page.locator("xpath=/html/body/ngb-modal-window/div/div/div[2]/app-pibo-material-procurement-form-sales/form/div[1]/div[5]/div/ng-select").click(timeout=5000, force=True)
+                
+                # Wait for API to fire
+                await asyncio.sleep(4)
+                
+                page.remove_listener("response", handle_response)
+                
+                if api_response_data:
+                    os.makedirs("archive", exist_ok=True)
+                    with open(f"archive/{json_filename}", "w") as f:
+                        json.dump(api_response_data, f, indent=4)
+                    logger.info("Saved %s successfully!", json_filename)
+            except Exception as e:
+                logger.error("Failed intercepting %s: %s", entity_name, e)
+
+        # Execute the extraction for all 3 entities
+        await intercept_and_select_entity(
+            "Producer", 
+            "/html/body/ngb-modal-window/div/div/div[2]/app-pibo-material-procurement-form-sales/form/div[1]/div[3]/div/ng-select/ng-dropdown-panel/div/div[2]/div[1]/span", 
+            "EPR_PLASTIC_Unregistered_Producer.json"
+        )
+        await intercept_and_select_entity(
+            "Brand Owner", 
+            "/html/body/ngb-modal-window/div/div/div[2]/app-pibo-material-procurement-form-sales/form/div[1]/div[3]/div/ng-select/ng-dropdown-panel/div/div[2]/div[2]/span", 
+            "EPR_PLASTIC_Unregistered_Brand_Owner.json"
+        )
+        await intercept_and_select_entity(
+            "Importer", 
+            "/html/body/ngb-modal-window/div/div/div[2]/app-pibo-material-procurement-form-sales/form/div[1]/div[3]/div/ng-select/ng-dropdown-panel/div/div[2]/div[3]/span", 
+            "EPR_PLASTIC_Unregistered_Importer.json"
+        )
+
+        # Final form state
         snap = await save_snapshot(
             page, portal_name, BASE_KEY + "__form__final_state",
             await page.screenshot(full_page=False, type="png")
