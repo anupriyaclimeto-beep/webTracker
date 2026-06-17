@@ -36,7 +36,7 @@ except FileNotFoundError:
 LOGIN_USER = os.getenv("LOGIN_USER", "webtracker@test.com")
 LOGIN_PASS = os.getenv("LOGIN_PASS", "12345")
 
-app = Flask(__name__, static_folder="frontend/dist", static_url_path="/")
+app = Flask(__name__, static_folder="frontend/dist")
 CORS(app)
 
 # Serve React App
@@ -97,7 +97,7 @@ def _filter_visible_rows(rows):
                         detail = json.loads(detail or "{}")
                     if not isinstance(detail, dict):
                         detail = {}
-                    if bool(detail.get("is_noise")):
+                    if bool(detail.get("is_noise")) or detail.get("changed") is False:
                         continue
                     conf = detail.get("confidence")
                     try:
@@ -133,8 +133,8 @@ def _filter_visible_rows(rows):
                 if not isinstance(detail, dict):
                     detail = {}
 
-                # explicit noise flag
-                if bool(detail.get("is_noise")):
+                # explicit noise flag or engine decided no change
+                if bool(detail.get("is_noise")) or detail.get("changed") is False:
                     continue
                 # low confidence
                 try:
