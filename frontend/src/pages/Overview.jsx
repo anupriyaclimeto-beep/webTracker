@@ -7,11 +7,18 @@ export default function Overview() {
   const [portals, setPortals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [filterDate, setFilterDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
   const navigate = useNavigate();
 
   const fetchPortals = async () => {
     try {
-      const res = await fetch(API_ENDPOINTS.portals);
+      const url = filterDate 
+        ? `${API_ENDPOINTS.portals}?date=${filterDate}` 
+        : API_ENDPOINTS.portals;
+      const res = await fetch(url);
       const data = await res.json();
       if (data.portals) setPortals(data.portals);
     } catch (err) {
@@ -23,7 +30,7 @@ export default function Overview() {
 
   useEffect(() => {
     fetchPortals();
-  }, []);
+  }, [filterDate]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -52,14 +59,22 @@ export default function Overview() {
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">System Overview</h1>
           <p className="text-slate-500 text-sm mt-1">Real-time status monitoring and compliance log tracking.</p>
         </div>
-        <button 
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="inline-flex items-center px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 text-sm font-semibold rounded-xl transition shadow-sm hover:shadow-md disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          {refreshing ? 'Refreshing...' : 'Refresh Status'}
-        </button>
+        <div className="flex items-center space-x-3">
+          <input
+            type="date"
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+            className="px-3 py-2 bg-white border border-slate-200 text-slate-700 text-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition shadow-sm"
+          />
+          <button 
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="inline-flex items-center px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 hover:text-slate-900 text-sm font-semibold rounded-xl transition shadow-sm hover:shadow-md disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       {/* Hero Statistics Cards */}

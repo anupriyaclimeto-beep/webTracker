@@ -292,18 +292,23 @@ def get_portals():
         # Filter changes using the Python helper
         filtered_changes = _filter_visible_rows(all_changes)
         
+        date_filter = request.args.get("date")
+
         # Aggregate stats in Python
         stats = {}
         for ch in filtered_changes:
+            ts = ch["timestamp"]
+            ts_str = ts.isoformat() if hasattr(ts, 'isoformat') else str(ts)
+            
+            if date_filter and not ts_str.startswith(date_filter):
+                continue
+                
             p = ch["portal"]
             if p not in stats:
                 stats[p] = {"total_changes": 0, "last_change": None}
             stats[p]["total_changes"] += 1
-            ts = ch["timestamp"]
-            if ts:
-                ts_str = ts.isoformat() if hasattr(ts, 'isoformat') else str(ts)
-                if not stats[p]["last_change"] or ts_str > stats[p]["last_change"]:
-                    stats[p]["last_change"] = ts_str
+            if not stats[p]["last_change"] or ts_str > stats[p]["last_change"]:
+                stats[p]["last_change"] = ts_str
 
         # Build crawl status lookup (latest crawl per portal)
         crawl_stats = {}
