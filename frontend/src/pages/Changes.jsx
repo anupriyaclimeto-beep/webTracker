@@ -191,7 +191,8 @@ export default function Changes() {
   const [changes, setChanges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterPortal, setFilterPortal] = useState(location.state?.portal || '');
-  const [filterDate, setFilterDate] = useState('');
+  const todayDate = new Date().toISOString().split('T')[0];
+  const [filterDate, setFilterDate] = useState(todayDate);
   const [selectedImage, setSelectedImage] = useState(null);
   const [zoom, setZoom] = useState(1);
 
