@@ -1421,6 +1421,9 @@ async def run_all_portals(portal_name_filter: str | None = None, mode: str = "fu
             elif name == "BEE RCO":
                 from crawler_bee import crawl_bee_portal
                 await crawl_bee_portal(portal, mode=mode)
+            elif name == "BEE ICM":
+                from crawler_bee_icm import crawl_bee_portal
+                await crawl_bee_portal(portal, mode=mode)
             else:
                 logger.warning("Unknown portal '%s' — skipping", name)
                 continue

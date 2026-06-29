@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 45
     strategy:
       matrix:
-        portal: ["EPR PLASTIC", "EPR EWASTE", "EPR BATTERY", "EPR TYRES", "EPR USEDOIL", "EPR ELV", "CPCB NIC"]
+        portal: ["EPR PLASTIC", "EPR EWASTE", "EPR BATTERY", "EPR TYRES", "EPR USEDOIL", "EPR ELV", "CPCB NIC", "BEE RCO", "BEE ICM"]
     steps:
       - uses: actions/checkout@v4
 
