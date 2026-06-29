@@ -451,7 +451,14 @@ async def diff_and_store(portal_name: str, url: str, snap: dict, har_path: str):
                     words_changed = int(diff_data.get("words_changed") or 0) if diff_data.get("words_changed") is not None else 0
                     diff_lines = int(diff_data.get("diff_lines") or 0)
                     meaningful = diff_data.get("meaningful_html_change", False)
-                    if words_changed >= 10 or diff_lines >= 3 or meaningful:
+                    
+                    # Ensure we NEVER save if diff_engine marked it as noise or NOT changed
+                    is_noise = diff_data.get("is_noise", False)
+                    actually_changed = diff_data.get("changed", True)
+                    
+                    if is_noise or not actually_changed:
+                        should_save = False
+                    elif words_changed >= 10 or diff_lines >= 3 or meaningful:
                         should_save = True
                     else:
                         # delete trivial html changes if present (only for Supabase)
@@ -1411,6 +1418,9 @@ async def run_all_portals(portal_name_filter: str | None = None, mode: str = "fu
             elif name == "CPCB NIC":
                 from crawler_cpcb_nic import crawl_cpcb_nic_portal
                 await crawl_cpcb_nic_portal(portal, mode=mode)
+            elif name == "BEE RCO":
+                from crawler_bee import crawl_bee_portal
+                await crawl_bee_portal(portal, mode=mode)
             else:
                 logger.warning("Unknown portal '%s' — skipping", name)
                 continue

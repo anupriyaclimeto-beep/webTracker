@@ -84,6 +84,7 @@ export default function Console() {
             <option value="EPR SSO">EPR SSO</option>
             <option value="MOEF">MOEF Portal</option>
             <option value="CPCB NIC">CPCB NIC</option>
+            <option value="BEE RCO">BEE RCO</option>
           </select>
 
           {!isRunning ? (

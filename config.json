@@ -176,6 +176,16 @@
         "only_home": false,
         "capture_dropdowns": true
       }
+    },
+    {
+      "name": "BEE RCO",
+      "url": "https://beeindia.gov.in/show_content.php?lang=1&level=1&ls_id=119&lid=291",
+      "auth": "none",
+      "crawl_interval_minutes": 60,
+      "crawl": {
+        "only_home": true,
+        "capture_dropdowns": false
+      }
     }
   ],
   "schedule": {

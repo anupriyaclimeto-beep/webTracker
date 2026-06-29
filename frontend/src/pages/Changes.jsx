@@ -293,6 +293,7 @@ export default function Changes() {
             <option value="EPR SSO">EPR SSO</option>
             <option value="MOEF">MOEF Portal</option>
             <option value="CPCB NIC">CPCB NIC</option>
+            <option value="BEE RCO">BEE RCO</option>
           </select>
         </div>
       </div>
