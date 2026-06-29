@@ -6,8 +6,11 @@ export default function Dashboard({ onLogout }) {
   const navItems = [
     { name: 'Overview', path: '/overview', icon: LayoutDashboard },
     { name: 'Changes', path: '/changes', icon: FileText },
-    { name: 'Console', path: '/console', icon: Terminal },
   ];
+
+  if (import.meta.env.DEV) {
+    navItems.push({ name: 'Console', path: '/console', icon: Terminal });
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
