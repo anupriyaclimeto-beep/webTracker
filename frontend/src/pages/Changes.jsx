@@ -294,6 +294,7 @@ export default function Changes() {
             <option value="MOEF">MOEF Portal</option>
             <option value="CPCB NIC">CPCB NIC</option>
             <option value="BEE RCO">BEE RCO</option>
+            <option value="BEE ICM">BEE ICM</option>
           </select>
         </div>
       </div>
