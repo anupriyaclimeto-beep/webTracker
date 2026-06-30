@@ -187,8 +187,6 @@ export async function login({ email, password, force = false }) {
   if (!token || !user) {
     throw new Error('Login succeeded but token or user was missing.');
   }
-    throw new Error('Login succeeded but token or user was missing.');
-  }
 
   if (!isWebTrackerUser(user)) {
     clearSession();

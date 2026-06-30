@@ -4,6 +4,12 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
 COPY frontend/ ./
+
+ARG VITE_AUTH_API_BASE_URL
+ARG VITE_PORTAL_URL
+ENV VITE_AUTH_API_BASE_URL=$VITE_AUTH_API_BASE_URL
+ENV VITE_PORTAL_URL=$VITE_PORTAL_URL
+
 RUN npm run build
 
 # Stage 2: Build the Python backend
