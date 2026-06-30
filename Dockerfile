@@ -22,8 +22,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy backend requirements
-COPY requirements.txt ./requirements.txt
+# Copy backend requirements (UTF-8; avoid Windows UTF-16 requirements.txt)
+COPY requirements-docker.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
 # Install Playwright and its system dependencies (only Chromium to save space)
