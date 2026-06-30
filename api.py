@@ -5,6 +5,7 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 from storage import get_conn, USE_SUPABASE, init_db
+from climeto_auth import register_climeto_auth
 
 load_dotenv()
 
@@ -37,7 +38,12 @@ LOGIN_USER = os.getenv("LOGIN_USER", "webtracker@test.com")
 LOGIN_PASS = os.getenv("LOGIN_PASS", "12345")
 
 app = Flask(__name__, static_folder="frontend/dist")
-CORS(app)
+CORS(
+    app,
+    resources={r"/api/*": {"origins": "*"}},
+    allow_headers=["Content-Type", "Authorization", "X-Climeto-Client"],
+)
+register_climeto_auth(app)
 
 # Serve React App
 @app.route("/", defaults={"path": ""})

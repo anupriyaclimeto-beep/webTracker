@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Activity, Clock, Database, Globe, RefreshCw, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
+import { authFetch } from '../lib/apiClient';
 
 export default function Overview() {
   const [portals, setPortals] = useState([]);
@@ -18,7 +19,7 @@ export default function Overview() {
       const url = filterDate 
         ? `${API_ENDPOINTS.portals}?date=${filterDate}` 
         : API_ENDPOINTS.portals;
-      const res = await fetch(url);
+      const res = await authFetch(url);
       const data = await res.json();
       if (data.portals) setPortals(data.portals);
     } catch (err) {

@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { LayoutDashboard, FileText, Terminal, LogOut } from 'lucide-react';
 
-export default function Dashboard({ onLogout }) {
+export default function Dashboard({ onLogout, displayName }) {
   const navItems = [
     { name: 'Overview', path: '/overview', icon: LayoutDashboard },
     { name: 'Changes', path: '/changes', icon: FileText },
@@ -41,7 +41,10 @@ export default function Dashboard({ onLogout }) {
                 ))}
               </nav>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center gap-4">
+              {displayName && (
+                <span className="text-sm text-slate-600 hidden sm:inline">{displayName}</span>
+              )}
               <button
                 onClick={onLogout}
                 className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-red-600 bg-red-50 hover:bg-red-100 transition"
