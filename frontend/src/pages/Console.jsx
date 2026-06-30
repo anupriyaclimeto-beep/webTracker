@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Play, Square, Terminal } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
+import { authFetch } from '../lib/apiClient';
 
 export default function Console() {
   const location = useLocation();
@@ -13,7 +14,7 @@ export default function Console() {
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch(API_ENDPOINTS.crawlStatus);
+      const res = await authFetch(API_ENDPOINTS.crawlStatus);
       const data = await res.json();
       setIsRunning(data.running);
       setStatus(data.db_status || data.status || 'stopped');
@@ -39,7 +40,7 @@ export default function Console() {
 
   const handleStart = async () => {
     try {
-      await fetch(API_ENDPOINTS.crawlStart, {
+      await authFetch(API_ENDPOINTS.crawlStart, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ portal: selectedPortal })
@@ -52,7 +53,7 @@ export default function Console() {
 
   const handleStop = async () => {
     try {
-      await fetch(API_ENDPOINTS.crawlStop, { method: 'POST' });
+      await authFetch(API_ENDPOINTS.crawlStop, { method: 'POST' });
       fetchStatus();
     } catch (err) {
       console.error(err);
