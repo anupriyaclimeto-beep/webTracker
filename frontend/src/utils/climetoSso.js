@@ -11,7 +11,11 @@ function readSsoParam(params, key) {
 }
 
 export function applyClimetoSsoFromUrl() {
-  const params = new URLSearchParams(window.location.search);
+  const hash = window.location.hash?.replace(/^#/, '').trim();
+  const params =
+    hash && (hash.includes('climeto_sso=1') || hash.includes('token='))
+      ? new URLSearchParams(hash)
+      : new URLSearchParams(window.location.search);
   if (params.get('climeto_sso') !== '1') return false;
 
   const token = readSsoParam(params, 'token');
@@ -41,10 +45,6 @@ export function applyClimetoSsoFromUrl() {
   );
 
   const nextPath = window.location.pathname === '/login' ? '/overview' : window.location.pathname;
-  const clean =
-    nextPath +
-    (params.toString() ? `?${params.toString()}` : '') +
-    window.location.hash;
-  window.history.replaceState({}, '', clean);
+  window.history.replaceState({}, '', nextPath);
   return Boolean(token);
 }

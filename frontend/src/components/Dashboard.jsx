@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { LayoutDashboard, FileText, Terminal, LogOut } from 'lucide-react';
+import PortalSwitcher from './PortalSwitcher';
 
 export default function Dashboard({ onLogout, displayName }) {
   const navItems = [
@@ -42,6 +43,7 @@ export default function Dashboard({ onLogout, displayName }) {
               </nav>
             </div>
             <div className="flex items-center gap-4">
+              <PortalSwitcher />
               {displayName && (
                 <span className="text-sm text-slate-600 hidden sm:inline">{displayName}</span>
               )}
