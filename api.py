@@ -4,7 +4,7 @@ import os
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
-from storage import get_conn, USE_SUPABASE, init_db
+from storage import get_conn, USE_SUPABASE, init_db, _supabase_retry
 from climeto_auth import register_climeto_auth
 
 load_dotenv()
@@ -45,16 +45,8 @@ CORS(
 )
 register_climeto_auth(app)
 
-# Serve React App
-@app.route("/", defaults={"path": ""})
-@app.route("/<path:path>")
-def serve(path):
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, "index.html")
 
-
+@_supabase_retry()
 def query_db(query, args=()):
     """Query the database using storage.py's connection (Supabase or SQLite)."""
     conn = get_conn()
@@ -190,8 +182,8 @@ def _filter_visible_rows(rows):
         return rows
 
 
-@app.route("/")
-def index():
+@app.route("/api/health")
+def health():
     return jsonify({
         "status": "running",
         "db": "supabase" if USE_SUPABASE else "sqlite",
@@ -594,6 +586,21 @@ def crawl_stop():
     except Exception as e:
         logger.error("POST /api/crawl/stop error — %s", str(e))
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+# Serve React App (must be registered after /api/* routes)
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve(path):
+    if path.startswith("api/"):
+        return jsonify({"error": "Not found"}), 404
+    static_root = app.static_folder or ""
+    if path and static_root and os.path.exists(os.path.join(static_root, path)):
+        return send_from_directory(static_root, path)
+    if static_root and os.path.exists(os.path.join(static_root, "index.html")):
+        return send_from_directory(static_root, "index.html")
+    return jsonify({"status": "running", "db": "supabase" if USE_SUPABASE else "sqlite"})
+
 
 if __name__ == "__main__":
     init_db()

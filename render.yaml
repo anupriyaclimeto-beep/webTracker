@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: webtracker
+    runtime: python
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 120 wsgi:app
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: SUPABASE_HOST
+        sync: false
+      - key: SUPABASE_PORT
+        value: "5432"
+      - key: SUPABASE_DB
+        sync: false
+      - key: SUPABASE_USER
+        sync: false
+      - key: SUPABASE_PASSWORD
+        sync: false
+      - key: LOGIN_USER
+        sync: false
+      - key: LOGIN_PASS
+        sync: false

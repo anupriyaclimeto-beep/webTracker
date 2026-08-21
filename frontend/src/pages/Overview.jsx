@@ -8,6 +8,7 @@ export default function Overview() {
   const [portals, setPortals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
   const [filterDate, setFilterDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -16,14 +17,21 @@ export default function Overview() {
 
   const fetchPortals = async () => {
     try {
+      setError('');
       const url = filterDate 
         ? `${API_ENDPOINTS.portals}?date=${filterDate}` 
         : API_ENDPOINTS.portals;
       const res = await authFetch(url);
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || data.message || `API error (${res.status})`);
+      }
       if (data.portals) setPortals(data.portals);
+      else setPortals([]);
     } catch (err) {
       console.error(err);
+      setError(err.message || 'Failed to load portal data');
+      setPortals([]);
     }
     setLoading(false);
     setRefreshing(false);
@@ -77,6 +85,12 @@ export default function Overview() {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+          {error}
+        </div>
+      )}
 
       {/* Hero Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

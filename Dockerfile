@@ -40,4 +40,4 @@ ENV PORT=5000
 EXPOSE $PORT
 
 # Start Gunicorn server (api.py is our Flask app)
-CMD gunicorn --bind 0.0.0.0:$PORT api:app
+CMD gunicorn --bind 0.0.0.0:$PORT --timeout 120 wsgi:app

@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://webtracker-backend.onrender.com/api/:path*"
+      "destination": "https://webtracker-1.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",

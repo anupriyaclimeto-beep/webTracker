@@ -2,18 +2,14 @@
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/.*",
-      "dest": "/api/api.py"
+      "source": "/api/:path*",
+      "destination": "https://webtracker-1.onrender.com/api/:path*"
     },
     {
-      "src": "/assets/.*",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
